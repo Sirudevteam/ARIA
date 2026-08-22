@@ -7,9 +7,19 @@
 # Environment variables — NEVER commit real .env files
 # =============================================================================
 .env
+.env.*
 .env.local
 .env.*.local
 *.env
+*.env.*
+**/.env
+**/.env.*
+**/*.env
+**/*.env.*
+!.env.example
+!**/.env.example
+!**/.env.*.example
+!**/.env.local.example
 
 # =============================================================================
 # Node / Next.js
