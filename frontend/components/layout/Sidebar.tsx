@@ -1,0 +1,82 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
+const navItems = [
+  {
+    label: "Chat",
+    href: "/chat",
+    icon: "💬",
+  },
+  {
+    label: "Documents",
+    href: "/documents",
+    icon: "📄",
+    badge: "Soon",
+  },
+  {
+    label: "Search",
+    href: "/search",
+    icon: "🔍",
+    badge: "Soon",
+  },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="flex h-full w-60 flex-col border-r border-border bg-card">
+      {/* Logo */}
+      <div className="flex items-center gap-2 px-4 py-5">
+        <span className="text-xl">🔴</span>
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-semibold text-foreground">
+            LiDAR AI
+          </span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            Knowledge Assistant
+          </span>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Navigation */}
+      <nav className="flex flex-1 flex-col gap-1 px-2 py-4">
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.badge ? "#" : item.href}
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              pathname === item.href
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              item.badge && "pointer-events-none opacity-50",
+            )}
+          >
+            <span>{item.icon}</span>
+            <span className="flex-1">{item.label}</span>
+            {item.badge && (
+              <Badge variant="secondary" className="text-[10px]">
+                {item.badge}
+              </Badge>
+            )}
+          </Link>
+        ))}
+      </nav>
+
+      <Separator />
+
+      {/* Footer */}
+      <div className="px-4 py-3">
+        <p className="text-[10px] text-muted-foreground">v0.1.0 · Foundation</p>
+      </div>
+    </aside>
+  );
+}
