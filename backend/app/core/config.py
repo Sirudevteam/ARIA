@@ -48,6 +48,14 @@ class Settings(BaseSettings):
     # Default secret for local dev/testing if not set in environment
     SUPABASE_JWT_SECRET: str = "super-secret-jwt-token-with-at-least-32-characters-long"
     JWT_ALGORITHM: str = "HS256"
+    # ── Embedding & Vector Search ─────────────────────────────────────────────
+    EMBEDDING_PROVIDER: str = "bge_m3"  # "bge_m3", "openai", "mock"
+    EMBEDDING_MODEL: str = "BAAI/bge-m3"
+    EMBEDDING_DIMENSIONS: int = 1024
+    EMBEDDING_BATCH_SIZE: int = 32
+    EMBEDDING_MAX_RETRIES: int = 3
+    OPENAI_API_KEY: str | None = None
+    HUGGINGFACE_API_KEY: str | None = None
 
     @property
     def is_production(self) -> bool:

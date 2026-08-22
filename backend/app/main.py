@@ -19,12 +19,12 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     # Startup
-    print(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} starting...")
+    print(f"[STARTUP] {settings.APP_NAME} v{settings.APP_VERSION} starting...")
     print(f"   Environment : {settings.APP_ENV}")
     print(f"   Debug mode  : {settings.DEBUG}")
     yield
     # Shutdown
-    print(f"🛑 {settings.APP_NAME} shutting down...")
+    print(f"[SHUTDOWN] {settings.APP_NAME} shutting down...")
 
 
 # ── App factory ───────────────────────────────────────────────────────────────
