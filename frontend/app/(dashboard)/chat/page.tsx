@@ -5,9 +5,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { searchService, RetrievedChunkResult } from "@/lib/services/search";
 import { chatService, ChatMessage, TokenUsage } from "@/lib/services/chat";
 import { ProjectSummary } from "@/types/document";
+import { MarkdownRenderer } from "@/components/chat/MarkdownRenderer";
+import { CitationModal } from "@/components/chat/CitationModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Send,
   Sparkles,
@@ -25,14 +27,18 @@ import {
   Square,
   Copy,
   Check,
-  Eye,
   Plus,
   MessageSquare,
   Trash2,
-  Calendar,
+  ThumbsUp,
+  ThumbsDown,
+  RotateCcw,
+  AlertCircle,
+  Menu,
+  X,
+  Clock,
   Layers,
-  ShieldCheck,
-  CheckCircle2,
+  Folder,
 } from "lucide-react";
 
 interface MessageItem {
@@ -45,6 +51,8 @@ interface MessageItem {
   usage?: TokenUsage;
   latencyMs?: number;
   timestamp: string;
+  feedback?: "like" | "dislike" | null;
+  isError?: boolean;
 }
 
 interface ConversationSession {
@@ -55,7 +63,7 @@ interface ConversationSession {
   messages: MessageItem[];
 }
 
-const DEFAULT_SUGGESTIONS = [
+const DEFAULT_PROMPT_SUGGESTIONS = [
   {
     title: "QC Rules & Occlusion",
     query: "What is occlusion and what are the categorization standards for 3D annotation?",
@@ -74,80 +82,30 @@ const DEFAULT_SUGGESTIONS = [
   },
 ];
 
-const INITIAL_SESSIONS: ConversationSession[] = [
-  {
-    id: "session-qc-rules",
-    title: "QC Rules & Occlusion",
-    createdAt: new Date().toISOString(),
-    dateCategory: "Today",
-    messages: [
-      {
-        id: "msg-1",
-        role: "user",
-        content: "What is occlusion in 3D point cloud annotation?",
-        timestamp: "10:14 AM",
-      },
-      {
-        id: "msg-2",
-        role: "assistant",
-        content: "According to the perception guidelines, **occlusion** occurs when an object is partially or fully hidden from the sensor's line of sight by other objects or obstacles [Citation 1].\n\n### Occlusion Categories:\n- **Level 1 (0–20% Occluded)**: Mostly visible; annotate full 3D extent based on visible points.\n- **Level 2 (20–50% Occluded)**: Partially visible; infer bounding box dimensions using vehicle geometry priors.\n- **Level 3 (>50% Occluded)**: Heavily occluded; maintain track ID if trajectory is continuous.",
-        citations: [
-          {
-            chunk_id: "demo-chunk-1",
-            document_id: "demo-doc-1",
-            document_title: "Perception & QC Annotation Guide",
-            doc_type: "annotation_schema",
-            version_number: 2,
-            page: 24,
-            section: "Occlusion Categories",
-            content: "Occlusion levels are categorized into Level 1 (0-20%), Level 2 (20-50%), and Level 3 (>50%). Annotators must estimate total vehicle volume using standard length/width/height priors.",
-            combined_score: 0.96,
-            rerank_score: 0.985,
-            rerank_rank: 1,
-            original_rank: 1,
-            rank_delta: 0,
-            match_channel: "both",
-            metadata: { page_number: 24, section: "Occlusion Categories" },
-          },
-        ],
-        timestamp: "10:15 AM",
-        model: "deepseek-chat",
-        latencyMs: 340,
-      },
-    ],
-  },
-  {
-    id: "session-cuboid",
-    title: "Cuboid Alignment",
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    dateCategory: "Today",
-    messages: [],
-  },
-  {
-    id: "session-tracking",
-    title: "Tracking & Point Density",
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-    dateCategory: "Today",
-    messages: [],
-  },
-];
+const STORAGE_KEY = "aria_chat_sessions_v2";
 
 export default function ChatPage() {
   const { user } = useAuth();
 
-  // Sessions state
-  const [sessions, setSessions] = useState<ConversationSession[]>(INITIAL_SESSIONS);
-  const [activeSessionId, setActiveSessionId] = useState<string>("session-qc-rules");
+  // Sessions state (loaded from localStorage on mount)
+  const [sessions, setSessions] = useState<ConversationSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string>("");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Projects state
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>("");
 
   // Chat UI state
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingStatusText, setStreamingStatusText] = useState("Retrieving context...");
   const [showConfig, setShowConfig] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [expandedReasoning, setExpandedReasoning] = useState<Record<string, boolean>>({});
-  const [activeCitationModal, setActiveCitationModal] = useState<RetrievedChunkResult | null>(null);
+  const [activeCitationModal, setActiveCitationModal] = useState<{ citation: RetrievedChunkResult; index: number } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   // Hyperparameters
   const [candidateK, setCandidateK] = useState<number>(20);
@@ -158,11 +116,48 @@ export default function ChatPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Active session helper
-  const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
-  const messages = activeSession?.messages || [];
+  // Load sessions from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSessions(parsed);
+          setActiveSessionId(parsed[0].id);
+          setIsLoaded(true);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
+    }
 
-  // Load project list
+    // Default initial session
+    const initialSession: ConversationSession = {
+      id: `session-${Date.now()}`,
+      title: "New Conversation",
+      createdAt: new Date().toISOString(),
+      dateCategory: "Today",
+      messages: [],
+    };
+    setSessions([initialSession]);
+    setActiveSessionId(initialSession.id);
+    setIsLoaded(true);
+  }, []);
+
+  // Persist sessions to localStorage
+  useEffect(() => {
+    if (isLoaded && sessions.length > 0) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+      } catch (err) {
+        console.error("Failed to save chat sessions to localStorage:", err);
+      }
+    }
+  }, [sessions, isLoaded]);
+
+  // Load projects
   useEffect(() => {
     async function loadProjects() {
       const projs = await searchService.getProjects();
@@ -174,7 +169,15 @@ export default function ChatPage() {
   // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isStreaming]);
+  }, [sessions, isStreaming]);
+
+  // Active session helper
+  const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
+  const messages = activeSession?.messages || [];
+
+  // Group sessions by date
+  const todaySessions = sessions.filter((s) => s.dateCategory === "Today");
+  const previousSessions = sessions.filter((s) => s.dateCategory !== "Today");
 
   // Create new chat session
   const handleNewChat = () => {
@@ -188,81 +191,148 @@ export default function ChatPage() {
     };
     setSessions((prev) => [newSession, ...prev]);
     setActiveSessionId(newId);
+    setMobileSidebarOpen(false);
+    setErrorBanner(null);
   };
 
-  // Delete chat session
+  // Delete session
   const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setSessions((prev) => {
       const filtered = prev.filter((s) => s.id !== sessionId);
-      if (sessionId === activeSessionId && filtered.length > 0) {
+      if (filtered.length === 0) {
+        const fresh: ConversationSession = {
+          id: `session-${Date.now()}`,
+          title: "New Conversation",
+          createdAt: new Date().toISOString(),
+          dateCategory: "Today",
+          messages: [],
+        };
+        setActiveSessionId(fresh.id);
+        return [fresh];
+      }
+      if (sessionId === activeSessionId) {
         setActiveSessionId(filtered[0].id);
       }
       return filtered;
     });
   };
 
+  // Copy text handler
   const handleCopyText = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  // Feedback handler (thumbs up / down)
+  const handleFeedback = (messageId: string, feedbackType: "like" | "dislike") => {
+    setSessions((prev) =>
+      prev.map((s) => {
+        if (s.id === activeSessionId) {
+          return {
+            ...s,
+            messages: s.messages.map((m) => {
+              if (m.id === messageId) {
+                return {
+                  ...m,
+                  feedback: m.feedback === feedbackType ? null : feedbackType,
+                };
+              }
+              return m;
+            }),
+          };
+        }
+        return s;
+      })
+    );
+  };
+
+  // Stop generation
   const handleStopGeneration = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       setIsStreaming(false);
+      setStreamingStatusText("");
     }
   };
 
-  // Send message
+  // Send message or Regenerate
   const handleSendMessage = useCallback(
-    async (queryText?: string) => {
+    async (queryText?: string, targetAssistantMsgId?: string) => {
       const query = (queryText || inputValue).trim();
       if (!query || isStreaming) return;
 
+      setErrorBanner(null);
       const userMsgId = `user-${Date.now()}`;
-      const assistantMsgId = `asst-${Date.now()}`;
+      const assistantMsgId = targetAssistantMsgId || `asst-${Date.now()}`;
       const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-      const newUserMessage: MessageItem = {
-        id: userMsgId,
-        role: "user",
-        content: query,
-        timestamp,
-      };
+      if (!targetAssistantMsgId) {
+        // Add new user & assistant message pair
+        const newUserMessage: MessageItem = {
+          id: userMsgId,
+          role: "user",
+          content: query,
+          timestamp,
+        };
 
-      const newAssistantMessage: MessageItem = {
-        id: assistantMsgId,
-        role: "assistant",
-        content: "",
-        citations: [],
-        timestamp,
-      };
+        const newAssistantMessage: MessageItem = {
+          id: assistantMsgId,
+          role: "assistant",
+          content: "",
+          citations: [],
+          timestamp,
+        };
 
-      // Update session title if first message
-      setSessions((prev) =>
-        prev.map((s) => {
-          if (s.id === activeSessionId) {
-            const updatedTitle = s.messages.length === 0 ? query.slice(0, 28) + (query.length > 28 ? "..." : "") : s.title;
-            return {
-              ...s,
-              title: updatedTitle,
-              messages: [...s.messages, newUserMessage, newAssistantMessage],
-            };
-          }
-          return s;
-        })
-      );
+        setSessions((prev) =>
+          prev.map((s) => {
+            if (s.id === activeSessionId) {
+              const updatedTitle =
+                s.messages.length === 0
+                  ? query.slice(0, 30) + (query.length > 30 ? "..." : "")
+                  : s.title;
+              return {
+                ...s,
+                title: updatedTitle,
+                messages: [...s.messages, newUserMessage, newAssistantMessage],
+              };
+            }
+            return s;
+          })
+        );
+      } else {
+        // Regenerating existing assistant message
+        setSessions((prev) =>
+          prev.map((s) => {
+            if (s.id === activeSessionId) {
+              return {
+                ...s,
+                messages: s.messages.map((m) =>
+                  m.id === targetAssistantMsgId
+                    ? { ...m, content: "", citations: [], isError: false }
+                    : m
+                ),
+              };
+            }
+            return s;
+          })
+        );
+      }
 
       setInputValue("");
       setIsStreaming(true);
+      setStreamingStatusText("Retrieving verified perception context (Hybrid + Reranker)...");
 
-      const historyPayload: ChatMessage[] = messages.slice(-6).map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
+      // Extract conversation history
+      const historyPayload: ChatMessage[] = messages
+        .filter((m) => m.id !== targetAssistantMsgId && !m.isError)
+        .slice(-6)
+        .map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
 
       abortControllerRef.current = new AbortController();
       const startTime = performance.now();
@@ -280,6 +350,7 @@ export default function ChatPage() {
           },
           {
             onCitations: (citations) => {
+              setStreamingStatusText("Synthesizing grounded answer with DeepSeek...");
               setSessions((prev) =>
                 prev.map((s) => {
                   if (s.id === activeSessionId) {
@@ -340,8 +411,10 @@ export default function ChatPage() {
                 })
               );
               setIsStreaming(false);
+              setStreamingStatusText("");
             },
             onError: (err) => {
+              setErrorBanner(err.message);
               setSessions((prev) =>
                 prev.map((s) => {
                   if (s.id === activeSessionId) {
@@ -352,7 +425,9 @@ export default function ChatPage() {
                           ? {
                               ...m,
                               content:
-                                m.content || `⚠️ Streaming error: ${err.message}`,
+                                m.content ||
+                                "⚠️ Failed to generate grounded response. Please verify backend connection or check API keys.",
+                              isError: true,
                             }
                           : m
                       ),
@@ -362,32 +437,61 @@ export default function ChatPage() {
                 })
               );
               setIsStreaming(false);
+              setStreamingStatusText("");
             },
           },
           abortControllerRef.current.signal
         );
       } catch (err: unknown) {
         if ((err as Error).name !== "AbortError") {
-          console.error("Chat error:", err);
+          setErrorBanner((err as Error).message);
         }
       } finally {
         setIsStreaming(false);
+        setStreamingStatusText("");
       }
     },
     [inputValue, isStreaming, messages, activeSessionId, selectedProject, candidateK, topK, minThreshold, temperature]
   );
 
+  // Regenerate last response handler
+  const handleRegenerate = (assistantMsgIndex: number) => {
+    if (isStreaming) return;
+    const userMsg = messages[assistantMsgIndex - 1];
+    const asstMsg = messages[assistantMsgIndex];
+    if (userMsg && userMsg.role === "user" && asstMsg) {
+      handleSendMessage(userMsg.content, asstMsg.id);
+    }
+  };
+
+  // Click on citation link inside Markdown text handler
+  const handleCitationClick = (citationNumber: number, citationsList?: RetrievedChunkResult[]) => {
+    const list = citationsList || [];
+    const targetIdx = citationNumber - 1;
+    if (list[targetIdx]) {
+      setActiveCitationModal({ citation: list[targetIdx], index: citationNumber });
+    }
+  };
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col max-w-7xl mx-auto p-2 md:p-3 space-y-2">
-      {/* ── Top Header ────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-border/60 pb-2.5 px-2">
+    <div className="flex h-[calc(100vh-4rem)] flex-col max-w-7xl mx-auto p-2 md:p-3 space-y-2 select-text">
+      {/* ── Top Automotive Header ─────────────────────────────────────────── */}
+      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5 px-2 bg-slate-950/40 rounded-t-xl">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+          {/* Mobile Sidebar Toggle */}
+          <button
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            className="md:hidden p-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white"
+          >
+            {mobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+
+          <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shadow-sm shadow-sky-500/10">
             <BrainCircuit className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base md:text-lg font-bold tracking-tight text-white">
+              <h1 className="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
                 3D LIDAR AI ASSISTANT
               </h1>
               <Badge variant="outline" className="border-sky-500/40 bg-sky-950/40 text-sky-300 text-[10px] py-0 hidden sm:inline-flex">
@@ -421,7 +525,7 @@ export default function ChatPage() {
             variant="outline"
             size="sm"
             onClick={() => setShowConfig(!showConfig)}
-            className={`h-7 px-2 text-xs gap-1 border-slate-800 ${showConfig ? "bg-sky-500/10 text-sky-400 border-sky-500/30" : ""}`}
+            className={`h-7 px-2 text-xs gap-1 border-slate-800 ${showConfig ? "bg-sky-500/10 text-sky-400 border-sky-500/30" : "text-slate-300"}`}
           >
             <SlidersHorizontal className="w-3 h-3" />
             <span className="hidden sm:inline">Settings</span>
@@ -429,29 +533,29 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Optional Tuning Drawer */}
+      {/* Settings Tuning Drawer */}
       {showConfig && (
-        <Card className="border-slate-800 bg-slate-900/90 p-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-xl">
+        <Card className="border-slate-800 bg-slate-900/90 p-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-xl animate-in fade-in duration-100">
           <div>
-            <label className="text-slate-400 block mb-1 text-[11px]">Candidate Chunks (20)</label>
+            <label className="text-slate-400 block mb-1 text-[11px]">Candidate Chunks (k1)</label>
             <input
               type="number"
               value={candidateK}
               onChange={(e) => setCandidateK(Number(e.target.value))}
               min={5}
               max={50}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200"
+              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 font-mono text-xs"
             />
           </div>
           <div>
-            <label className="text-slate-400 block mb-1 text-[11px]">Top Citations (5)</label>
+            <label className="text-slate-400 block mb-1 text-[11px]">Top Citations (k2)</label>
             <input
               type="number"
               value={topK}
               onChange={(e) => setTopK(Number(e.target.value))}
               min={1}
               max={10}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200"
+              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 font-mono text-xs"
             />
           </div>
           <div>
@@ -481,62 +585,137 @@ export default function ChatPage() {
         </Card>
       )}
 
+      {/* Error Banner Alert */}
+      {errorBanner && (
+        <div className="flex items-center justify-between p-2.5 rounded-lg border border-red-500/30 bg-red-950/20 text-red-300 text-xs animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <span>{errorBanner}</span>
+          </div>
+          <button
+            onClick={() => setErrorBanner(null)}
+            className="text-red-400 hover:text-red-200 font-bold px-1.5"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* ── 2-Column Split: Conversations on Left, AI Assistant on Right ── */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 flex-1 min-h-0">
-        {/* Left Panel: Conversations (3 cols) */}
-        <Card className="hidden md:flex md:col-span-3 flex-col border-slate-800 bg-slate-900/60 backdrop-blur overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 flex-1 min-h-0 relative">
+        {/* Left Panel: Conversations Sidebar */}
+        <Card
+          className={`${
+            mobileSidebarOpen ? "absolute inset-0 z-30 flex" : "hidden"
+          } md:flex md:static md:col-span-3 flex-col border-slate-800 bg-slate-900/80 backdrop-blur overflow-hidden rounded-xl`}
+        >
           <div className="p-3 border-b border-slate-800/80 space-y-2">
             <Button
               onClick={handleNewChat}
-              className="w-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold py-2 rounded-lg shadow-md shadow-sky-500/20 flex items-center justify-center gap-1.5"
+              className="w-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold py-2 rounded-lg shadow-md shadow-sky-500/20 flex items-center justify-center gap-1.5 transition"
             >
               <Plus className="w-3.5 h-3.5" />
               + New Chat
             </Button>
           </div>
 
-          {/* Conversations list */}
+          {/* Conversations Session List */}
           <div className="flex-1 overflow-y-auto p-2 space-y-3 text-xs">
-            <div>
-              <span className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase px-2">
-                Today
-              </span>
-              <div className="mt-1 space-y-0.5">
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    onClick={() => setActiveSessionId(session.id)}
-                    className={`group flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition text-xs ${
-                      session.id === activeSessionId
-                        ? "bg-sky-500/15 border border-sky-500/30 text-white font-medium shadow-sm"
-                        : "hover:bg-slate-800/60 text-slate-300 border border-transparent"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${session.id === activeSessionId ? "text-sky-400" : "text-slate-500"}`} />
-                      <span className="truncate">{session.title}</span>
-                    </div>
+            {/* Today */}
+            {todaySessions.length > 0 && (
+              <div>
+                <span className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase px-2">
+                  Today
+                </span>
+                <div className="mt-1 space-y-0.5">
+                  {todaySessions.map((session) => (
+                    <div
+                      key={session.id}
+                      onClick={() => {
+                        setActiveSessionId(session.id);
+                        setMobileSidebarOpen(false);
+                      }}
+                      className={`group flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition text-xs ${
+                        session.id === activeSessionId
+                          ? "bg-sky-500/15 border border-sky-500/30 text-white font-medium shadow-sm"
+                          : "hover:bg-slate-800/60 text-slate-300 border border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <MessageSquare
+                          className={`w-3.5 h-3.5 shrink-0 ${
+                            session.id === activeSessionId ? "text-sky-400" : "text-slate-500"
+                          }`}
+                        />
+                        <span className="truncate">{session.title}</span>
+                      </div>
 
-                    {sessions.length > 1 && (
+                      {sessions.length > 1 && (
+                        <button
+                          onClick={(e) => handleDeleteSession(session.id, e)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition"
+                          title="Delete thread"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Previous Days */}
+            {previousSessions.length > 0 && (
+              <div>
+                <span className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase px-2">
+                  Previous 7 Days
+                </span>
+                <div className="mt-1 space-y-0.5">
+                  {previousSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      onClick={() => {
+                        setActiveSessionId(session.id);
+                        setMobileSidebarOpen(false);
+                      }}
+                      className={`group flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition text-xs ${
+                        session.id === activeSessionId
+                          ? "bg-sky-500/15 border border-sky-500/30 text-white font-medium shadow-sm"
+                          : "hover:bg-slate-800/60 text-slate-300 border border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <MessageSquare
+                          className={`w-3.5 h-3.5 shrink-0 ${
+                            session.id === activeSessionId ? "text-sky-400" : "text-slate-500"
+                          }`}
+                        />
+                        <span className="truncate">{session.title}</span>
+                      </div>
+
                       <button
                         onClick={(e) => handleDeleteSession(session.id, e)}
                         className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition"
-                        title="Delete conversation"
+                        title="Delete thread"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </Card>
 
-        {/* Right Panel: AI Assistant Main Canvas (9 cols) */}
-        <Card className="md:col-span-9 flex flex-col border-slate-800 bg-slate-900/60 backdrop-blur overflow-hidden">
-          {/* Top Assistant Status Bar */}
-          <div className="px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
+        {/* Right Panel: AI Assistant Main Canvas */}
+        <Card className="col-span-1 md:col-span-9 flex flex-col border-slate-800 bg-slate-900/60 backdrop-blur overflow-hidden rounded-xl relative">
+          {/* Subtle 3D LiDAR Grid background accent */}
+          <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:20px_20px] opacity-25 pointer-events-none" />
+
+          {/* Top Status Header */}
+          <div className="px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/50 relative z-10">
             <div>
               <h2 className="text-xs font-semibold text-white flex items-center gap-1.5">
                 <Bot className="w-3.5 h-3.5 text-sky-400" />
@@ -548,12 +727,12 @@ export default function ChatPage() {
             </div>
 
             <Badge variant="outline" className="border-slate-800 bg-slate-950 font-mono text-[10px] text-slate-400">
-              {messages.length} messages
+              {messages.length} message{messages.length === 1 ? "" : "s"}
             </Badge>
           </div>
 
           {/* Messages Scroll Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 relative z-10">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 my-auto">
                 <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shadow-md">
@@ -570,13 +749,13 @@ export default function ChatPage() {
 
                 {/* Prompt Suggestions */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl pt-2">
-                  {DEFAULT_SUGGESTIONS.map((item, idx) => (
+                  {DEFAULT_PROMPT_SUGGESTIONS.map((item, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleSendMessage(item.query)}
-                      className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/70 hover:bg-slate-800 hover:border-sky-500/40 text-left transition text-xs flex flex-col gap-1 group shadow-sm"
+                      className="p-3 rounded-xl border border-slate-800 bg-slate-950/70 hover:bg-slate-800/80 hover:border-sky-500/40 text-left transition text-xs flex flex-col gap-1 group shadow-sm"
                     >
-                      <span className="font-medium text-slate-200 group-hover:text-sky-400 transition flex items-center justify-between">
+                      <span className="font-semibold text-slate-200 group-hover:text-sky-400 transition flex items-center justify-between">
                         {item.title}
                         <ArrowUpRight className="w-3 h-3 opacity-60" />
                       </span>
@@ -588,7 +767,7 @@ export default function ChatPage() {
                 </div>
               </div>
             ) : (
-              messages.map((msg) => (
+              messages.map((msg, mIdx) => (
                 <div
                   key={msg.id}
                   className={`flex flex-col space-y-1.5 ${msg.role === "user" ? "items-end" : "items-start"}`}
@@ -600,13 +779,13 @@ export default function ChatPage() {
 
                   {/* Main Bubble */}
                   <div
-                    className={`rounded-2xl p-3.5 text-xs md:text-sm leading-relaxed max-w-[92%] md:max-w-[84%] shadow-sm ${
+                    className={`rounded-2xl p-3.5 text-xs md:text-sm leading-relaxed max-w-[95%] md:max-w-[85%] shadow-sm ${
                       msg.role === "user"
-                        ? "bg-sky-600 text-white rounded-tr-sm"
-                        : "bg-slate-950 border border-slate-800/90 text-slate-100 rounded-tl-sm"
+                        ? "bg-sky-600 text-white rounded-tr-sm font-sans"
+                        : "bg-slate-950/90 border border-slate-800/90 text-slate-100 rounded-tl-sm backdrop-blur"
                     }`}
                   >
-                    {/* DeepSeek-R1 Reasoning Accordion */}
+                    {/* DeepSeek-R1 Reasoning Chain Accordion */}
                     {msg.reasoningContent && (
                       <div className="mb-2.5 rounded-md border border-purple-500/30 bg-purple-950/20 p-2 text-xs">
                         <button
@@ -636,30 +815,34 @@ export default function ChatPage() {
                       </div>
                     )}
 
-                    {/* Message Body */}
+                    {/* Message Content (Markdown Rendered) */}
                     {msg.content ? (
-                      <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                      <MarkdownRenderer
+                        content={msg.content}
+                        onCitationClick={(citNum) => handleCitationClick(citNum, msg.citations)}
+                      />
                     ) : isStreaming && msg.role === "assistant" ? (
-                      <div className="flex items-center gap-2 text-slate-400 py-1">
+                      <div className="flex items-center gap-2 text-slate-400 py-1 font-mono text-xs">
                         <Sparkles className="w-3.5 h-3.5 animate-spin text-sky-400" />
-                        <span>According to the guideline...</span>
+                        <span>{streamingStatusText}</span>
                       </div>
                     ) : null}
 
-                    {/* ── 📄 Sources Card (Directly attached under AI Message) ── */}
+                    {/* ── 📄 Sources Card (Embedded Under AI Response) ── */}
                     {msg.role === "assistant" && msg.citations && msg.citations.length > 0 && (
                       <div className="mt-3 pt-2.5 border-t border-slate-800/80 space-y-1.5">
                         <div className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
                           <FileText className="w-3.5 h-3.5 text-sky-400" />
-                          📄 Sources
+                          📄 Sources ({msg.citations.length} Verified Citations)
                         </div>
 
                         <div className="flex flex-wrap gap-1.5">
                           {msg.citations.map((c, idx) => (
                             <button
                               key={c.chunk_id || idx}
-                              onClick={() => setActiveCitationModal(c)}
-                              className="px-2 py-1 rounded-md bg-slate-900 border border-slate-800 hover:border-sky-500/50 hover:bg-slate-850 text-[11px] text-slate-300 transition flex items-center gap-1.5 group shadow-sm"
+                              onClick={() => setActiveCitationModal({ citation: c, index: idx + 1 })}
+                              className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-sky-500/50 hover:bg-slate-850 text-[11px] text-slate-300 transition flex items-center gap-1.5 group shadow-sm cursor-pointer"
+                              title="Click to view verified source chunk"
                             >
                               <Bookmark className="w-3 h-3 text-sky-400" />
                               <span className="font-medium group-hover:text-white transition">
@@ -682,19 +865,68 @@ export default function ChatPage() {
                     )}
                   </div>
 
-                  {/* Metadata Footer */}
-                  {msg.role === "assistant" && (
+                  {/* Message Action Toolbar (Assistant Messages) */}
+                  {msg.role === "assistant" && msg.content && (
                     <div className="flex items-center gap-2 text-[10px] text-slate-500 px-1 font-mono">
                       {msg.latencyMs && <span>{msg.latencyMs}ms</span>}
                       {msg.model && <span>{msg.model}</span>}
-                      <button
-                        onClick={() => handleCopyText(msg.id, msg.content)}
-                        className="hover:text-slate-300 transition ml-1"
-                        title="Copy answer"
-                      >
-                        {copiedId === msg.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      </button>
+
+                      <div className="flex items-center gap-1 border-l border-slate-800 pl-2">
+                        {/* Copy button */}
+                        <button
+                          onClick={() => handleCopyText(msg.id, msg.content)}
+                          className="p-1 hover:text-slate-300 transition rounded"
+                          title="Copy answer"
+                        >
+                          {copiedId === msg.id ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+
+                        {/* Regenerate button */}
+                        <button
+                          onClick={() => handleRegenerate(mIdx)}
+                          className="p-1 hover:text-slate-300 transition rounded"
+                          title="Regenerate response"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                        </button>
+
+                        {/* Thumbs up */}
+                        <button
+                          onClick={() => handleFeedback(msg.id, "like")}
+                          className={`p-1 transition rounded ${
+                            msg.feedback === "like"
+                              ? "text-emerald-400 font-bold"
+                              : "hover:text-slate-300"
+                          }`}
+                          title="Helpful"
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                        </button>
+
+                        {/* Thumbs down */}
+                        <button
+                          onClick={() => handleFeedback(msg.id, "dislike")}
+                          className={`p-1 transition rounded ${
+                            msg.feedback === "dislike"
+                              ? "text-red-400 font-bold"
+                              : "hover:text-slate-300"
+                          }`}
+                          title="Not helpful"
+                        >
+                          <ThumbsDown className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
+                  )}
+
+                  {msg.role === "user" && (
+                    <span className="text-[10px] text-slate-500 mr-1 font-mono">
+                      {msg.timestamp}
+                    </span>
                   )}
                 </div>
               ))
@@ -702,8 +934,8 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ── Bottom Input Bar ──────────────────────────────────────── */}
-          <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 backdrop-blur">
+          {/* ── Bottom Input Bar ────────────────────────────────────────── */}
+          <div className="p-3 border-t border-slate-800/80 bg-slate-950/70 backdrop-blur relative z-10">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -725,7 +957,7 @@ export default function ChatPage() {
                   type="button"
                   variant="destructive"
                   onClick={handleStopGeneration}
-                  className="h-10 px-4 gap-1.5 text-xs font-medium rounded-xl"
+                  className="h-10 px-4 gap-1.5 text-xs font-medium rounded-xl shadow-lg"
                 >
                   <Square className="w-3.5 h-3.5 fill-current" />
                   Stop
@@ -734,7 +966,7 @@ export default function ChatPage() {
                 <Button
                   type="submit"
                   disabled={!inputValue.trim()}
-                  className="h-10 px-4 gap-1.5 text-xs font-semibold rounded-xl bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20"
+                  className="h-10 px-4 gap-1.5 text-xs font-semibold rounded-xl bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20 transition cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
                   Send
@@ -745,62 +977,12 @@ export default function ChatPage() {
         </Card>
       </div>
 
-      {/* ── Citation Detail Modal ───────────────────────────────────── */}
-      {activeCitationModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card className="w-full max-w-xl border-slate-800 bg-slate-900 shadow-2xl animate-in fade-in zoom-in-95">
-            <CardHeader className="border-b border-slate-800 pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-white">
-                  <Bookmark className="w-4 h-4 text-sky-400" />
-                  Source Citation Detail
-                </CardTitle>
-                <button
-                  onClick={() => setActiveCitationModal(null)}
-                  className="text-slate-400 hover:text-white text-sm font-bold px-2 py-1 rounded"
-                >
-                  ✕
-                </button>
-              </div>
-              <CardDescription className="text-xs text-slate-400">
-                {activeCitationModal.document_title} · Version {activeCitationModal.version_number}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3 text-xs">
-              <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                {activeCitationModal.page && (
-                  <Badge variant="outline" className="border-slate-700 bg-slate-950 text-slate-300">
-                    Page {activeCitationModal.page}
-                  </Badge>
-                )}
-                {activeCitationModal.section && (
-                  <Badge variant="outline" className="border-slate-700 bg-slate-950 text-slate-300">
-                    {activeCitationModal.section}
-                  </Badge>
-                )}
-                <Badge variant="outline" className="border-emerald-500/40 bg-emerald-950/60 text-emerald-300">
-                  Relevance: {Math.round((activeCitationModal.rerank_score ?? activeCitationModal.combined_score) * 100)}%
-                </Badge>
-              </div>
-
-              <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-slate-200 font-sans leading-relaxed text-xs">
-                {activeCitationModal.content}
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setActiveCitationModal(null)}
-                  className="text-xs border-slate-800"
-                >
-                  Close
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* ── Citation Detail Modal ─────────────────────────────────────── */}
+      <CitationModal
+        citation={activeCitationModal?.citation || null}
+        citationIndex={activeCitationModal?.index}
+        onClose={() => setActiveCitationModal(null)}
+      />
     </div>
   );
 }
