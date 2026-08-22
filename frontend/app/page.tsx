@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +38,13 @@ export default function HomePage() {
       <header className="border-b border-border bg-card px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🔴</span>
+            <Image
+              src="/aria-logo.jpg"
+              alt="ARIA Logo"
+              width={32}
+              height={32}
+              className="rounded-md object-cover"
+            />
             <span className="text-sm font-semibold tracking-wide">ARIA</span>
           </div>
           <Badge variant="outline" className="text-xs">
@@ -52,6 +59,14 @@ export default function HomePage() {
           <Badge className="text-xs" variant="secondary">
             🚧 RAG Engine Coming Soon
           </Badge>
+
+          <Image
+            src="/aria-logo.jpg"
+            alt="ARIA"
+            width={140}
+            height={140}
+            className="rounded-2xl shadow-2xl shadow-blue-500/20"
+          />
 
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             ARIA

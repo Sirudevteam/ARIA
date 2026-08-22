@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -32,8 +33,14 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-60 flex-col border-r border-border bg-card">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 py-5">
-        <span className="text-xl">🔴</span>
+      <div className="flex items-center gap-3 px-4 py-4">
+        <Image
+          src="/aria-logo.jpg"
+          alt="ARIA Logo"
+          width={40}
+          height={40}
+          className="rounded-lg object-cover"
+        />
         <div className="flex flex-col leading-tight">
           <span className="text-sm font-semibold text-foreground tracking-wide">
             ARIA
