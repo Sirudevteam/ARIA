@@ -3,13 +3,21 @@ Document, DocumentVersion, and DocumentChunk models.
 """
 
 import enum
+import uuid
+from typing import TYPE_CHECKING
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import BigInteger, Enum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, Boolean, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, TimestampMixin, UUIDMixin
+from app.models.base import Base, CreatedAtMixin, TimestampMixin, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.models.conversation import MessageSource
+    from app.models.organization import Organization
+    from app.models.project import Project
+    from app.models.user import User
 
 
 class DocStatus(str, enum.Enum):
@@ -38,86 +46,86 @@ class ChunkStatus(str, enum.Enum):
 class Document(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "documents"
 
-    project_id: Mapped[str] = mapped_column(
+    project_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
     )
-    organization_id: Mapped[str] = mapped_column(
+    organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
     )
-    uploaded_by: Mapped[str | None] = mapped_column(
+    uploaded_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     title: Mapped[str] = mapped_column(String, nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
     doc_type: Mapped[DocType] = mapped_column(
         Enum(DocType, name="doc_type"), default=DocType.other, nullable=False
     )
     status: Mapped[DocStatus] = mapped_column(
         Enum(DocStatus, name="doc_status"), default=DocStatus.pending, nullable=False
     )
-    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    file_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    mime_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    source_url: Mapped[str] = mapped_column(Text, nullable=True)
+    file_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    mime_type: Mapped[str] = mapped_column(String, nullable=True)
+    page_count: Mapped[int] = mapped_column(Integer, nullable=True)
+    language: Mapped[str] = mapped_column(String, default="en", nullable=False)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
 
     # Relationships
     project: Mapped["Project"] = relationship(back_populates="documents")
-    versions: Mapped[list["DocumentVersion"]] = relationship(back_populates="document", cascade="all, delete-orphan")
-    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
+    organization: Mapped["Organization"] = relationship()
+    uploader: Mapped["User"] = relationship()
+    versions: Mapped[list["DocumentVersion"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan", order_by="DocumentVersion.version_number"
+    )
+    chunks: Mapped[list["DocumentChunk"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan", order_by="DocumentChunk.chunk_index"
+    )
 
     def __repr__(self) -> str:
         return f"<Document {self.title}>"
 
 
-class DocumentVersion(Base, UUIDMixin):
+class DocumentVersion(Base, UUIDMixin, CreatedAtMixin):
     __tablename__ = "document_versions"
 
-    document_id: Mapped[str] = mapped_column(
+    document_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
     )
-    created_by: Mapped[str | None] = mapped_column(
+    created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     storage_path: Mapped[str] = mapped_column(Text, nullable=False)
-    checksum: Mapped[str | None] = mapped_column(String, nullable=True)
-    change_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    checksum: Mapped[str] = mapped_column(String, nullable=True)
+    change_summary: Mapped[str] = mapped_column(Text, nullable=True)
+    is_current: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    from app.models.base import TimestampMixin
-    from sqlalchemy import DateTime
-    from sqlalchemy.orm import mapped_column as mc
-    created_at: Mapped[str] = mapped_column(
-        "created_at", __import__("sqlalchemy").DateTime(timezone=True),
-        server_default=__import__("sqlalchemy").func.now(), nullable=False
-    )
-
+    # Relationships
     document: Mapped["Document"] = relationship(back_populates="versions")
+    author: Mapped["User"] = relationship()
 
 
-class DocumentChunk(Base, UUIDMixin):
+class DocumentChunk(Base, UUIDMixin, CreatedAtMixin):
     __tablename__ = "document_chunks"
 
-    document_id: Mapped[str] = mapped_column(
+    document_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
     )
-    version_id: Mapped[str | None] = mapped_column(
+    version_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("document_versions.id", ondelete="SET NULL"), nullable=True
     )
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    token_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    token_count: Mapped[int] = mapped_column(Integer, nullable=True)
     status: Mapped[ChunkStatus] = mapped_column(
         Enum(ChunkStatus, name="chunk_status"), default=ChunkStatus.pending, nullable=False
     )
-    # 1536-dim vector for OpenAI/DeepSeek embeddings
-    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
+    # 1536-dimensional embedding vector for pgvector
+    embedding: Mapped[list[float]] = mapped_column(Vector(1536), nullable=True)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
 
-    from sqlalchemy import DateTime
-    created_at: Mapped[str] = mapped_column(
-        "created_at", __import__("sqlalchemy").DateTime(timezone=True),
-        server_default=__import__("sqlalchemy").func.now(), nullable=False
-    )
-
+    # Relationships
     document: Mapped["Document"] = relationship(back_populates="chunks")
+    version: Mapped["DocumentVersion"] = relationship()
     sources: Mapped[list["MessageSource"]] = relationship(back_populates="chunk")

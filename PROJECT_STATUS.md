@@ -42,15 +42,17 @@
 - [x] TypeScript API types (`types/api.ts`)
 - [x] `Dockerfile` for production Next.js
 
-### Database
-- [x] `00001_init.sql` migration
-  - `users` table
-  - `documents` table
-  - `chat_sessions` table
-  - `chat_messages` table
-  - `pgvector` extension pre-provisioned
-  - Indexes on frequently queried columns
-- [x] Supabase `config.toml`
+### Database & Vector Storage (Supabase PostgreSQL + pgvector)
+- [x] Modular migration architecture:
+  - `00001_extensions.sql` — `uuid-ossp`, `vector`, `pg_trgm`, `btree_gin`
+  - `00002_enums.sql` — 10 domain enums (`user_status`, `role_scope`, `doc_type`, etc.)
+  - `00003_schema.sql` — 15 production tables with strict FK cascades and updated_at triggers
+  - `00004_views.sql` — 4 application views (`v_project_members`, `v_documents_latest`, `v_conversation_summary`, `v_document_chunk_stats`)
+  - `00005_functions.sql` — `fn_search_chunks` (cosine similarity), `fn_get_user_permissions`, `fn_new_document_version`, `fn_write_audit_log`
+  - `00006_rls.sql` — Comprehensive Supabase Row Level Security policies
+- [x] Python SQLAlchemy 2.0 ORM models for all 15 tables with `pgvector` Vector support
+- [x] Realistic enterprise LiDAR annotation seed data (`supabase/seed/seed_dev.sql` & `supabase/seed.sql`)
+- [x] Full database documentation with Mermaid ERD (`docs/architecture/database.md`)
 
 ### Documentation
 - [x] `README.md` — full setup guide

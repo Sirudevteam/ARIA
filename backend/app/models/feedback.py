@@ -3,12 +3,19 @@ Feedback and AuditLog models.
 """
 
 import enum
+import uuid
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, UUIDMixin
+from app.models.base import Base, CreatedAtMixin, TimestampMixin, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.models.conversation import Message
+    from app.models.organization import Organization
+    from app.models.user import User
 
 
 class FeedbackRating(str, enum.Enum):
@@ -30,26 +37,21 @@ class AuditAction(str, enum.Enum):
     export = "export"
 
 
-class Feedback(Base, UUIDMixin):
+class Feedback(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "feedback"
 
-    message_id: Mapped[str] = mapped_column(
+    message_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("messages.id", ondelete="CASCADE"), nullable=False
     )
-    user_id: Mapped[str] = mapped_column(
+    user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     rating: Mapped[FeedbackRating] = mapped_column(
         Enum(FeedbackRating, name="feedback_rating"), nullable=False
     )
-    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    comment: Mapped[str] = mapped_column(Text, nullable=True)
 
-    from sqlalchemy import DateTime
-    created_at: Mapped[str] = mapped_column(
-        "created_at", __import__("sqlalchemy").DateTime(timezone=True),
-        server_default=__import__("sqlalchemy").func.now(), nullable=False
-    )
-
+    # Relationships
     message: Mapped["Message"] = relationship(back_populates="feedback")
     user: Mapped["User"] = relationship(back_populates="feedback")
 
@@ -57,32 +59,30 @@ class Feedback(Base, UUIDMixin):
         return f"<Feedback {self.rating} on msg {self.message_id}>"
 
 
-class AuditLog(Base, UUIDMixin):
+class AuditLog(Base, UUIDMixin, CreatedAtMixin):
     __tablename__ = "audit_logs"
 
-    # Append-only — no updated_at
-    user_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    # Append-only — immutable audit events
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True
     )
-    org_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     action: Mapped[AuditAction] = mapped_column(
         Enum(AuditAction, name="audit_action"), nullable=False
     )
     resource: Mapped[str] = mapped_column(String, nullable=False)
-    resource_id: Mapped[str | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    ip_address: Mapped[str | None] = mapped_column(INET, nullable=True)
-    user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
-    old_value: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    new_value: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    resource_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=True)
+    ip_address: Mapped[str] = mapped_column(INET, nullable=True)
+    user_agent: Mapped[str] = mapped_column(Text, nullable=True)
+    old_value: Mapped[dict] = mapped_column(JSONB, nullable=True)
+    new_value: Mapped[dict] = mapped_column(JSONB, nullable=True)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
 
-    from sqlalchemy import DateTime
-    created_at: Mapped[str] = mapped_column(
-        "created_at", __import__("sqlalchemy").DateTime(timezone=True),
-        server_default=__import__("sqlalchemy").func.now(), nullable=False
-    )
+    # Relationships
+    organization: Mapped["Organization"] = relationship()
+    user: Mapped["User"] = relationship()
 
     def __repr__(self) -> str:
         return f"<AuditLog {self.action} on {self.resource}>"

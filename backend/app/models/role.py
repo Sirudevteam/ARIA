@@ -3,10 +3,11 @@ Role model.
 """
 
 import enum
+import uuid
 
-from sqlalchemy import Boolean, Enum, String
+from sqlalchemy import Boolean, Enum, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin, UUIDMixin
 
@@ -26,6 +27,7 @@ class Role(Base, UUIDMixin, TimestampMixin):
     )
     permissions: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
 
     def __repr__(self) -> str:
         return f"<Role {self.name} ({self.scope})>"
