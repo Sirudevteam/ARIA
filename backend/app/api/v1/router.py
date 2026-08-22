@@ -4,7 +4,7 @@ API v1 router — aggregates all v1 endpoint routers.
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, chat, departments, documents, embedding, health, projects, search, users
+from app.api.v1.endpoints import admin, auth, chat, departments, documents, embedding, health, projects, search, users
 
 router = APIRouter(prefix="/api/v1")
 
@@ -17,3 +17,4 @@ router.include_router(documents.router)
 router.include_router(embedding.router)
 router.include_router(search.router)
 router.include_router(chat.router)
+router.include_router(admin.router)

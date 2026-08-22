@@ -31,9 +31,14 @@ const navItems: NavItem[] = [
     icon: "📄",
   },
   {
-    label: "Search",
+    label: "Search & Reranker",
     href: "/search",
     icon: "🔍",
+  },
+  {
+    label: "Admin Dashboard",
+    href: "/admin",
+    icon: "🛡️",
   },
 ];
 
