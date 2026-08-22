@@ -41,6 +41,14 @@ class Settings(BaseSettings):
         "postgresql+psycopg://lidar_user:lidar_password@localhost:5432/lidar_db"
     )
 
+    # ── Supabase Auth / JWT ───────────────────────────────────────────────────
+    SUPABASE_URL: str = "https://your-project.supabase.co"
+    SUPABASE_ANON_KEY: str = "your_supabase_anon_key"
+    SUPABASE_SERVICE_ROLE_KEY: str = "your_service_role_key"
+    # Default secret for local dev/testing if not set in environment
+    SUPABASE_JWT_SECRET: str = "super-secret-jwt-token-with-at-least-32-characters-long"
+    JWT_ALGORITHM: str = "HS256"
+
     @property
     def is_production(self) -> bool:
         return self.APP_ENV == "production"

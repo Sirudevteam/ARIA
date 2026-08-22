@@ -52,7 +52,22 @@
   - `00006_rls.sql` — Comprehensive Supabase Row Level Security policies
 - [x] Python SQLAlchemy 2.0 ORM models for all 15 tables with `pgvector` Vector support
 - [x] Realistic enterprise LiDAR annotation seed data (`supabase/seed/seed_dev.sql` & `supabase/seed.sql`)
-- [x] Full database documentation with Mermaid ERD (`docs/architecture/database.md`)
+### Authentication & Multi-Layer Authorization (Supabase Auth + PostgreSQL RBAC)
+- [x] Backend JWT validation (`PyJWT[crypto]` with `SUPABASE_JWT_SECRET`)
+- [x] Zero-trust independent database user status & role resolution
+- [x] Reusable FastAPI authorization dependencies:
+  - `get_current_user` (Active status & token validation)
+  - `require_roles` (7-tier RBAC enforcement: `SUPER_ADMIN`, `ADMIN`, `MANAGER`, `ANNOTATOR`, `QC`, `VALIDATOR`, `VIEWER`)
+  - `require_project_access` & `require_project_roles` (Project membership & project-level roles)
+  - `require_document_access` (Cross-project document security validation)
+- [x] Auth endpoints: `GET /api/v1/auth/me`, `PATCH /api/v1/auth/profile`, `GET /api/v1/users`, `GET /api/v1/projects`, `GET /api/v1/documents/{id}`
+- [x] Automated pytest authorization test suite with 100% pass rate (401, 403, 200 checks)
+- [x] Frontend Supabase SSR client (`lib/supabase/client.ts`, `lib/supabase/server.ts`)
+- [x] React `AuthProvider` and `useAuth` hook with session persistence and live profile hydration
+- [x] Route & UI guards (`<ProtectedRoute>`, `<RoleGuard>`)
+- [x] Login & Sign-up page with demo quick-login shortcuts (`/login`)
+- [x] User Profile & Authorization dashboard (`/profile`)
+- [x] Header integration with dynamic role badges and sign-out controls
 
 ### Documentation
 - [x] `README.md` — full setup guide

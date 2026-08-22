@@ -14,6 +14,11 @@ const navItems = [
     icon: "💬",
   },
   {
+    label: "Profile & Access",
+    href: "/profile",
+    icon: "🛡️",
+  },
+  {
     label: "Documents",
     href: "/documents",
     icon: "📄",

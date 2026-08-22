@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/providers/auth-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,19 +14,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ARIA",
+  title: "ARIA — 3D LiDAR Annotation AI Assistant",
   description:
-    "ARIA — Annotation RAG Intelligence Assistant. AI-powered knowledge assistant for 3D LiDAR annotation workflows.",
-  keywords: ["ARIA", "LiDAR", "RAG", "annotation", "AI assistant", "point cloud"],
+    "ARIA — Annotation RAG Intelligence Assistant. Enterprise knowledge assistant for 3D LiDAR point cloud annotation.",
+  keywords: ["ARIA", "LiDAR", "RAG", "annotation", "AI assistant", "point cloud", "autonomous vehicles"],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="h-full bg-background text-foreground">{children}</body>
+      <body className="h-full bg-slate-950 text-foreground">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
