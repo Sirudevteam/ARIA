@@ -32,7 +32,7 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
     FROM   users u
     JOIN   roles r ON r.id = u.role_id
     WHERE  u.id = auth.uid()
-      AND  r.name IN ('super_admin', 'org_admin')
+      AND  UPPER(r.name) IN ('SUPER_ADMIN', 'ADMIN')
   )
 $$;
 

@@ -50,18 +50,22 @@ VALUES
 DO $$
 DECLARE
   v_super_admin_id UUID;
-  v_org_admin_id   UUID;
-  v_proj_lead_id   UUID;
+  v_admin_id       UUID;
+  v_manager_id     UUID;
   v_annotator_id   UUID;
+  v_qc_id          UUID;
+  v_validator_id   UUID;
   v_viewer_id      UUID;
 BEGIN
-  SELECT id INTO v_super_admin_id FROM roles WHERE name = 'super_admin' AND scope = 'system';
-  SELECT id INTO v_org_admin_id   FROM roles WHERE name = 'org_admin'   AND scope = 'organization';
-  SELECT id INTO v_proj_lead_id   FROM roles WHERE name = 'project_lead' AND scope = 'project';
-  SELECT id INTO v_annotator_id   FROM roles WHERE name = 'annotator'   AND scope = 'project';
-  SELECT id INTO v_viewer_id      FROM roles WHERE name = 'viewer'      AND scope = 'project';
+  SELECT id INTO v_super_admin_id FROM roles WHERE name = 'SUPER_ADMIN' AND scope = 'system';
+  SELECT id INTO v_admin_id       FROM roles WHERE name = 'ADMIN'       AND scope = 'organization';
+  SELECT id INTO v_manager_id     FROM roles WHERE name = 'MANAGER'     AND scope = 'organization';
+  SELECT id INTO v_annotator_id   FROM roles WHERE name = 'ANNOTATOR'   AND scope = 'project';
+  SELECT id INTO v_qc_id          FROM roles WHERE name = 'QC'          AND scope = 'project';
+  SELECT id INTO v_validator_id   FROM roles WHERE name = 'VALIDATOR'   AND scope = 'project';
+  SELECT id INTO v_viewer_id      FROM roles WHERE name = 'VIEWER'      AND scope = 'project';
 
-  -- User 1: Deena Chandran (Lead Admin)
+  -- User 1: Deena Chandran (SUPER_ADMIN)
   INSERT INTO users (id, organization_id, role_id, email, name, avatar_url, status, metadata)
   VALUES (
     'c0000000-0000-0000-0000-000000000001',
@@ -71,23 +75,23 @@ BEGIN
     'Deena Chandran',
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&q=80',
     'active',
-    '{"title": "Head of AI & Perception", "department": "Perception & Autonomous Systems"}'::jsonb
+    '{"title": "Head of AI & Perception", "role_badge": "SUPER_ADMIN"}'::jsonb
   ) ON CONFLICT (id) DO NOTHING;
 
-  -- User 2: Sarah Chen (Project Lead)
+  -- User 2: Sarah Chen (ADMIN / MANAGER)
   INSERT INTO users (id, organization_id, role_id, email, name, avatar_url, status, metadata)
   VALUES (
     'c0000000-0000-0000-0000-000000000002',
     'a0000000-0000-0000-0000-000000000001',
-    v_org_admin_id,
+    v_admin_id,
     'sarah.chen@autocruise.example.com',
     'Sarah Chen',
     'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=128&q=80',
     'active',
-    '{"title": "Senior 3D Annotation Lead", "department": "Data Operations & Annotation QA"}'::jsonb
+    '{"title": "Annotation Operations Director", "role_badge": "ADMIN"}'::jsonb
   ) ON CONFLICT (id) DO NOTHING;
 
-  -- User 3: Alex Rivera (3D LiDAR Annotator)
+  -- User 3: Alex Rivera (ANNOTATOR)
   INSERT INTO users (id, organization_id, role_id, email, name, avatar_url, status, metadata)
   VALUES (
     'c0000000-0000-0000-0000-000000000003',
@@ -97,20 +101,46 @@ BEGIN
     'Alex Rivera',
     'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=128&q=80',
     'active',
-    '{"title": "3D Point Cloud Specialist", "skills": ["Pandar64", "Velodyne", "OpenPCDet"]}'::jsonb
+    '{"title": "Senior 3D LiDAR Labeler", "skills": ["Pandar64", "Velodyne", "OpenPCDet"], "role_badge": "ANNOTATOR"}'::jsonb
   ) ON CONFLICT (id) DO NOTHING;
 
-  -- User 4: Maya Patel (Quality Assurance Reviewer)
+  -- User 4: Marcus Vance (QC)
   INSERT INTO users (id, organization_id, role_id, email, name, avatar_url, status, metadata)
   VALUES (
     'c0000000-0000-0000-0000-000000000004',
     'a0000000-0000-0000-0000-000000000001',
+    v_qc_id,
+    'marcus.vance@autocruise.example.com',
+    'Marcus Vance',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=128&q=80',
+    'active',
+    '{"title": "3D Point Cloud QC Lead", "role_badge": "QC"}'::jsonb
+  ) ON CONFLICT (id) DO NOTHING;
+
+  -- User 5: Dr. Elena Rostova (VALIDATOR)
+  INSERT INTO users (id, organization_id, role_id, email, name, avatar_url, status, metadata)
+  VALUES (
+    'c0000000-0000-0000-0000-000000000005',
+    'a0000000-0000-0000-0000-000000000001',
+    v_validator_id,
+    'elena.rostova@autocruise.example.com',
+    'Dr. Elena Rostova',
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=128&q=80',
+    'active',
+    '{"title": "Principal Perception Scientist & Dataset Validator", "role_badge": "VALIDATOR"}'::jsonb
+  ) ON CONFLICT (id) DO NOTHING;
+
+  -- User 6: Maya Patel (VIEWER)
+  INSERT INTO users (id, organization_id, role_id, email, name, avatar_url, status, metadata)
+  VALUES (
+    'c0000000-0000-0000-0000-000000000006',
+    'a0000000-0000-0000-0000-000000000001',
     v_viewer_id,
     'maya.patel@autocruise.example.com',
     'Maya Patel',
-    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=128&q=80',
+    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=128&q=80',
     'active',
-    '{"title": "Sensor Calibration & QA Auditor", "department": "Perception & Autonomous Systems"}'::jsonb
+    '{"title": "Compliance & Safety Auditor", "role_badge": "VIEWER"}'::jsonb
   ) ON CONFLICT (id) DO NOTHING;
 
 END $$;
@@ -142,8 +172,10 @@ VALUES
   ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001'),
   ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000002'),
   ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003'),
+  ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004'),
   ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001'),
-  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000004')
+  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000005'),
+  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000006')
 ON CONFLICT (team_id, user_id) DO NOTHING;
 
 -- =============================================================================
@@ -182,25 +214,36 @@ VALUES
   }'::jsonb
 ) ON CONFLICT (id) DO NOTHING;
 
--- Project Members with explicit project roles
+-- Project Members with explicit project roles across the 7-role hierarchy
 DO $$
 DECLARE
-  v_lead_role UUID;
-  v_annot_role UUID;
-  v_view_role  UUID;
+  v_manager_role   UUID;
+  v_annotator_role UUID;
+  v_qc_role        UUID;
+  v_validator_role UUID;
+  v_viewer_role    UUID;
 BEGIN
-  SELECT id INTO v_lead_role  FROM roles WHERE name = 'project_lead' AND scope = 'project';
-  SELECT id INTO v_annot_role FROM roles WHERE name = 'annotator'    AND scope = 'project';
-  SELECT id INTO v_view_role  FROM roles WHERE name = 'viewer'       AND scope = 'project';
+  SELECT id INTO v_manager_role   FROM roles WHERE name = 'MANAGER'   AND scope = 'organization';
+  SELECT id INTO v_annotator_role FROM roles WHERE name = 'ANNOTATOR' AND scope = 'project';
+  SELECT id INTO v_qc_role        FROM roles WHERE name = 'QC'        AND scope = 'project';
+  SELECT id INTO v_validator_role FROM roles WHERE name = 'VALIDATOR' AND scope = 'project';
+  SELECT id INTO v_viewer_role    FROM roles WHERE name = 'VIEWER'    AND scope = 'project';
 
   INSERT INTO project_members (project_id, user_id, role_id, invited_by)
   VALUES 
-    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', v_lead_role,  NULL),
-    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000002', v_lead_role,  'c0000000-0000-0000-0000-000000000001'),
-    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', v_annot_role, 'c0000000-0000-0000-0000-000000000002'),
-    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004', v_view_role,  'c0000000-0000-0000-0000-000000000002'),
-    ('e0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', v_lead_role,  NULL),
-    ('e0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000003', v_annot_role, 'c0000000-0000-0000-0000-000000000001')
+    -- Project 1 (Urban Shuttle): Manager, Annotator, QC, Validator, Viewer
+    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', v_manager_role,   NULL),
+    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000002', v_manager_role,   'c0000000-0000-0000-0000-000000000001'),
+    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', v_annotator_role, 'c0000000-0000-0000-0000-000000000002'),
+    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004', v_qc_role,        'c0000000-0000-0000-0000-000000000002'),
+    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000005', v_validator_role, 'c0000000-0000-0000-0000-000000000001'),
+    ('e0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000006', v_viewer_role,    'c0000000-0000-0000-0000-000000000002'),
+
+    -- Project 2 (Highway Perception): Manager, Annotator, QC, Validator
+    ('e0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', v_manager_role,   NULL),
+    ('e0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000003', v_annotator_role, 'c0000000-0000-0000-0000-000000000001'),
+    ('e0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000004', v_qc_role,        'c0000000-0000-0000-0000-000000000001'),
+    ('e0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000005', v_validator_role, 'c0000000-0000-0000-0000-000000000001')
   ON CONFLICT (project_id, user_id) DO NOTHING;
 END $$;
 

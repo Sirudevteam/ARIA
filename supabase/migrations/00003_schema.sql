@@ -98,16 +98,20 @@ CALL add_updated_at_trigger('roles');
 
 -- Seed system roles (idempotent via ON CONFLICT)
 INSERT INTO roles (name, scope, permissions, is_system, description) VALUES
-  ('super_admin',  'system',       '["*"]',
-   TRUE,  'Full platform access'),
-  ('org_admin',    'organization', '["org.*","project.*","user.*","document.*"]',
-   TRUE,  'Full access within an organisation'),
-  ('project_lead', 'project',      '["project.read","project.write","document.*","conversation.*","user.invite"]',
-   TRUE,  'Manages a project and its members'),
-  ('annotator',    'project',      '["project.read","document.read","document.upload","conversation.*"]',
-   TRUE,  'Creates and reviews annotations'),
-  ('viewer',       'project',      '["project.read","document.read","conversation.read"]',
-   TRUE,  'Read-only access to a project')
+  ('SUPER_ADMIN', 'system',       '["*"]',
+   TRUE,  'Full platform and infrastructure access across all organizations'),
+  ('ADMIN',       'organization', '["org.*","dept.*","team.*","project.*","user.*","document.*","audit.read"]',
+   TRUE,  'Full organization administrator with user and project management privileges'),
+  ('MANAGER',     'organization', '["project.read","project.write","project.members.manage","document.*","task.assign","conversation.*","analytics.read"]',
+   TRUE,  'Project and operations manager supervising annotation workflows'),
+  ('ANNOTATOR',   'project',      '["project.read","document.read","annotation.create","annotation.update","conversation.*","feedback.submit"]',
+   TRUE,  'Core 3D point cloud annotator creating bounding boxes and labels'),
+  ('QC',          'project',      '["project.read","document.read","annotation.read","annotation.review","qc.approve","qc.reject","conversation.*","feedback.submit"]',
+   TRUE,  'Quality Control specialist reviewing and approving/rejecting annotations'),
+  ('VALIDATOR',   'project',      '["project.read","document.read","annotation.read","annotation.validate","dataset.export","conversation.*","feedback.submit"]',
+   TRUE,  'Domain expert performing final validation and dataset release signoff'),
+  ('VIEWER',      'project',      '["project.read","document.read","annotation.read","conversation.read"]',
+   TRUE,  'Read-only observer or auditor')
 ON CONFLICT (name, scope) DO NOTHING;
 
 -- ============================================================================

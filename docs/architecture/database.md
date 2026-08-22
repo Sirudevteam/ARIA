@@ -109,12 +109,14 @@ Role-Based Access Control (RBAC) permission definitions.
 | `is_system` | `BOOLEAN` | `NOT NULL`, default `FALSE` | Protected system role flag |
 | `description` | `TEXT` | `NULL` | Human-readable role description |
 
-*Pre-seeded System Roles*:
-- `super_admin` (`system`): `["*"]`
-- `org_admin` (`organization`): `["org.*", "project.*", "user.*", "document.*"]`
-- `project_lead` (`project`): `["project.read", "project.write", "document.*", "conversation.*"]`
-- `annotator` (`project`): `["project.read", "document.read", "document.upload", "conversation.*"]`
-- `viewer` (`project`): `["project.read", "document.read", "conversation.read"]`
+*Pre-seeded System Roles (7-Tier Enterprise Hierarchy)*:
+- **`SUPER_ADMIN`** (`system` scope): Full unrestricted system-wide platform access across all organizations and infrastructure (`["*"]`).
+- **`ADMIN`** (`organization` scope): Full organization administrator with user, team, project, and billing management (`["org.*", "dept.*", "team.*", "project.*", "user.*", "document.*", "audit.read"]`).
+- **`MANAGER`** (`organization` scope): Project & operations manager supervising annotation workflows, assigning tasks, and managing document ingestion (`["project.read", "project.write", "project.members.manage", "document.*", "task.assign", "conversation.*", "analytics.read"]`).
+- **`ANNOTATOR`** (`project` scope): Core 3D point cloud annotator creating bounding boxes, semantic labels, and querying ARIA (`["project.read", "document.read", "annotation.create", "annotation.update", "conversation.*", "feedback.submit"]`).
+- **`QC`** (`project` scope): Quality Control specialist reviewing labels, approving/rejecting bounding box accuracy, and logging error tags (`["project.read", "document.read", "annotation.read", "annotation.review", "qc.approve", "qc.reject", "conversation.*", "feedback.submit"]`).
+- **`VALIDATOR`** (`project` scope): Domain perception scientist validating ground plane calibration and signing off on golden dataset releases (`["project.read", "document.read", "annotation.read", "annotation.validate", "dataset.export", "conversation.*", "feedback.submit"]`).
+- **`VIEWER`** (`project` scope): Read-only client, safety auditor, or stakeholder (`["project.read", "document.read", "annotation.read", "conversation.read"]`).
 
 ---
 
