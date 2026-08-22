@@ -5,7 +5,7 @@ User model.
 import enum
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -31,7 +31,13 @@ class User(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "users"
 
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True
+    )
+    department_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
+    )
+    team_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True
     )
     role_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("roles.id", ondelete="SET NULL"), nullable=True
@@ -42,8 +48,16 @@ class User(Base, UUIDMixin, TimestampMixin):
     status: Mapped[UserStatus] = mapped_column(
         Enum(UserStatus, name="user_status"), default=UserStatus.pending, nullable=False
     )
-    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_login_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
+
+    @property
+    def last_seen_at(self) -> Optional[datetime]:
+        return self.last_login_at
+
+    @last_seen_at.setter
+    def last_seen_at(self, value: Optional[datetime]) -> None:
+        self.last_login_at = value
 
     # Relationships
     organization: Mapped["Organization"] = relationship(back_populates="users")
