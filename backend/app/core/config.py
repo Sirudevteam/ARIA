@@ -60,6 +60,15 @@ class Settings(BaseSettings):
     RETRIEVAL_CANDIDATE_K: int = 20
     RETRIEVAL_FINAL_TOP_K: int = 5
     RERANKER_MIN_THRESHOLD: float = 0.25
+    # ── LLM & DeepSeek Provider ───────────────────────────────────────────────
+    DEEPSEEK_API_KEY: str | None = None
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+    LLM_PROVIDER: str = "deepseek"  # "deepseek", "openai", "mock"
+    LLM_MODEL: str = "deepseek-chat"  # "deepseek-chat" (DeepSeek-V3), "deepseek-reasoner" (R1)
+    LLM_TEMPERATURE: float = 0.2
+    LLM_MAX_TOKENS: int = 4096
+    LLM_TIMEOUT_SECONDS: int = 60
+    LLM_MAX_RETRIES: int = 3
     OPENAI_API_KEY: str | None = None
     HUGGINGFACE_API_KEY: str | None = None
     COHERE_API_KEY: str | None = None

@@ -58,6 +58,10 @@ backend/build/
 htmlcov/
 .coverage
 coverage.xml
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
 
 # =============================================================================
 # Docker
