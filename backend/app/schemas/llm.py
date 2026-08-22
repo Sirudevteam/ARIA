@@ -74,3 +74,47 @@ class RAGChatResponse(BaseModel):
     model: str
     usage: TokenUsage
     latency_ms: float
+
+
+class ChatFeedbackRequest(BaseModel):
+    """Payload for submitting employee thumbs up / down feedback."""
+
+    query: str = Field(..., description="The user query that generated the response")
+    response_content: Optional[str] = Field(None, description="The AI response text")
+    rating: Literal["like", "dislike"] = Field(..., description="Employee rating: like or dislike")
+    reason: Optional[str] = Field(None, description="Categorized reason for negative feedback")
+    comment: Optional[str] = Field(None, description="Optional employee detail explanation")
+    project_id: Optional[uuid.UUID] = None
+
+
+class ChatFeedbackResponse(BaseModel):
+    """Response confirming recorded feedback."""
+
+    id: uuid.UUID
+    status: str = "RECORDED"
+    message: str = "Feedback successfully logged. If negative, flagged for Admin SOP review."
+
+
+class KnowledgeGapResolutionRequest(BaseModel):
+    """Payload for admin resolving an identified knowledge gap by adding/updating SOP content."""
+
+    unanswered_id: Optional[uuid.UUID] = None
+    query: str = Field(..., description="The query that lacked documentation")
+    document_title: str = Field(..., description="Target document title (e.g. 'Urban LiDAR 3D Annotation SOP')")
+    section_name: str = Field(..., description="Section heading (e.g. 'Emergency Vehicle Bounding Box')")
+    page_number: Optional[int] = 1
+    new_guideline_content: str = Field(..., min_length=10, description="The verified SOP text to index")
+    project_id: Optional[uuid.UUID] = None
+
+
+class KnowledgeGapResolutionResponse(BaseModel):
+    """Confirmation of newly indexed SOP chunk and resolution status."""
+
+    status: str = "RESOLVED"
+    document_title: str
+    section_name: str
+    chunk_id: str
+    vector_dimension: int = 1024
+    embedding_model: str = "BAAI/bge-m3"
+    message: str = "Knowledge gap resolved. New SOP chunk embedded and indexed in pgvector."
+

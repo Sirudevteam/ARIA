@@ -107,6 +107,12 @@ export default function ChatPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
+  // Closed-loop Feedback Modal State
+  const [feedbackModalMsg, setFeedbackModalMsg] = useState<MessageItem | null>(null);
+  const [feedbackReason, setFeedbackReason] = useState<string>("Missing guideline in SOP");
+  const [feedbackComment, setFeedbackComment] = useState<string>("");
+  const [feedbackSubmittedMsgId, setFeedbackSubmittedMsgId] = useState<string | null>(null);
+
   // Hyperparameters
   const [candidateK, setCandidateK] = useState<number>(20);
   const [topK, setTopK] = useState<number>(5);
@@ -226,7 +232,17 @@ export default function ChatPage() {
   };
 
   // Feedback handler (thumbs up / down)
-  const handleFeedback = (messageId: string, feedbackType: "like" | "dislike") => {
+  const handleFeedback = async (messageId: string, feedbackType: "like" | "dislike") => {
+    const targetMsg = messages.find((m) => m.id === messageId);
+    if (!targetMsg) return;
+
+    if (feedbackType === "dislike") {
+      // Open closed-loop gap reason modal for admin review
+      setFeedbackModalMsg(targetMsg);
+      return;
+    }
+
+    // Like rating
     setSessions((prev) =>
       prev.map((s) => {
         if (s.id === activeSessionId) {
@@ -236,7 +252,7 @@ export default function ChatPage() {
               if (m.id === messageId) {
                 return {
                   ...m,
-                  feedback: m.feedback === feedbackType ? null : feedbackType,
+                  feedback: m.feedback === "like" ? null : "like",
                 };
               }
               return m;
@@ -246,6 +262,55 @@ export default function ChatPage() {
         return s;
       })
     );
+
+    try {
+      await chatService.submitFeedback({
+        query: messages[messages.indexOf(targetMsg) - 1]?.content || "User Query",
+        response_content: targetMsg.content,
+        rating: "like",
+        project_id: selectedProject || undefined,
+      });
+    } catch (e) {
+      console.warn("Feedback logging warning:", e);
+    }
+  };
+
+  const handleSubmitNegativeFeedback = async () => {
+    if (!feedbackModalMsg) return;
+    const msgIndex = messages.indexOf(feedbackModalMsg);
+    const userQuery = msgIndex > 0 ? messages[msgIndex - 1]?.content : "User Query";
+
+    setSessions((prev) =>
+      prev.map((s) => {
+        if (s.id === activeSessionId) {
+          return {
+            ...s,
+            messages: s.messages.map((m) =>
+              m.id === feedbackModalMsg.id ? { ...m, feedback: "dislike" } : m
+            ),
+          };
+        }
+        return s;
+      })
+    );
+
+    try {
+      await chatService.submitFeedback({
+        query: userQuery,
+        response_content: feedbackModalMsg.content,
+        rating: "dislike",
+        reason: feedbackReason,
+        comment: feedbackComment || undefined,
+        project_id: selectedProject || undefined,
+      });
+      setFeedbackSubmittedMsgId(feedbackModalMsg.id);
+      setTimeout(() => setFeedbackSubmittedMsgId(null), 4000);
+    } catch (e) {
+      console.warn("Feedback submit warning:", e);
+    } finally {
+      setFeedbackModalMsg(null);
+      setFeedbackComment("");
+    }
   };
 
   // Stop generation
@@ -983,6 +1048,84 @@ export default function ChatPage() {
         citationIndex={activeCitationModal?.index}
         onClose={() => setActiveCitationModal(null)}
       />
+
+      {/* ── Closed-Loop Feedback Reason Modal ─────────────────────────── */}
+      {feedbackModalMsg && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <Card className="w-full max-w-md border-slate-800 bg-slate-900 shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-4 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ThumbsDown className="w-4 h-4 text-red-400" />
+                <span className="text-sm font-bold text-white">Help Improve Annotation SOP</span>
+              </div>
+              <button
+                onClick={() => setFeedbackModalMsg(null)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3.5 text-xs">
+              <p className="text-slate-400 leading-relaxed">
+                Your feedback flags this query for the Admin team to update guidelines and re-index the knowledge base.
+              </p>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-semibold block">What was the primary issue?</label>
+                <select
+                  value={feedbackReason}
+                  onChange={(e) => setFeedbackReason(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                >
+                  <option value="Missing guideline in SOP">Missing guideline or edge-case in SOP</option>
+                  <option value="Ambiguous 3D cuboid standard">Ambiguous 3D bounding box / yaw angle standard</option>
+                  <option value="Outdated document version">Outdated document version referenced</option>
+                  <option value="Inaccurate / hallucinated answer">Inaccurate / hallucinated answer</option>
+                  <option value="Other">Other annotation question issue</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-semibold block">Additional detail / expected guideline (Optional):</label>
+                <textarea
+                  value={feedbackComment}
+                  onChange={(e) => setFeedbackComment(e.target.value)}
+                  placeholder="e.g. Need clarification on minimum point count for heavy trailers..."
+                  rows={3}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFeedbackModalMsg(null)}
+                  className="h-8 text-xs border-slate-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSubmitNegativeFeedback}
+                  className="h-8 px-4 text-xs font-semibold bg-red-500/90 hover:bg-red-600 text-white"
+                >
+                  Submit for SOP Review
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Temporary confirmation toast badge */}
+      {feedbackSubmittedMsgId && (
+        <div className="fixed bottom-4 right-4 z-50 bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>Feedback submitted. Knowledge gap queued for Admin SOP review!</span>
+        </div>
+      )}
     </div>
   );
 }

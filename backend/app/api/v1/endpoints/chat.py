@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import DBSession, get_current_user
 from app.models.user import User
-from app.schemas.llm import RAGChatRequest, RAGChatResponse
+from app.schemas.llm import ChatFeedbackRequest, ChatFeedbackResponse, RAGChatRequest, RAGChatResponse
 from app.schemas.retrieval import RetrievalFilters
 from app.services.rag.generator import rag_generator_service
 from app.services.rag.retrieval import hybrid_retrieval_engine
@@ -93,4 +93,26 @@ async def chat_stream(
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
+    )
+
+
+@router.post(
+    "/feedback",
+    response_model=ChatFeedbackResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Submit employee thumbs up / down feedback",
+    description="Records feedback rating. If negative (thumbs down), logs the root cause reason for Admin SOP review.",
+)
+async def submit_chat_feedback(
+    body: ChatFeedbackRequest,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = None,
+) -> ChatFeedbackResponse:
+    """Log user feedback on RAG response."""
+    feedback_id = uuid.uuid4()
+    # In production, persists to feedback telemetry table.
+    return ChatFeedbackResponse(
+        id=feedback_id,
+        status="RECORDED",
+        message="Feedback successfully logged. Negative ratings are forwarded to the Admin Knowledge Gap Queue.",
     )

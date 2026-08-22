@@ -161,4 +161,35 @@ export const chatService = {
       throw err;
     }
   },
+
+  /**
+   * Submit thumbs up / down feedback
+   */
+  async submitFeedback(req: {
+    query: string;
+    response_content?: string;
+    rating: "like" | "dislike";
+    reason?: string;
+    comment?: string;
+    project_id?: string;
+  }): Promise<{ id: string; status: string; message: string }> {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const res = await fetch(`${BASE_URL}/api/v1/chat/feedback`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(req),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Failed to submit feedback: ${errText}`);
+    }
+
+    return res.json();
+  },
 };

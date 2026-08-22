@@ -48,3 +48,23 @@ export interface AuditLogEntry {
   ip_address: string;
   status: string;
 }
+
+export interface KnowledgeGapResolutionRequest {
+  unanswered_id?: string;
+  query: string;
+  document_title: string;
+  section_name: string;
+  page_number?: number;
+  new_guideline_content: string;
+  project_id?: string;
+}
+
+export interface KnowledgeGapResolutionResponse {
+  status: string;
+  document_title: string;
+  section_name: string;
+  chunk_id: string;
+  vector_dimension: number;
+  embedding_model: string;
+  message: string;
+}

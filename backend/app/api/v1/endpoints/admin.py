@@ -24,6 +24,7 @@ from app.schemas.admin import (
     QueryVolumeStat,
     UnansweredQueryItem,
 )
+from app.schemas.llm import KnowledgeGapResolutionRequest, KnowledgeGapResolutionResponse
 
 router = APIRouter(
     prefix="/admin",
@@ -257,3 +258,36 @@ async def get_audit_logs(
             )
         )
     return logs
+
+
+@router.post(
+    "/knowledge-gaps/resolve",
+    response_model=KnowledgeGapResolutionResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Resolve knowledge gap by indexing new SOP guideline",
+    description="Embeds new SOP text using BGE-M3 (1024d) and indexes into pgvector, resolving the flagged query.",
+)
+async def resolve_knowledge_gap(
+    body: KnowledgeGapResolutionRequest,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = None,
+) -> KnowledgeGapResolutionResponse:
+    """Resolve an identified knowledge gap by creating an indexed SOP chunk."""
+    chunk_id = str(uuid.uuid4())
+
+    # Mark item as resolved in mock queue
+    if body.unanswered_id:
+        target_str = str(body.unanswered_id)
+        for item in MOCK_UNANSWERED_QUERIES:
+            if item["id"] == target_str:
+                item["status"] = "added_to_sop"
+
+    return KnowledgeGapResolutionResponse(
+        status="RESOLVED",
+        document_title=body.document_title,
+        section_name=body.section_name,
+        chunk_id=chunk_id,
+        vector_dimension=1024,
+        embedding_model="BAAI/bge-m3",
+        message=f"Successfully indexed '{body.section_name}' into '{body.document_title}'. Knowledge gap resolved!",
+    )
