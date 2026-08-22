@@ -7,7 +7,14 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-const navItems = [
+interface NavItem {
+  label: string;
+  href: string;
+  icon: string;
+  badge?: string;
+}
+
+const navItems: NavItem[] = [
   {
     label: "Chat",
     href: "/chat",
@@ -27,7 +34,6 @@ const navItems = [
     label: "Search",
     href: "/search",
     icon: "🔍",
-    badge: "Soon",
   },
 ];
 
