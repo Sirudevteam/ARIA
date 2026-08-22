@@ -19,15 +19,83 @@ from app.api.deps import (
     require_roles,
 )
 from app.models.document import Document
-from app.models.project import Project, ProjectMember
+from app.models.organization import Organization
+from app.models.project import Project, ProjectMember, ProjectStatus
+from app.models.role import Role
 from app.models.user import User
 from app.schemas.auth import (
     DocumentSummaryResponse,
+    ProjectCreateRequest,
     ProjectMemberResponse,
     ProjectSummaryResponse,
 )
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
+
+
+@router.post(
+    "",
+    response_model=ProjectSummaryResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new perception project",
+    description="Creates a new project in the organization and assigns the creator as an admin.",
+)
+async def create_project(
+    req: ProjectCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = None,
+) -> ProjectSummaryResponse:
+    """Create a new project and add the creator as member."""
+    org_id = current_user.organization_id
+    if not org_id:
+        org_stmt = select(Organization).limit(1)
+        org_res = await db.execute(org_stmt)
+        org = org_res.scalar_one_or_none()
+        org_id = org.id if org else uuid.uuid4()
+
+    new_project = Project(
+        id=uuid.uuid4(),
+        organization_id=org_id,
+        name=req.name.strip(),
+        description=req.description.strip() if req.description else None,
+        status=ProjectStatus.active,
+        settings=req.settings or {},
+    )
+    db.add(new_project)
+    await db.flush()
+
+    # Assign creator as project member
+    role_id = current_user.role_id
+    if not role_id:
+        r_stmt = select(Role).where(Role.name.in_(["SUPER_ADMIN", "ADMIN"])).limit(1)
+        r_res = await db.execute(r_stmt)
+        r = r_res.scalar_one_or_none()
+        role_id = r.id if r else None
+
+    if role_id:
+        pm = ProjectMember(
+            id=uuid.uuid4(),
+            project_id=new_project.id,
+            user_id=current_user.id,
+            role_id=role_id,
+        )
+        db.add(pm)
+
+    await db.commit()
+    await db.refresh(new_project)
+
+    user_role_name = current_user.role.name.upper() if current_user.role else "ADMIN"
+    return ProjectSummaryResponse(
+        id=new_project.id,
+        organization_id=new_project.organization_id,
+        name=new_project.name,
+        description=new_project.description,
+        status=new_project.status.value if hasattr(new_project.status, "value") else str(new_project.status),
+        settings=new_project.settings,
+        user_role=user_role_name,
+        created_at=new_project.created_at,
+        updated_at=new_project.updated_at,
+    )
 
 
 @router.get(

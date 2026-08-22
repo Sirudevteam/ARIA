@@ -140,6 +140,12 @@ class ProjectSummaryResponse(BaseModel):
             return v.value
         return str(v)
 
+
+class ProjectCreateRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=120, description="Project name")
+    description: Optional[str] = Field(None, max_length=500, description="Project description")
+    settings: Dict[str, Any] = Field(default_factory=dict)
+
     @field_validator("settings", mode="before")
     @classmethod
     def parse_settings(cls, v: Any) -> Dict[str, Any]:

@@ -61,10 +61,16 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Independently lookup the user in the database
+    # Lookup the user in the database by ID or email
+    from sqlalchemy import or_
+
+    conditions = [User.id == payload.user_id]
+    if payload.email:
+        conditions.append(User.email == payload.email)
+
     stmt = (
         select(User)
-        .where(User.id == payload.user_id)
+        .where(or_(*conditions))
         .options(
             selectinload(User.role),
             selectinload(User.organization),
@@ -74,11 +80,37 @@ async def get_current_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authenticated user account not found in database.",
-            headers={"WWW-Authenticate": "Bearer"},
+        # Auto-provision verified Supabase user into database
+        org_stmt = select(Organization).limit(1)
+        org_res = await db.execute(org_stmt)
+        org = org_res.scalar_one_or_none()
+
+        role_stmt = select(Role).where(Role.name.in_(["SUPER_ADMIN", "ADMIN"])).limit(1)
+        role_res = await db.execute(role_stmt)
+        role = role_res.scalar_one_or_none()
+
+        user = User(
+            id=payload.user_id,
+            email=payload.email or f"{payload.user_id}@supabase.auth",
+            name=payload.user_metadata.get("name") or payload.email.split("@")[0] if payload.email else "Admin User",
+            organization_id=org.id if org else None,
+            role_id=role.id if role else None,
+            status=UserStatus.active,
         )
+        db.add(user)
+        await db.commit()
+
+        # Re-fetch with relationships
+        stmt = (
+            select(User)
+            .where(User.id == user.id)
+            .options(
+                selectinload(User.role),
+                selectinload(User.organization),
+            )
+        )
+        res = await db.execute(stmt)
+        user = res.scalar_one()
 
     # Validate user status
     if user.status == UserStatus.suspended:

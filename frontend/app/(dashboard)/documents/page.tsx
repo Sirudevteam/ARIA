@@ -33,6 +33,8 @@ import {
   FileCode,
   FileSpreadsheet,
   File,
+  Folder,
+  FolderPlus,
   Lock,
 } from "lucide-react";
 
@@ -58,9 +60,16 @@ export default function DocumentsPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
   const [selectedDocForVersion, setSelectedDocForVersion] = useState<DocumentItem | null>(null);
   const [selectedDocDetail, setSelectedDocDetail] = useState<DocumentDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+
+  // Project Creation State
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectDesc, setNewProjectDesc] = useState("");
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [projectCreateError, setProjectCreateError] = useState<string | null>(null);
 
   // Upload Form State
   const [uploadTitle, setUploadTitle] = useState("");
@@ -249,6 +258,28 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleCreateProjectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProjectName.trim()) return;
+
+    try {
+      setIsCreatingProject(true);
+      setProjectCreateError(null);
+      const created = await documentsService.createProject(newProjectName, newProjectDesc);
+      setProjects((prev) => [created, ...prev]);
+      setUploadProject(created.id);
+      setSelectedProject(created.id);
+      setIsCreateProjectModalOpen(false);
+      setNewProjectName("");
+      setNewProjectDesc("");
+      await fetchDocuments();
+    } catch (err: unknown) {
+      setProjectCreateError(err instanceof Error ? err.message : "Failed to create project");
+    } finally {
+      setIsCreatingProject(false);
+    }
+  };
+
   // Helper styles
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -312,6 +343,16 @@ export default function DocumentsPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCreateProjectModalOpen(true)}
+            className="border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs"
+          >
+            <FolderPlus className="w-3.5 h-3.5 mr-1.5 text-sky-400" />
+            New Project
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -602,17 +643,44 @@ export default function DocumentsPage() {
                 {/* Project & Department */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="font-medium text-slate-300">Target Project *</label>
-                    <select
-                      required
-                      value={uploadProject}
-                      onChange={(e) => setUploadProject(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded bg-slate-950 border border-slate-800 text-white"
-                    >
-                      {projects.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
+                    <div className="flex items-center justify-between">
+                      <label className="font-medium text-slate-300">Target Project *</label>
+                      <button
+                        type="button"
+                        onClick={() => setIsCreateProjectModalOpen(true)}
+                        className="text-[10px] text-sky-400 hover:text-sky-300 hover:underline cursor-pointer"
+                      >
+                        + New
+                      </button>
+                    </div>
+                    {projects.length === 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsCreateProjectModalOpen(true)}
+                        className="w-full px-2.5 py-2 rounded bg-amber-950/40 border border-amber-500/40 text-amber-300 text-left text-xs hover:bg-amber-950/60 transition flex items-center justify-between cursor-pointer"
+                      >
+                        <span>No projects yet. Click to create</span>
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <select
+                        required
+                        value={uploadProject}
+                        onChange={(e) => {
+                          if (e.target.value === "__create__") {
+                            setIsCreateProjectModalOpen(true);
+                          } else {
+                            setUploadProject(e.target.value);
+                          }
+                        }}
+                        className="w-full px-2.5 py-1.5 rounded bg-slate-950 border border-slate-800 text-white"
+                      >
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                        <option value="__create__">+ Create New Project...</option>
+                      </select>
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -971,6 +1039,90 @@ export default function DocumentsPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── Create Project Modal ────────────────────────────────────── */}
+      {isCreateProjectModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <Card className="w-full max-w-md border-slate-800 bg-slate-900 shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-4 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                  <FolderPlus className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-white">Create New Perception Project</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateProjectModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProjectSubmit}>
+              <div className="p-4 space-y-3.5 text-xs">
+                {projectCreateError && (
+                  <div className="p-2.5 rounded bg-rose-950/60 border border-rose-800 text-rose-300 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{projectCreateError}</span>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="text-slate-300 font-semibold block">Project Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Urban 3D Perception Project"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-slate-300 font-semibold block">Description (Optional)</label>
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Multi-sensor LiDAR & camera dataset annotation for Level 4 autonomous highway driving."
+                    value={newProjectDesc}
+                    onChange={(e) => setNewProjectDesc(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsCreateProjectModalOpen(false)}
+                    className="h-8 text-xs border-slate-800"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isCreatingProject || !newProjectName.trim()}
+                    size="sm"
+                    className="h-8 px-4 text-xs font-semibold bg-sky-500 hover:bg-sky-600 text-white"
+                  >
+                    {isCreatingProject ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Create Project"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Card>
         </div>
       )}
     </div>

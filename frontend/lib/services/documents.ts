@@ -180,4 +180,8 @@ export const documentsService = {
       return [];
     }
   },
+
+  async createProject(name: string, description?: string): Promise<ProjectSummary> {
+    return api.post<ProjectSummary>("/api/v1/projects", { name, description });
+  },
 };
