@@ -38,7 +38,7 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">🔴</span>
-            <span className="text-sm font-semibold">LiDAR AI Assistant</span>
+            <span className="text-sm font-semibold tracking-wide">ARIA</span>
           </div>
           <Badge variant="outline" className="text-xs">
             v0.1.0 · Foundation
@@ -54,9 +54,11 @@ export default function HomePage() {
           </Badge>
 
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            3D LiDAR Annotation
+            ARIA
             <br />
-            <span className="text-muted-foreground">AI Knowledge Assistant</span>
+            <span className="text-muted-foreground text-2xl sm:text-3xl font-medium">
+              Annotation RAG Intelligence Assistant
+            </span>
           </h1>
 
           <p className="max-w-xl text-base text-muted-foreground">

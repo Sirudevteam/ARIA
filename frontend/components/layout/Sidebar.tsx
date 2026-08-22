@@ -35,11 +35,11 @@ export function Sidebar() {
       <div className="flex items-center gap-2 px-4 py-5">
         <span className="text-xl">🔴</span>
         <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold text-foreground">
-            LiDAR AI
+          <span className="text-sm font-semibold text-foreground tracking-wide">
+            ARIA
           </span>
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-            Knowledge Assistant
+            Annotation RAG Intelligence Assistant
           </span>
         </div>
       </div>

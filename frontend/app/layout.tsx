@@ -13,10 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LiDAR AI Assistant",
+  title: "ARIA",
   description:
-    "Production-grade 3D LiDAR Annotation AI Knowledge Assistant — RAG-powered technical documentation chat.",
-  keywords: ["LiDAR", "AI", "RAG", "annotation", "point cloud"],
+    "ARIA — Annotation RAG Intelligence Assistant. AI-powered knowledge assistant for 3D LiDAR annotation workflows.",
+  keywords: ["ARIA", "LiDAR", "RAG", "annotation", "AI assistant", "point cloud"],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,6 +1,6 @@
-# LiDAR AI Assistant
+# ARIA — Annotation RAG Intelligence Assistant
 
-> Production-grade 3D LiDAR Annotation AI Knowledge Assistant — monorepo foundation.
+> Production-grade AI knowledge assistant for 3D LiDAR annotation workflows.
 
 [![Backend](https://img.shields.io/badge/FastAPI-0.115-green)](https://fastapi.tiangolo.com)
 [![Frontend](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org)

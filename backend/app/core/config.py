@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     )
 
     # ── Application ──────────────────────────────────────────────────────────
-    APP_NAME: str = "LiDAR AI Assistant"
+    APP_NAME: str = "ARIA"
     APP_VERSION: str = "0.1.0"
     APP_ENV: str = "development"
     DEBUG: bool = True

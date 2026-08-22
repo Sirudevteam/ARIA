@@ -33,7 +33,8 @@ def create_app() -> FastAPI:
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
         description=(
-            "Production API for the LiDAR Annotation AI Knowledge Assistant. "
+            "ARIA — Annotation RAG Intelligence Assistant. "
+            "Production API for 3D LiDAR annotation knowledge. "
             "RAG engine and LLM integrations are not yet implemented."
         ),
         docs_url="/docs",
