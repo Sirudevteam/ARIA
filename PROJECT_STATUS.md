@@ -67,7 +67,15 @@
 - [x] Route & UI guards (`<ProtectedRoute>`, `<RoleGuard>`)
 - [x] Login & Sign-up page with demo quick-login shortcuts (`/login`)
 - [x] User Profile & Authorization dashboard (`/profile`)
-- [x] Header integration with dynamic role badges and sign-out controls
+### Document Management System (Multi-Versioning, Storage & Metadata)
+- [x] 5 lifecycle processing states: `UPLOADED`, `PROCESSING`, `READY`, `FAILED`, `ARCHIVED`
+- [x] Complete metadata tracking: `title`, `description`, `project`, `department`, `doc_type`, `version`, `author`, `uploaded_by`, `status`, `confidentiality`, `created_at`, `updated_at`
+- [x] Supabase Storage & local disk persistence (`storage/documents/{org_id}/{project_id}/{doc_id}/v{version_number}_{filename}`)
+- [x] File validation (50MB size limit, SHA-256 integrity checksums, MIME whitelist for `.pdf`, `.docx`, `.txt`, `.md`, `.json`, `.csv`)
+- [x] Multi-version lifecycle workflow (`v1` $\to$ `v2` increment, change summaries, active version flags)
+- [x] Admin endpoints: `POST /projects/{id}/documents/upload`, `GET /documents`, `GET /documents/{id}`, `POST /documents/{id}/versions`, `PATCH /documents/{id}/archive`, `DELETE /documents/{id}`, `GET /documents/{id}/download`
+- [x] Automated test suite with 100% pass rate in `tests/test_document_management.py` (7/7 tests passed, 18/18 total suite passed)
+- [x] Frontend Document Management UI at `/documents` with live search, multi-criteria filtering, drag-and-drop upload modal with progress, new version modal, and version history drawer
 
 ### Documentation
 - [x] `README.md` — full setup guide

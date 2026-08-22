@@ -1,10 +1,10 @@
 """
-Document, DocumentVersion, and DocumentChunk models.
+Document, DocumentVersion, and DocumentChunk models with multi-version lifecycle support.
 """
 
 import enum
+from typing import TYPE_CHECKING, Optional
 import uuid
-from typing import TYPE_CHECKING
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import BigInteger, Boolean, Enum, ForeignKey, Integer, String, Text
@@ -15,17 +15,18 @@ from app.models.base import Base, CreatedAtMixin, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.models.conversation import MessageSource
+    from app.models.department import Department
     from app.models.organization import Organization
     from app.models.project import Project
     from app.models.user import User
 
 
 class DocStatus(str, enum.Enum):
-    pending = "pending"
-    processing = "processing"
-    indexed = "indexed"
-    failed = "failed"
-    archived = "archived"
+    uploaded = "UPLOADED"
+    processing = "PROCESSING"
+    ready = "READY"
+    failed = "FAILED"
+    archived = "ARCHIVED"
 
 
 class DocType(str, enum.Enum):
@@ -35,6 +36,13 @@ class DocType(str, enum.Enum):
     guide = "guide"
     annotation_schema = "annotation_schema"
     other = "other"
+
+
+class ConfidentialityLevel(str, enum.Enum):
+    public = "public"
+    internal = "internal"
+    confidential = "confidential"
+    restricted = "restricted"
 
 
 class ChunkStatus(str, enum.Enum):
@@ -52,17 +60,22 @@ class Document(Base, UUIDMixin, TimestampMixin):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
     )
+    department_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
+    )
     uploaded_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
+    author: Mapped[str] = mapped_column(String, nullable=True)
     doc_type: Mapped[DocType] = mapped_column(
         Enum(DocType, name="doc_type"), default=DocType.other, nullable=False
     )
     status: Mapped[DocStatus] = mapped_column(
-        Enum(DocStatus, name="doc_status"), default=DocStatus.pending, nullable=False
+        Enum(DocStatus, name="doc_status"), default=DocStatus.uploaded, nullable=False
     )
+    confidentiality: Mapped[str] = mapped_column(String, default="internal", nullable=False)
     source_url: Mapped[str] = mapped_column(Text, nullable=True)
     file_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=True)
     mime_type: Mapped[str] = mapped_column(String, nullable=True)
@@ -73,6 +86,7 @@ class Document(Base, UUIDMixin, TimestampMixin):
     # Relationships
     project: Mapped["Project"] = relationship(back_populates="documents")
     organization: Mapped["Organization"] = relationship()
+    department: Mapped["Department"] = relationship()
     uploader: Mapped["User"] = relationship()
     versions: Mapped[list["DocumentVersion"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", order_by="DocumentVersion.version_number"
@@ -81,8 +95,15 @@ class Document(Base, UUIDMixin, TimestampMixin):
         back_populates="document", cascade="all, delete-orphan", order_by="DocumentChunk.chunk_index"
     )
 
+    @property
+    def current_version(self) -> Optional["DocumentVersion"]:
+        for v in self.versions:
+            if v.is_current:
+                return v
+        return self.versions[-1] if self.versions else None
+
     def __repr__(self) -> str:
-        return f"<Document {self.title}>"
+        return f"<Document {self.title} ({self.status.value if hasattr(self.status, 'value') else self.status})>"
 
 
 class DocumentVersion(Base, UUIDMixin, CreatedAtMixin):
@@ -104,6 +125,9 @@ class DocumentVersion(Base, UUIDMixin, CreatedAtMixin):
     # Relationships
     document: Mapped["Document"] = relationship(back_populates="versions")
     author: Mapped["User"] = relationship()
+
+    def __repr__(self) -> str:
+        return f"<DocumentVersion doc={self.document_id} v={self.version_number} current={self.is_current}>"
 
 
 class DocumentChunk(Base, UUIDMixin, CreatedAtMixin):

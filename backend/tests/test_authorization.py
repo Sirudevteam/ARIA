@@ -159,7 +159,7 @@ async def setup_test_database():
             organization_id=org.id,
             title="Urban Shuttle 3D Labeling SOP",
             doc_type=DocType.manual,
-            status=DocStatus.indexed,
+            status=DocStatus.ready,
             language="en",
         )
         doc_p2 = Document(
@@ -167,7 +167,7 @@ async def setup_test_database():
             organization_id=org.id,
             title="Highway Long-Range Confidential SOP",
             doc_type=DocType.spec,
-            status=DocStatus.indexed,
+            status=DocStatus.ready,
             language="en",
         )
         session.add_all([doc_p1, doc_p2])

@@ -22,7 +22,6 @@ const navItems = [
     label: "Documents",
     href: "/documents",
     icon: "📄",
-    badge: "Soon",
   },
   {
     label: "Search",
