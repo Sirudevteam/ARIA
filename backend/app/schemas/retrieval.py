@@ -54,24 +54,29 @@ class RetrievedChunk(BaseModel):
 
 
 class RetrievalRequest(BaseModel):
-    """API payload for hybrid document chunk retrieval."""
+    """API payload for 2-stage hybrid retrieval and semantic reranking."""
 
     query: str = Field(..., min_length=1, description="Search query string")
     project_id: Optional[uuid.UUID] = None
     department_id: Optional[uuid.UUID] = None
-    top_k: int = Field(5, ge=1, le=50, description="Top-K results to return")
+    candidate_k: int = Field(20, ge=1, le=100, description="Stage 1: Candidates to retrieve before reranking")
+    top_k: int = Field(5, ge=1, le=50, description="Stage 2: Final precision chunks to return")
     alpha: float = Field(0.5, ge=0.0, le=1.0, description="Weight for Dense Vector (1.0 = vector only, 0.0 = keyword only)")
     fusion_mode: str = Field("rrf", description="Fusion algorithm: 'rrf' (Reciprocal Rank Fusion) or 'weighted'")
     current_version_only: bool = True
-    min_threshold: float = 0.2
+    min_threshold: float = 0.0
+    enable_rerank: bool = Field(True, description="Whether to execute cross-encoder semantic reranking")
+    min_relevance_threshold: float = Field(0.25, ge=0.0, le=1.0, description="Filter out chunks below this relevance score")
 
 
 class RetrievalResponse(BaseModel):
-    """API response containing ranked hybrid retrieved chunks."""
+    """API response containing precision-ranked context chunks."""
 
     query: str
     total_results: int
     top_k: int
     alpha: float
     fusion_mode: str
-    results: List[RetrievedChunk]
+    reranker_enabled: bool = True
+    reranker_model: Optional[str] = None
+    results: List[Any]

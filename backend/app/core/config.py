@@ -54,8 +54,15 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSIONS: int = 1024
     EMBEDDING_BATCH_SIZE: int = 32
     EMBEDDING_MAX_RETRIES: int = 3
+    # ── Reranker & 2-Stage Retrieval ──────────────────────────────────────────
+    RERANKER_PROVIDER: str = "bge_reranker"  # "bge_reranker", "cohere", "local"
+    RERANKER_MODEL: str = "BAAI/bge-reranker-v2-m3"
+    RETRIEVAL_CANDIDATE_K: int = 20
+    RETRIEVAL_FINAL_TOP_K: int = 5
+    RERANKER_MIN_THRESHOLD: float = 0.25
     OPENAI_API_KEY: str | None = None
     HUGGINGFACE_API_KEY: str | None = None
+    COHERE_API_KEY: str | None = None
 
     @property
     def is_production(self) -> bool:

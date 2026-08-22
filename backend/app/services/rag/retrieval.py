@@ -344,5 +344,73 @@ class HybridRetrievalEngine:
 
         return fused_items[:top_k]
 
+    @classmethod
+    async def retrieve_and_rerank(
+        cls,
+        db: AsyncSession,
+        query: str,
+        user_context: UserContext,
+        filters: Optional[RetrievalFilters] = None,
+        candidate_k: int = 20,
+        final_top_k: int = 5,
+        alpha: float = 0.5,
+        fusion_mode: str = "rrf",
+        min_relevance_threshold: float = 0.25,
+        enable_rerank: bool = True,
+    ):
+        """
+        2-Stage Retrieval Pipeline:
+        1. Hybrid Retrieval retrieves candidate_k candidates (e.g. 20 chunks).
+        2. Semantic Cross-Encoder Reranker scores & filters candidates by min_relevance_threshold,
+           dropping irrelevant chunks and returning top-K high precision context.
+        """
+        from app.schemas.reranker import RerankedChunk
+        from app.services.rag.reranker.service import reranker_service
+
+        # Stage 1: High Recall Candidates Retrieval
+        initial_k = candidate_k if enable_rerank else final_top_k
+        candidates = await cls.retrieve(
+            db=db,
+            query=query,
+            user_context=user_context,
+            filters=filters,
+            top_k=initial_k,
+            alpha=alpha,
+            fusion_mode=fusion_mode,
+        )
+
+        if not enable_rerank or not candidates:
+            return [
+                RerankedChunk(
+                    chunk_id=c.chunk_id,
+                    document_id=c.document_id,
+                    document_title=c.document_title,
+                    doc_type=c.doc_type,
+                    version_number=c.version_number,
+                    page=c.page,
+                    section=c.section,
+                    content=c.content,
+                    similarity_score=c.similarity_score,
+                    keyword_score=c.keyword_score,
+                    combined_score=c.combined_score,
+                    rerank_score=c.combined_score,
+                    rerank_rank=idx + 1,
+                    original_rank=idx + 1,
+                    rank_delta=0,
+                    match_channel=c.match_channel,
+                    reranker_model="passthrough",
+                    metadata=c.metadata,
+                )
+                for idx, c in enumerate(candidates[:final_top_k])
+            ]
+
+        # Stage 2: Deep Cross-Encoder Reranking and Irrelevance Threshold Pruning
+        return await reranker_service.rerank_candidates(
+            query=query,
+            chunks=candidates,
+            top_k=final_top_k,
+            min_threshold=min_relevance_threshold,
+        )
+
 
 hybrid_retrieval_engine = HybridRetrievalEngine()
