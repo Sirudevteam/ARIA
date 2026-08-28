@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -491,7 +491,7 @@ export default function ChatPage() {
                               ...m,
                               content:
                                 m.content ||
-                                "⚠️ Failed to generate grounded response. Please verify backend connection or check API keys.",
+                                "âš ï¸ Failed to generate grounded response. Please verify backend connection or check API keys.",
                               isError: true,
                             }
                           : m
@@ -539,388 +539,486 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col max-w-7xl mx-auto p-2 md:p-3 space-y-2 select-text">
-      {/* ── Top Automotive Header ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5 px-2 bg-slate-950/40 rounded-t-xl">
-        <div className="flex items-center gap-3">
-          {/* Mobile Sidebar Toggle */}
+    <div className="flex h-[calc(100vh-3rem)] overflow-hidden">
+      {/* â”€â”€ Left Conversation Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <div
+        className={`${
+          mobileSidebarOpen ? "flex absolute inset-y-0 left-0 z-30" : "hidden"
+        } md:flex flex-col w-56 shrink-0`}
+        style={{
+          background: "#050d1a",
+          borderRight: "1px solid rgba(14,165,233,0.1)",
+        }}
+      >
+        {/* New chat */}
+        <div className="p-3 border-b border-slate-800/40">
           <button
-            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-            className="md:hidden p-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white"
+            onClick={handleNewChat}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold text-white transition-all"
+            style={{
+              background: "rgba(14,165,233,0.12)",
+              border: "1px solid rgba(14,165,233,0.25)",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "rgba(14,165,233,0.2)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "rgba(14,165,233,0.12)")
+            }
           >
-            {mobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            <Plus className="w-3.5 h-3.5 text-sky-400" />
+            New Conversation
           </button>
-
-          <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shadow-sm shadow-sky-500/10">
-            <BrainCircuit className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
-                3D LIDAR AI ASSISTANT
-              </h1>
-              <Badge variant="outline" className="border-sky-500/40 bg-sky-950/40 text-sky-300 text-[10px] py-0 hidden sm:inline-flex">
-                DeepSeek-V3 · R1
-              </Badge>
-              <Badge variant="outline" className="border-emerald-500/40 bg-emerald-950/40 text-emerald-300 text-[10px] py-0 hidden sm:inline-flex">
-                BGE-M3 + Reranker
-              </Badge>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Autonomous Driving Data Annotation & QC Intelligence
-            </p>
-          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Project filter */}
-          <select
-            value={selectedProject}
-            onChange={(e) => setSelectedProject(e.target.value)}
-            className="h-7 rounded-md bg-slate-950 border border-slate-800 px-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
-          >
-            <option value="">All Authorized Projects</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+        {/* Session list */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          {todaySessions.length > 0 && (
+            <div className="mb-2">
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-700 px-2">
+                Today
+              </span>
+              {todaySessions.map((session) => (
+                <div
+                  key={session.id}
+                  onClick={() => {
+                    setActiveSessionId(session.id);
+                    setMobileSidebarOpen(false);
+                  }}
+                  className={`group flex items-center justify-between px-2.5 py-2 mt-1 rounded-lg cursor-pointer transition-all text-xs ${
+                    session.id === activeSessionId
+                      ? "text-white"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
+                  }`}
+                  style={
+                    session.id === activeSessionId
+                      ? {
+                          background: "rgba(14,165,233,0.08)",
+                          border: "1px solid rgba(14,165,233,0.18)",
+                        }
+                      : { border: "1px solid transparent" }
+                  }
+                >
+                  <div className="flex items-center gap-2 truncate min-w-0">
+                    <MessageSquare
+                      className={`w-3.5 h-3.5 shrink-0 ${
+                        session.id === activeSessionId ? "text-sky-400" : "text-slate-600"
+                      }`}
+                    />
+                    <span className="truncate">{session.title}</span>
+                  </div>
+                  {sessions.length > 1 && (
+                    <button
+                      onClick={(e) => handleDeleteSession(session.id, e)}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-600 hover:text-red-400 transition shrink-0"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
-          {/* Settings button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowConfig(!showConfig)}
-            className={`h-7 px-2 text-xs gap-1 border-slate-800 ${showConfig ? "bg-sky-500/10 text-sky-400 border-sky-500/30" : "text-slate-300"}`}
-          >
-            <SlidersHorizontal className="w-3 h-3" />
-            <span className="hidden sm:inline">Settings</span>
-          </Button>
+          {previousSessions.length > 0 && (
+            <div>
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-700 px-2">
+                Previous
+              </span>
+              {previousSessions.map((session) => (
+                <div
+                  key={session.id}
+                  onClick={() => {
+                    setActiveSessionId(session.id);
+                    setMobileSidebarOpen(false);
+                  }}
+                  className={`group flex items-center justify-between px-2.5 py-2 mt-1 rounded-lg cursor-pointer transition-all text-xs ${
+                    session.id === activeSessionId
+                      ? "text-white"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
+                  }`}
+                  style={
+                    session.id === activeSessionId
+                      ? {
+                          background: "rgba(14,165,233,0.08)",
+                          border: "1px solid rgba(14,165,233,0.18)",
+                        }
+                      : { border: "1px solid transparent" }
+                  }
+                >
+                  <div className="flex items-center gap-2 truncate min-w-0">
+                    <MessageSquare
+                      className={`w-3.5 h-3.5 shrink-0 ${
+                        session.id === activeSessionId ? "text-sky-400" : "text-slate-600"
+                      }`}
+                    />
+                    <span className="truncate">{session.title}</span>
+                  </div>
+                  <button
+                    onClick={(e) => handleDeleteSession(session.id, e)}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-600 hover:text-red-400 transition shrink-0"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar footer */}
+        <div className="p-3 border-t border-slate-800/40">
+          <div className="flex items-center gap-2 text-[10px] text-slate-600 font-mono">
+            <Clock className="w-3 h-3" />
+            <span>{messages.length} messages</span>
+          </div>
         </div>
       </div>
 
-      {/* Settings Tuning Drawer */}
-      {showConfig && (
-        <Card className="border-slate-800 bg-slate-900/90 p-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-xl animate-in fade-in duration-100">
-          <div>
-            <label className="text-slate-400 block mb-1 text-[11px]">Candidate Chunks (k1)</label>
-            <input
-              type="number"
-              value={candidateK}
-              onChange={(e) => setCandidateK(Number(e.target.value))}
-              min={5}
-              max={50}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 font-mono text-xs"
-            />
-          </div>
-          <div>
-            <label className="text-slate-400 block mb-1 text-[11px]">Top Citations (k2)</label>
-            <input
-              type="number"
-              value={topK}
-              onChange={(e) => setTopK(Number(e.target.value))}
-              min={1}
-              max={10}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 font-mono text-xs"
-            />
-          </div>
-          <div>
-            <label className="text-slate-400 block mb-1 text-[11px]">Min Relevance Filter ({Math.round(minThreshold * 100)}%)</label>
-            <input
-              type="range"
-              min="0"
-              max="0.8"
-              step="0.05"
-              value={minThreshold}
-              onChange={(e) => setMinThreshold(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-sky-500"
-            />
-          </div>
-          <div>
-            <label className="text-slate-400 block mb-1 text-[11px]">Temperature ({temperature})</label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={temperature}
-              onChange={(e) => setTemperature(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-sky-500"
-            />
-          </div>
-        </Card>
-      )}
+      {/* â”€â”€ Main Chat Canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Background dot grid */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #0ea5e9 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
 
-      {/* Error Banner Alert */}
-      {errorBanner && (
-        <div className="flex items-center justify-between p-2.5 rounded-lg border border-red-500/30 bg-red-950/20 text-red-300 text-xs animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-            <span>{errorBanner}</span>
-          </div>
-          <button
-            onClick={() => setErrorBanner(null)}
-            className="text-red-400 hover:text-red-200 font-bold px-1.5"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {/* ── 2-Column Split: Conversations on Left, AI Assistant on Right ── */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 flex-1 min-h-0 relative">
-        {/* Left Panel: Conversations Sidebar */}
-        <Card
-          className={`${
-            mobileSidebarOpen ? "absolute inset-0 z-30 flex" : "hidden"
-          } md:flex md:static md:col-span-3 flex-col border-slate-800 bg-slate-900/80 backdrop-blur overflow-hidden rounded-xl`}
+        {/* â”€â”€ Top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <div
+          className="relative z-10 flex items-center justify-between px-4 py-2.5"
+          style={{ borderBottom: "1px solid rgba(14,165,233,0.1)" }}
         >
-          <div className="p-3 border-b border-slate-800/80 space-y-2">
-            <Button
-              onClick={handleNewChat}
-              className="w-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold py-2 rounded-lg shadow-md shadow-sky-500/20 flex items-center justify-center gap-1.5 transition"
+          <div className="flex items-center gap-3">
+            {/* Mobile sidebar toggle */}
+            <button
+              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              className="md:hidden p-1.5 rounded-md text-slate-400 hover:text-white"
+              style={{ border: "1px solid rgba(255,255,255,0.08)" }}
             >
-              <Plus className="w-3.5 h-3.5" />
-              + New Chat
-            </Button>
-          </div>
+              {mobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
 
-          {/* Conversations Session List */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-3 text-xs">
-            {/* Today */}
-            {todaySessions.length > 0 && (
-              <div>
-                <span className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase px-2">
-                  Today
-                </span>
-                <div className="mt-1 space-y-0.5">
-                  {todaySessions.map((session) => (
-                    <div
-                      key={session.id}
-                      onClick={() => {
-                        setActiveSessionId(session.id);
-                        setMobileSidebarOpen(false);
-                      }}
-                      className={`group flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition text-xs ${
-                        session.id === activeSessionId
-                          ? "bg-sky-500/15 border border-sky-500/30 text-white font-medium shadow-sm"
-                          : "hover:bg-slate-800/60 text-slate-300 border border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <MessageSquare
-                          className={`w-3.5 h-3.5 shrink-0 ${
-                            session.id === activeSessionId ? "text-sky-400" : "text-slate-500"
-                          }`}
-                        />
-                        <span className="truncate">{session.title}</span>
-                      </div>
-
-                      {sessions.length > 1 && (
-                        <button
-                          onClick={(e) => handleDeleteSession(session.id, e)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition"
-                          title="Delete thread"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Previous Days */}
-            {previousSessions.length > 0 && (
-              <div>
-                <span className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase px-2">
-                  Previous 7 Days
-                </span>
-                <div className="mt-1 space-y-0.5">
-                  {previousSessions.map((session) => (
-                    <div
-                      key={session.id}
-                      onClick={() => {
-                        setActiveSessionId(session.id);
-                        setMobileSidebarOpen(false);
-                      }}
-                      className={`group flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition text-xs ${
-                        session.id === activeSessionId
-                          ? "bg-sky-500/15 border border-sky-500/30 text-white font-medium shadow-sm"
-                          : "hover:bg-slate-800/60 text-slate-300 border border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <MessageSquare
-                          className={`w-3.5 h-3.5 shrink-0 ${
-                            session.id === activeSessionId ? "text-sky-400" : "text-slate-500"
-                          }`}
-                        />
-                        <span className="truncate">{session.title}</span>
-                      </div>
-
-                      <button
-                        onClick={(e) => handleDeleteSession(session.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition"
-                        title="Delete thread"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Right Panel: AI Assistant Main Canvas */}
-        <Card className="col-span-1 md:col-span-9 flex flex-col border-slate-800 bg-slate-900/60 backdrop-blur overflow-hidden rounded-xl relative">
-          {/* Subtle 3D LiDAR Grid background accent */}
-          <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:20px_20px] opacity-25 pointer-events-none" />
-
-          {/* Top Status Header */}
-          <div className="px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/50 relative z-10">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center"
+              style={{
+                background: "rgba(14,165,233,0.1)",
+                border: "1px solid rgba(14,165,233,0.25)",
+              }}
+            >
+              <BrainCircuit className="w-3.5 h-3.5 text-sky-400" />
+            </div>
             <div>
-              <h2 className="text-xs font-semibold text-white flex items-center gap-1.5">
-                <Bot className="w-3.5 h-3.5 text-sky-400" />
-                AI Assistant
-              </h2>
-              <p className="text-[10px] text-slate-400">
-                Ask anything about annotation & QC
+              <h1 className="text-xs font-bold text-white tracking-wide">
+                ARIA Â· AI ASSISTANT
+              </h1>
+              <p className="text-[10px] text-slate-600 font-mono">
+                DeepSeek-V3 Â· BGE-M3 Â· pgvector RAG
               </p>
             </div>
-
-            <Badge variant="outline" className="border-slate-800 bg-slate-950 font-mono text-[10px] text-slate-400">
-              {messages.length} message{messages.length === 1 ? "" : "s"}
-            </Badge>
           </div>
 
-          {/* Messages Scroll Area */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 relative z-10">
-            {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 my-auto">
-                <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shadow-md">
-                  <Bot className="w-6 h-6" />
-                </div>
-                <div className="max-w-md space-y-1">
-                  <h3 className="text-sm font-semibold text-white">
-                    Ask anything about annotation & QC
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Grounded directly in verified SOPs, ISO 8855 standards, and point cloud calibration schemas.
-                  </p>
-                </div>
+          <div className="flex items-center gap-2">
+            {/* Project selector */}
+            <select
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              className="h-7 rounded-md px-2 text-xs text-slate-300 outline-none"
+              style={{
+                background: "#040c19",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <option value="">All Projects</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
 
-                {/* Prompt Suggestions */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl pt-2">
-                  {DEFAULT_PROMPT_SUGGESTIONS.map((item, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleSendMessage(item.query)}
-                      className="p-3 rounded-xl border border-slate-800 bg-slate-950/70 hover:bg-slate-800/80 hover:border-sky-500/40 text-left transition text-xs flex flex-col gap-1 group shadow-sm"
-                    >
-                      <span className="font-semibold text-slate-200 group-hover:text-sky-400 transition flex items-center justify-between">
-                        {item.title}
-                        <ArrowUpRight className="w-3 h-3 opacity-60" />
-                      </span>
-                      <span className="text-[11px] text-slate-400 line-clamp-2">
-                        {item.query}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+            {/* Settings toggle */}
+            <button
+              onClick={() => setShowConfig(!showConfig)}
+              className={`h-7 px-2.5 rounded-md text-xs flex items-center gap-1.5 transition-all ${
+                showConfig ? "text-sky-300" : "text-slate-500 hover:text-slate-300"
+              }`}
+              style={{
+                background: showConfig ? "rgba(14,165,233,0.08)" : "transparent",
+                border: `1px solid ${showConfig ? "rgba(14,165,233,0.25)" : "rgba(255,255,255,0.06)"}`,
+              }}
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+          </div>
+        </div>
+
+        {/* RAG Settings panel */}
+        {showConfig && (
+          <div
+            className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-3 px-4 py-3"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: "rgba(4,12,25,0.9)" }}
+          >
+            {[
+              { label: "Candidate Chunks (k1)", value: candidateK, min: 5, max: 50, type: "number", onChange: (v: number) => setCandidateK(v) },
+              { label: "Top Citations (k2)", value: topK, min: 1, max: 10, type: "number", onChange: (v: number) => setTopK(v) },
+            ].map((f) => (
+              <div key={f.label}>
+                <label className="text-[10px] text-slate-600 block mb-1">{f.label}</label>
+                <input
+                  type="number"
+                  value={f.value}
+                  onChange={(e) => f.onChange(Number(e.target.value))}
+                  min={f.min}
+                  max={f.max}
+                  className="w-full px-2 py-1 rounded text-xs text-slate-200 font-mono outline-none"
+                  style={{ background: "#040c19", border: "1px solid rgba(255,255,255,0.08)" }}
+                />
               </div>
-            ) : (
-              messages.map((msg, mIdx) => (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col space-y-1.5 ${msg.role === "user" ? "items-end" : "items-start"}`}
-                >
-                  {/* Author Label */}
-                  <span className="text-[10px] font-semibold text-slate-400 px-1">
-                    {msg.role === "user" ? "User:" : "AI:"}
-                  </span>
+            ))}
+            <div>
+              <label className="text-[10px] text-slate-600 block mb-1">
+                Min Relevance ({Math.round(minThreshold * 100)}%)
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="0.8"
+                step="0.05"
+                value={minThreshold}
+                onChange={(e) => setMinThreshold(Number(e.target.value))}
+                className="w-full h-1.5 rounded accent-sky-500"
+                style={{ background: "#040c19" }}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-600 block mb-1">
+                Temperature ({temperature})
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={temperature}
+                onChange={(e) => setTemperature(Number(e.target.value))}
+                className="w-full h-1.5 rounded accent-sky-500"
+                style={{ background: "#040c19" }}
+              />
+            </div>
+          </div>
+        )}
 
-                  {/* Main Bubble */}
-                  <div
-                    className={`rounded-2xl p-3.5 text-xs md:text-sm leading-relaxed max-w-[95%] md:max-w-[85%] shadow-sm ${
-                      msg.role === "user"
-                        ? "bg-sky-600 text-white rounded-tr-sm font-sans"
-                        : "bg-slate-950/90 border border-slate-800/90 text-slate-100 rounded-tl-sm backdrop-blur"
-                    }`}
+        {/* Error banner */}
+        {errorBanner && (
+          <div
+            className="relative z-10 flex items-center justify-between px-4 py-2 text-xs"
+            style={{
+              background: "rgba(239,68,68,0.07)",
+              borderBottom: "1px solid rgba(239,68,68,0.2)",
+            }}
+          >
+            <div className="flex items-center gap-2 text-red-300">
+              <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <span>{errorBanner}</span>
+            </div>
+            <button
+              onClick={() => setErrorBanner(null)}
+              className="text-red-500 hover:text-red-300 font-bold px-1"
+            >
+              âœ•
+            </button>
+          </div>
+        )}
+
+        {/* â”€â”€ Messages area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <div className="relative z-10 flex-1 overflow-y-auto px-4 py-5 space-y-5">
+          {messages.length === 0 ? (
+            /* Empty state */
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-5 max-w-lg mx-auto">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                style={{
+                  background: "rgba(14,165,233,0.08)",
+                  border: "1px solid rgba(14,165,233,0.2)",
+                }}
+              >
+                <Bot className="w-7 h-7 text-sky-400" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-semibold text-white">
+                  Ask anything about annotation & QC
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Grounded directly in your verified SOPs, ISO 8855 standards,
+                  and point cloud calibration schemas.
+                </p>
+              </div>
+
+              {/* Suggestion chips */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+                {DEFAULT_PROMPT_SUGGESTIONS.map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSendMessage(item.query)}
+                    className="group p-3 rounded-xl text-left transition-all flex flex-col gap-1"
+                    style={{
+                      background: "rgba(14,165,233,0.04)",
+                      border: "1px solid rgba(14,165,233,0.12)",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.borderColor = "rgba(14,165,233,0.3)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.borderColor = "rgba(14,165,233,0.12)")
+                    }
                   >
-                    {/* DeepSeek-R1 Reasoning Chain Accordion */}
-                    {msg.reasoningContent && (
-                      <div className="mb-2.5 rounded-md border border-purple-500/30 bg-purple-950/20 p-2 text-xs">
-                        <button
-                          onClick={() =>
-                            setExpandedReasoning((prev) => ({
-                              ...prev,
-                              [msg.id]: !prev[msg.id],
-                            }))
-                          }
-                          className="flex items-center justify-between w-full font-medium text-purple-300 hover:text-purple-200"
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <BrainCircuit className="w-3.5 h-3.5 text-purple-400" />
-                            DeepSeek Reasoning Process
-                          </span>
-                          {expandedReasoning[msg.id] ? (
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          ) : (
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                        {expandedReasoning[msg.id] && (
-                          <div className="mt-2 pt-2 border-t border-purple-500/20 text-purple-200/90 whitespace-pre-wrap font-mono text-[11px] leading-relaxed">
-                            {msg.reasoningContent}
-                          </div>
+                    <span className="text-xs font-semibold text-slate-200 group-hover:text-sky-300 transition flex items-center justify-between">
+                      {item.title}
+                      <ArrowUpRight className="w-3 h-3 opacity-50" />
+                    </span>
+                    <span className="text-[11px] text-slate-500 line-clamp-2 text-left">
+                      {item.query}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            messages.map((msg, mIdx) => (
+              <div
+                key={msg.id}
+                className={`flex flex-col space-y-1.5 ${
+                  msg.role === "user" ? "items-end" : "items-start"
+                }`}
+              >
+                {/* Role label */}
+                <span className="text-[10px] font-semibold text-slate-600 px-1 font-mono">
+                  {msg.role === "user" ? "YOU" : "ARIA"}
+                </span>
+
+                {/* Bubble */}
+                <div
+                  className={`rounded-xl text-xs md:text-sm leading-relaxed max-w-[92%] md:max-w-[80%] ${
+                    msg.role === "user"
+                      ? "px-4 py-3 text-white rounded-tr-sm"
+                      : "px-4 py-3.5 text-slate-100 rounded-tl-sm"
+                  }`}
+                  style={
+                    msg.role === "user"
+                      ? {
+                          background: "rgba(14,165,233,0.9)",
+                          boxShadow: "0 2px 12px rgba(14,165,233,0.2)",
+                        }
+                      : {
+                          background: "rgba(8,15,30,0.95)",
+                          border: "1px solid rgba(255,255,255,0.07)",
+                        }
+                  }
+                >
+                  {/* DeepSeek Reasoning accordion */}
+                  {msg.reasoningContent && (
+                    <div
+                      className="mb-3 rounded-lg p-2.5 text-xs"
+                      style={{
+                        background: "rgba(139,92,246,0.08)",
+                        border: "1px solid rgba(139,92,246,0.2)",
+                      }}
+                    >
+                      <button
+                        onClick={() =>
+                          setExpandedReasoning((prev) => ({
+                            ...prev,
+                            [msg.id]: !prev[msg.id],
+                          }))
+                        }
+                        className="flex items-center justify-between w-full text-purple-300 hover:text-purple-200"
+                      >
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <BrainCircuit className="w-3.5 h-3.5 text-purple-400" />
+                          DeepSeek Reasoning
+                        </span>
+                        {expandedReasoning[msg.id] ? (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronRight className="w-3.5 h-3.5" />
                         )}
-                      </div>
-                    )}
-
-                    {/* Message Content (Markdown Rendered) */}
-                    {msg.content ? (
-                      <MarkdownRenderer
-                        content={msg.content}
-                        onCitationClick={(citNum) => handleCitationClick(citNum, msg.citations)}
-                      />
-                    ) : isStreaming && msg.role === "assistant" ? (
-                      <div className="flex items-center gap-2 text-slate-400 py-1 font-mono text-xs">
-                        <Sparkles className="w-3.5 h-3.5 animate-spin text-sky-400" />
-                        <span>{streamingStatusText}</span>
-                      </div>
-                    ) : null}
-
-                    {/* ── 📄 Sources Card (Embedded Under AI Response) ── */}
-                    {msg.role === "assistant" && msg.citations && msg.citations.length > 0 && (
-                      <div className="mt-3 pt-2.5 border-t border-slate-800/80 space-y-1.5">
-                        <div className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
-                          <FileText className="w-3.5 h-3.5 text-sky-400" />
-                          📄 Sources ({msg.citations.length} Verified Citations)
+                      </button>
+                      {expandedReasoning[msg.id] && (
+                        <div className="mt-2 pt-2 border-t border-purple-500/20 text-purple-200/80 whitespace-pre-wrap font-mono text-[11px] leading-relaxed">
+                          {msg.reasoningContent}
                         </div>
+                      )}
+                    </div>
+                  )}
 
+                  {/* Content */}
+                  {msg.content ? (
+                    <MarkdownRenderer
+                      content={msg.content}
+                      onCitationClick={(citNum) =>
+                        handleCitationClick(citNum, msg.citations)
+                      }
+                    />
+                  ) : isStreaming && msg.role === "assistant" ? (
+                    <div className="flex items-center gap-2 text-slate-500 py-1">
+                      <Sparkles className="w-3.5 h-3.5 animate-spin text-sky-400" />
+                      <span className="text-xs font-mono aria-scan-pulse">
+                        {streamingStatusText}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {/* Citations */}
+                  {msg.role === "assistant" &&
+                    msg.citations &&
+                    msg.citations.length > 0 && (
+                      <div
+                        className="mt-3.5 pt-3 space-y-2"
+                        style={{ borderTop: "1px solid rgba(14,165,233,0.1)" }}
+                      >
+                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500">
+                          <FileText className="w-3 h-3 text-sky-500" />
+                          {msg.citations.length} Verified Source
+                          {msg.citations.length !== 1 ? "s" : ""}
+                        </div>
                         <div className="flex flex-wrap gap-1.5">
                           {msg.citations.map((c, idx) => (
                             <button
                               key={c.chunk_id || idx}
-                              onClick={() => setActiveCitationModal({ citation: c, index: idx + 1 })}
-                              className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-sky-500/50 hover:bg-slate-850 text-[11px] text-slate-300 transition flex items-center gap-1.5 group shadow-sm cursor-pointer"
-                              title="Click to view verified source chunk"
+                              onClick={() =>
+                                setActiveCitationModal({ citation: c, index: idx + 1 })
+                              }
+                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] text-slate-300 hover:text-white transition-all cursor-pointer group"
+                              style={{
+                                background: "rgba(14,165,233,0.06)",
+                                border: "1px solid rgba(14,165,233,0.15)",
+                              }}
+                              onMouseEnter={(e) =>
+                                (e.currentTarget.style.borderColor =
+                                  "rgba(14,165,233,0.35)")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.currentTarget.style.borderColor =
+                                  "rgba(14,165,233,0.15)")
+                              }
                             >
-                              <Bookmark className="w-3 h-3 text-sky-400" />
-                              <span className="font-medium group-hover:text-white transition">
+                              <span
+                                className="text-[9px] font-bold text-sky-400 w-4 h-4 rounded flex items-center justify-center shrink-0"
+                                style={{ background: "rgba(14,165,233,0.15)" }}
+                              >
+                                {idx + 1}
+                              </span>
+                              <span className="font-medium truncate max-w-[140px]">
                                 {c.document_title}
                               </span>
-                              {c.page && (
-                                <span className="text-slate-400 font-mono">
-                                  · p.{c.page}
-                                </span>
-                              )}
-                              {c.section && (
-                                <span className="text-slate-500 truncate max-w-[120px]">
-                                  · {c.section}
+                              {c.page != null && (
+                                <span className="text-slate-600 font-mono">
+                                  p.{c.page}
                                 </span>
                               )}
                             </button>
@@ -928,155 +1026,179 @@ export default function ChatPage() {
                         </div>
                       </div>
                     )}
-                  </div>
-
-                  {/* Message Action Toolbar (Assistant Messages) */}
-                  {msg.role === "assistant" && msg.content && (
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500 px-1 font-mono">
-                      {msg.latencyMs && <span>{msg.latencyMs}ms</span>}
-                      {msg.model && <span>{msg.model}</span>}
-
-                      <div className="flex items-center gap-1 border-l border-slate-800 pl-2">
-                        {/* Copy button */}
-                        <button
-                          onClick={() => handleCopyText(msg.id, msg.content)}
-                          className="p-1 hover:text-slate-300 transition rounded"
-                          title="Copy answer"
-                        >
-                          {copiedId === msg.id ? (
-                            <Check className="w-3 h-3 text-emerald-400" />
-                          ) : (
-                            <Copy className="w-3 h-3" />
-                          )}
-                        </button>
-
-                        {/* Regenerate button */}
-                        <button
-                          onClick={() => handleRegenerate(mIdx)}
-                          className="p-1 hover:text-slate-300 transition rounded"
-                          title="Regenerate response"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                        </button>
-
-                        {/* Thumbs up */}
-                        <button
-                          onClick={() => handleFeedback(msg.id, "like")}
-                          className={`p-1 transition rounded ${
-                            msg.feedback === "like"
-                              ? "text-emerald-400 font-bold"
-                              : "hover:text-slate-300"
-                          }`}
-                          title="Helpful"
-                        >
-                          <ThumbsUp className="w-3 h-3" />
-                        </button>
-
-                        {/* Thumbs down */}
-                        <button
-                          onClick={() => handleFeedback(msg.id, "dislike")}
-                          className={`p-1 transition rounded ${
-                            msg.feedback === "dislike"
-                              ? "text-red-400 font-bold"
-                              : "hover:text-slate-300"
-                          }`}
-                          title="Not helpful"
-                        >
-                          <ThumbsDown className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {msg.role === "user" && (
-                    <span className="text-[10px] text-slate-500 mr-1 font-mono">
-                      {msg.timestamp}
-                    </span>
-                  )}
                 </div>
-              ))
-            )}
-            <div ref={messagesEndRef} />
-          </div>
 
-          {/* ── Bottom Input Bar ────────────────────────────────────────── */}
-          <div className="p-3 border-t border-slate-800/80 bg-slate-950/70 backdrop-blur relative z-10">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
+                {/* Message meta toolbar (assistant) */}
+                {msg.role === "assistant" && msg.content && (
+                  <div className="flex items-center gap-2 text-[10px] text-slate-700 px-1 font-mono">
+                    {msg.latencyMs && <span>{msg.latencyMs}ms</span>}
+                    {msg.model && <span className="text-slate-800">Â·</span>}
+                    {msg.model && <span>{msg.model}</span>}
+
+                    <div className="flex items-center gap-0.5 border-l border-slate-800 pl-2 ml-1">
+                      <button
+                        onClick={() => handleCopyText(msg.id, msg.content)}
+                        className="p-1 hover:text-slate-400 transition rounded"
+                        title="Copy"
+                      >
+                        {copiedId === msg.id ? (
+                          <Check className="w-3 h-3 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleRegenerate(mIdx)}
+                        className="p-1 hover:text-slate-400 transition rounded"
+                        title="Regenerate"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleFeedback(msg.id, "like")}
+                        className={`p-1 transition rounded ${
+                          msg.feedback === "like" ? "text-emerald-400" : "hover:text-slate-400"
+                        }`}
+                        title="Helpful"
+                      >
+                        <ThumbsUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleFeedback(msg.id, "dislike")}
+                        className={`p-1 transition rounded ${
+                          msg.feedback === "dislike" ? "text-red-400" : "hover:text-slate-400"
+                        }`}
+                        title="Not helpful"
+                      >
+                        <ThumbsDown className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {msg.role === "user" && (
+                  <span className="text-[10px] text-slate-700 mr-1 font-mono">
+                    {msg.timestamp}
+                  </span>
+                )}
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* â”€â”€ Input bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <div
+          className="relative z-10 px-4 py-3"
+          style={{ borderTop: "1px solid rgba(14,165,233,0.1)", background: "rgba(5,13,26,0.9)" }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="flex items-center gap-2"
+          >
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Ask about occlusion thresholds, cuboid fitting rules, calibration specs..."
+              disabled={isStreaming}
+              className="flex-1 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:ring-1 focus:ring-sky-500"
+              style={{
+                background: "#040c19",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
-              className="flex items-center gap-2"
-            >
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask anything about occlusion, 3D cuboid fitting, calibration rules..."
-                disabled={isStreaming}
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs md:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition"
-              />
+            />
 
-              {isStreaming ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleStopGeneration}
-                  className="h-10 px-4 gap-1.5 text-xs font-medium rounded-xl shadow-lg"
-                >
-                  <Square className="w-3.5 h-3.5 fill-current" />
-                  Stop
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={!inputValue.trim()}
-                  className="h-10 px-4 gap-1.5 text-xs font-semibold rounded-xl bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20 transition cursor-pointer"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  Send
-                </Button>
-              )}
-            </form>
-          </div>
-        </Card>
+            {isStreaming ? (
+              <button
+                type="button"
+                onClick={handleStopGeneration}
+                className="h-10 px-4 rounded-xl text-xs font-medium text-white flex items-center gap-1.5 transition"
+                style={{
+                  background: "rgba(239,68,68,0.7)",
+                  border: "1px solid rgba(239,68,68,0.4)",
+                }}
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+                Stop
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!inputValue.trim()}
+                className="h-10 px-4 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all"
+                style={{
+                  background: inputValue.trim()
+                    ? "rgba(14,165,233,1)"
+                    : "rgba(14,165,233,0.25)",
+                  boxShadow: inputValue.trim()
+                    ? "0 0 20px rgba(14,165,233,0.25)"
+                    : "none",
+                  cursor: inputValue.trim() ? "pointer" : "not-allowed",
+                }}
+              >
+                <Send className="w-3.5 h-3.5" />
+                Send
+              </button>
+            )}
+          </form>
+        </div>
       </div>
 
-      {/* ── Citation Detail Modal ─────────────────────────────────────── */}
-      <CitationModal
-        citation={activeCitationModal?.citation || null}
-        citationIndex={activeCitationModal?.index}
-        onClose={() => setActiveCitationModal(null)}
-      />
+      {/* â”€â”€ Citation Source Viewer Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {activeCitationModal && (
+        <CitationModal
+          citation={activeCitationModal.citation}
+          citationIndex={activeCitationModal.index}
+          onClose={() => setActiveCitationModal(null)}
+        />
+      )}
 
-      {/* ── Closed-Loop Feedback Reason Modal ─────────────────────────── */}
+      {/* â”€â”€ Negative Feedback Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {feedbackModalMsg && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <Card className="w-full max-w-md border-slate-800 bg-slate-900 shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95">
-            <div className="p-4 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-md rounded-xl overflow-hidden"
+            style={{
+              background: "#050d1a",
+              border: "1px solid rgba(239,68,68,0.2)",
+              boxShadow: "0 32px 64px rgba(0,0,0,0.7)",
+            }}
+          >
+            <div
+              className="flex items-center justify-between px-5 py-4"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+            >
               <div className="flex items-center gap-2">
                 <ThumbsDown className="w-4 h-4 text-red-400" />
-                <span className="text-sm font-bold text-white">Help Improve Annotation SOP</span>
+                <span className="text-sm font-bold text-white">Flag for SOP Review</span>
               </div>
               <button
                 onClick={() => setFeedbackModalMsg(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-500 hover:text-white p-1"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 space-y-3.5 text-xs">
-              <p className="text-slate-400 leading-relaxed">
-                Your feedback flags this query for the Admin team to update guidelines and re-index the knowledge base.
+            <div className="p-5 space-y-4 text-xs">
+              <p className="text-slate-400">
+                Your feedback flags this query for the Admin team to update guidelines
+                and re-index the knowledge base.
               </p>
 
               <div className="space-y-1.5">
-                <label className="text-slate-300 font-semibold block">What was the primary issue?</label>
+                <label className="text-slate-300 font-semibold block">
+                  What was the primary issue?
+                </label>
                 <select
                   value={feedbackReason}
                   onChange={(e) => setFeedbackReason(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  className="w-full px-3 py-2 rounded-lg text-xs text-white outline-none"
+                  style={{ background: "#040c19", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
                   <option value="Missing guideline in SOP">Missing guideline or edge-case in SOP</option>
                   <option value="Ambiguous 3D cuboid standard">Ambiguous 3D bounding box / yaw angle standard</option>
@@ -1087,43 +1209,55 @@ export default function ChatPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-slate-300 font-semibold block">Additional detail / expected guideline (Optional):</label>
+                <label className="text-slate-300 font-semibold block">
+                  Additional detail (optional):
+                </label>
                 <textarea
                   value={feedbackComment}
                   onChange={(e) => setFeedbackComment(e.target.value)}
                   placeholder="e.g. Need clarification on minimum point count for heavy trailers..."
                   rows={3}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  className="w-full px-3 py-2 rounded-lg text-xs text-white placeholder-slate-700 outline-none resize-none"
+                  style={{ background: "#040c19", border: "1px solid rgba(255,255,255,0.08)" }}
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                <Button
-                  variant="outline"
-                  size="sm"
+              <div
+                className="flex items-center justify-end gap-2 pt-3"
+                style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+              >
+                <button
                   onClick={() => setFeedbackModalMsg(null)}
-                  className="h-8 text-xs border-slate-800"
+                  className="h-8 px-4 rounded-lg text-xs text-slate-400 hover:text-white transition"
+                  style={{ border: "1px solid rgba(255,255,255,0.08)" }}
                 >
                   Cancel
-                </Button>
-                <Button
-                  size="sm"
+                </button>
+                <button
                   onClick={handleSubmitNegativeFeedback}
-                  className="h-8 px-4 text-xs font-semibold bg-red-500/90 hover:bg-red-600 text-white"
+                  className="h-8 px-4 rounded-lg text-xs font-semibold text-white transition"
+                  style={{ background: "rgba(239,68,68,0.8)", boxShadow: "0 0 16px rgba(239,68,68,0.2)" }}
                 >
                   Submit for SOP Review
-                </Button>
+                </button>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       )}
 
-      {/* Temporary confirmation toast badge */}
+      {/* Feedback confirmation toast */}
       {feedbackSubmittedMsgId && (
-        <div className="fixed bottom-4 right-4 z-50 bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+        <div
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium text-emerald-300"
+          style={{
+            background: "rgba(4,48,32,0.95)",
+            border: "1px solid rgba(52,211,153,0.3)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+          }}
+        >
           <Check className="w-4 h-4 text-emerald-400" />
-          <span>Feedback submitted. Knowledge gap queued for Admin SOP review!</span>
+          Feedback submitted Â· Queued for SOP review
         </div>
       )}
     </div>
