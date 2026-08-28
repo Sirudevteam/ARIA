@@ -72,8 +72,8 @@ class RAGChatResponse(BaseModel):
     reasoning_content: Optional[str] = None
     citations: List[RerankedChunk]
     model: str
-    usage: TokenUsage
-    latency_ms: float
+    usage: Optional[TokenUsage] = None
+    latency_ms: float = 0.0
 
 
 class ChatFeedbackRequest(BaseModel):

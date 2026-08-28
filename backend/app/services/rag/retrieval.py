@@ -188,16 +188,29 @@ class HybridRetrievalEngine:
 
         # DocType filter
         if filters.doc_types:
-            stmt = stmt.where(Document.doc_type.in_(filters.doc_types))
+            doc_type_enums = []
+            for dt in filters.doc_types:
+                try:
+                    doc_type_enums.append(DocType(str(dt).lower()))
+                except ValueError:
+                    try:
+                        doc_type_enums.append(DocType(dt))
+                    except ValueError:
+                        pass
+            if doc_type_enums:
+                stmt = stmt.where(Document.doc_type.in_(doc_type_enums))
 
         # Document Status filter (default: READY only)
         if filters.doc_statuses:
             status_enums = []
             for s in filters.doc_statuses:
                 try:
-                    status_enums.append(DocStatus(s.upper()))
+                    status_enums.append(DocStatus(str(s).lower()))
                 except ValueError:
-                    pass
+                    try:
+                        status_enums.append(DocStatus(s))
+                    except ValueError:
+                        pass
             if status_enums:
                 stmt = stmt.where(Document.status.in_(status_enums))
 

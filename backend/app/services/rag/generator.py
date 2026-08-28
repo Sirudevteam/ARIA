@@ -43,7 +43,7 @@ class RAGGeneratorService:
         conversation_history: Optional[List[ChatMessage]] = None,
         candidate_k: int = 20,
         top_k: int = 5,
-        min_relevance_threshold: float = 0.25,
+        min_relevance_threshold: float = 0.15,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
     ) -> RAGChatResponse:
@@ -62,6 +62,18 @@ class RAGGeneratorService:
             min_relevance_threshold=min_relevance_threshold,
             enable_rerank=True,
         )
+
+        # Refusal check when no relevant context chunks are available (Req 14)
+        if not citations:
+            return RAGChatResponse(
+                query=query,
+                answer="Based on the available documentation in this project, no relevant information was found to answer your question.",
+                reasoning_content=None,
+                citations=[],
+                model=self._llm_provider.model_name,
+                usage=None,
+                latency_ms=0.0,
+            )
 
         # 2. Compose grounded prompt messages
         messages = prompt_composer.compose_messages(
@@ -96,7 +108,7 @@ class RAGGeneratorService:
         conversation_history: Optional[List[ChatMessage]] = None,
         candidate_k: int = 20,
         top_k: int = 5,
-        min_relevance_threshold: float = 0.25,
+        min_relevance_threshold: float = 0.15,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
     ) -> AsyncGenerator[str, None]:
@@ -115,6 +127,13 @@ class RAGGeneratorService:
             min_relevance_threshold=min_relevance_threshold,
             enable_rerank=True,
         )
+
+        # Refusal check when no relevant context chunks are available (Req 14)
+        if not citations:
+            yield f"data: {json.dumps({'type': 'citations', 'count': 0, 'citations': []})}\n\n"
+            yield f"data: {json.dumps({'type': 'delta', 'delta': 'Based on the available documentation in this project, no relevant information was found to answer your question.'})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'finish_reason': 'stop'})}\n\n"
+            return
 
         # 2. Emit citations metadata chunk via SSE
         citations_payload = {
