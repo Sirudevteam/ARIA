@@ -7,38 +7,41 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+import {
+  Layers,
+  MessageSquare,
+  FileText,
+  Shield,
+  Sparkles,
+} from "lucide-react";
+
 interface NavItem {
   label: string;
   href: string;
-  icon: string;
+  icon: React.ReactNode;
   badge?: string;
 }
 
 const navItems: NavItem[] = [
   {
-    label: "Chat",
+    label: "Dashboard",
+    href: "/",
+    icon: <Layers className="w-4 h-4 text-sky-400" />,
+  },
+  {
+    label: "AI Assistant",
     href: "/chat",
-    icon: "💬",
+    icon: <MessageSquare className="w-4 h-4 text-emerald-400" />,
+  },
+  {
+    label: "Documents & SOPs",
+    href: "/documents",
+    icon: <FileText className="w-4 h-4 text-cyan-400" />,
   },
   {
     label: "Profile & Access",
     href: "/profile",
-    icon: "🛡️",
-  },
-  {
-    label: "Documents",
-    href: "/documents",
-    icon: "📄",
-  },
-  {
-    label: "Search & Reranker",
-    href: "/search",
-    icon: "🔍",
-  },
-  {
-    label: "Admin Dashboard",
-    href: "/admin",
-    icon: "🛡️",
+    icon: <Shield className="w-4 h-4 text-purple-400" />,
   },
 ];
 
