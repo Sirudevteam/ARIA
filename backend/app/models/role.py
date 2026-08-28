@@ -9,7 +9,7 @@ from sqlalchemy import Boolean, Enum, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, TimestampMixin, UUIDMixin
+from app.models.base import Base, CreatedAtMixin, UUIDMixin
 
 
 class RoleScope(str, enum.Enum):
@@ -18,7 +18,7 @@ class RoleScope(str, enum.Enum):
     project = "project"
 
 
-class Role(Base, UUIDMixin, TimestampMixin):
+class Role(Base, UUIDMixin, CreatedAtMixin):
     __tablename__ = "roles"
 
     name: Mapped[str] = mapped_column(String, nullable=False)

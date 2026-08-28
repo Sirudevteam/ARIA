@@ -33,9 +33,10 @@ async def health_check() -> HealthResponse:
             async with AsyncSessionLocal() as session:
                 await session.execute(text("SELECT 1"))
 
-        await asyncio.wait_for(check_db(), timeout=2.0)
+        await asyncio.wait_for(check_db(), timeout=5.0)
         db_status = "connected"
-    except Exception:
+    except Exception as e:
+        print(f"[HEALTH] Database check failed: {type(e)} {e}")
         db_status = "unreachable"
 
     return HealthResponse(

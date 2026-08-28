@@ -1,8 +1,10 @@
-"""
-Async SQLAlchemy database engine and session factory.
-Uses psycopg3 (postgresql+psycopg) for local dev on Python 3.14.
-Switch to asyncpg (postgresql+asyncpg) in Docker (Python 3.11).
-"""
+import asyncio
+import sys
+if sys.platform == "win32":
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except Exception:
+        pass
 
 from collections.abc import AsyncGenerator
 
