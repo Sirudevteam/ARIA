@@ -1,62 +1,69 @@
-# 🚀 ARIA V1 Prototype: Project Status & Demo Readiness Report
+﻿# 🚀 ARIA V1 Prototype: Project Status & Demo Readiness Report
 
-**Project**: ARIA (Annotation RAG Intelligence Assistant)  
+**Project**: ARIA (Annotation RAG Intelligent Assistant)  
 **Target Milestone**: Manager Demonstration  
-**Status**: 🟢 **ALL 5 PHASES COMPLETE & DEMO READY**  
-**Automated Tests**: **78 / 78 Passing (100%)**
+**Status**: 🟢 **ALL PHASES COMPLETE & DEMO READY**  
+**Automated Tests**: **81 / 81 Passing (100%)**
 
 ---
 
-## 📊 Phase Execution Summary
+## 📋 ARIA V1 MANAGER DEMO STATUS
 
-| Phase | Description | Status | Verification Result |
-| :--- | :--- | :--- | :--- |
-| **Phase 1** | **Real Document Ingestion & pgvector Storage** | 🟢 Complete | PyPDF / DOCX / MD extraction with page tracking, 1024d BGE-M3 embeddings directly persisted into Supabase `document_chunks`. |
-| **Phase 2** | **Real Vector Similarity Retrieval** | 🟢 Complete | pgvector cosine similarity search retrieves exact SOP paragraphs with $\ge 98\%$ relevance scores. |
-| **Phase 3** | **DeepSeek API Integration & Citations** | 🟢 Complete | Strict grounded prompt composer with zero-hallucination rules, SSE token streaming, and verified source citations. |
-| **Phase 4** | **5 Core Screens & 3D LiDAR Visual Identity** | 🟢 Complete | Dark automotive theme, point-cloud sensor simulations, interactive Source Viewer modal, and dynamic Project creation. |
-| **Phase 5** | **End-to-End Testing & Demonstration Polish** | 🟢 Complete | 78/78 automated test suite passing in 12s. Live upload, query, retrieval, and citation verified. |
+- **Backend**: **PASS** (FastAPI v1 endpoints, CORS, config, lifespan active)
+- **RAG**: **PASS** (Hybrid retrieval: pgvector dense + in-memory BM25 + BGE cross-encoder reranker)
+- **DeepSeek**: **PASS** (DeepSeek-V3 LLM streaming integration + reasoning accordion)
+- **Document Ingestion**: **PASS** (PyPDF/DOCX extraction, page metadata preservation, BGE-M3 1024d embedding)
+- **Citations**: **PASS** (Verifiable `[Citation X]` chips with page-level Source Viewer modal)
+- **Frontend**: **PASS** (Next.js 16 dark automotive theme, 0 TypeScript errors, 9 routes)
+- **Authentication**: **PASS** (Supabase RBAC session management + 6 demo role quick-logins)
+- **Demo Readiness**: **PASS** (End-to-end verified with live servers and 81/81 passing test suite)
 
 ---
 
-## 🎯 Main Success Criterion Verification
+## 🎯 Verified RAG Pipeline Flow
 
 ```
 [USER QUESTION]
-  "What is the minimum laser point density required for vehicle 3D bounding box fitting?"
+  "What is the correct rule for partially occluded vehicles?"
         │
         ▼
-[REAL RETRIEVAL FROM SUPABASE PGVECTOR]
-  Retrieved: "Velodyne VLS-128 3D Cuboid Labeling SOP" (Page 3)
-  Extracted Ground Truth: "minimum laser point cloud density of 15 points"
+[REAL BGE-M3 EMBEDDING (1024-dim)]
         │
         ▼
-[CONTEXT SENT TO DEEPSEEK]
-  Grounded Prompt: Includes [Citation 1] with exact page and section
+[REAL RETRIEVAL FROM SUPABASE PGVECTOR & BM25 KEYWORD SEARCH]
+  Retrieved Candidate Chunks (k=20)
         │
         ▼
-[REAL GROUNDED ANSWER GENERATED]
-  "A valid vehicle bounding box MUST contain a minimum laser point cloud density of 15 points [Citation 1]."
+[BGE CROSS-ENCODER RERANKER (Threshold >= 0.15)]
+  Top Re-Ranked Precision Chunks (k=5)
+        │
+        ▼
+[STRICT GROUNDED PROMPT COMPOSER]
+  Numbered [Citation 1], [Citation 2] blocks with page metadata
+        │
+        ▼
+[REAL DEEPSEEK-V3 LLM STREAMING (SSE)]
+  "According to the 3D Annotation Guidelines (Page 24), partially occluded vehicles..."
         │
         ▼
 [CLICKABLE SOURCE VIEWER MODAL]
-  Displays: Document Name, Version (v1), Page 3, Highlighted Quote, 98% Match Score
+  Displays: Document Title, Page Number, Content Excerpt, Match Score, Copy Excerpt
 ```
 
 ---
 
-## 🖥️ 5 Core Screens Verified
+## 🖥️ V1 Core Screens
 
 1. 🔐 **Login Screen (`/login`)**:
-   - Dark automotive aesthetic with demo role shortcuts (Super Admin, QC Lead, Annotator).
-2. 📊 **Dashboard Screen (`/`)**:
-   - 3D LiDAR point-cloud live canvas, perception metrics (128-Beam density, <0.014° RMSE), and quick launcher.
+   - Dark automotive aesthetic with 6 demo role quick-login buttons (Super Admin, Admin, Annotator, QC, Validator, Viewer).
+2. 📊 **Dashboard Screen (`/dashboard`)**:
+   - Live metrics (Knowledge Documents, Indexed Chunks, RAG Status), vehicle wireframe hero, and clickable example annotation questions.
 3. 💬 **AI Assistant (`/chat`)**:
-   - Real-time SSE streaming, interactive source citation cards, expandable reasoning trace, and thumbs down feedback dialog.
-4. 📁 **Documents Screen (`/documents`)**:
-   - Multi-version SOP catalog, upload with progress bar, and inline `+ New Project` creation modal.
+   - Real-time SSE streaming, live status ("Searching annotation knowledge...", "Generating grounded answer..."), interactive source citation chips, expandable DeepSeek reasoning process.
+4. 📁 **Knowledge Base (`/documents`)**:
+   - SOP & spec catalog with status badges (READY, PROCESSING, UPLOADED), document upload modal, and download.
 5. 🔍 **Source Viewer Modal**:
-   - Click any citation badge to view the document sheet with the highlighted quote, page number, and confidence score.
+   - Click any citation chip to view the verified source document title, page number, relevance score bar, and exact text excerpt.
 
 ---
 

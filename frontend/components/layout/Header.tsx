@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -10,7 +10,7 @@ import { Shield, ChevronRight } from "lucide-react";
 const breadcrumbMap: Record<string, { label: string; parent?: string }> = {
   "/dashboard": { label: "Dashboard" },
   "/chat": { label: "AI Assistant", parent: "Dashboard" },
-  "/documents": { label: "Documents & SOPs", parent: "Dashboard" },
+  "/documents": { label: "Knowledge Base", parent: "Dashboard" },
   "/profile": { label: "Profile & Access", parent: "Dashboard" },
   "/admin": { label: "Admin", parent: "Dashboard" },
 };

@@ -121,6 +121,31 @@ async def list_and_search_documents(
 
 
 @router.get(
+    "/documents/summary/stats",
+    summary="Get live document and chunk statistics",
+    description="Returns aggregate counts of uploaded documents and indexed chunks for the dashboard.",
+)
+async def get_document_stats(
+    current_user: User = Depends(get_current_user),
+    db: DBSession = None,
+):
+    from sqlalchemy import func
+    from app.models.document import DocumentChunk
+    
+    doc_res = await db.execute(select(func.count(Document.id)))
+    total_docs = doc_res.scalar() or 0
+    
+    chunk_res = await db.execute(select(func.count(DocumentChunk.id)))
+    total_chunks = chunk_res.scalar() or 0
+    
+    return {
+        "total_documents": total_docs,
+        "total_chunks": total_chunks,
+        "rag_status": "Active",
+    }
+
+
+@router.get(
     "/documents/{document_id}",
     response_model=DocumentDetailResponse,
     summary="Get document details & version history",

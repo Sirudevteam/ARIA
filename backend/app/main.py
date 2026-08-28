@@ -38,8 +38,9 @@ def create_app() -> FastAPI:
         version=settings.APP_VERSION,
         description=(
             "ARIA — Annotation RAG Intelligence Assistant. "
-            "Production API for 3D LiDAR annotation knowledge. "
-            "RAG engine and LLM integrations are not yet implemented."
+            "Production API for 3D LiDAR annotation knowledge retrieval. "
+            "Fully implemented RAG pipeline: BGE-M3 embeddings → pgvector retrieval → "
+            "BGE cross-encoder reranking → grounded DeepSeek-V3 generation with verified citations."
         ),
         docs_url="/docs",
         redoc_url="/redoc",

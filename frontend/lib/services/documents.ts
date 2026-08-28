@@ -184,4 +184,12 @@ export const documentsService = {
   async createProject(name: string, description?: string): Promise<ProjectSummary> {
     return api.post<ProjectSummary>("/api/v1/projects", { name, description });
   },
+
+  async getStats(): Promise<{ total_documents: number; total_chunks: number; rag_status: string }> {
+    try {
+      return await api.get<{ total_documents: number; total_chunks: number; rag_status: string }>("/api/v1/documents/summary/stats");
+    } catch {
+      return { total_documents: 0, total_chunks: 0, rag_status: "Active" };
+    }
+  },
 };

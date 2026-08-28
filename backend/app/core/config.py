@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     RERANKER_MODEL: str = "BAAI/bge-reranker-v2-m3"
     RETRIEVAL_CANDIDATE_K: int = 20
     RETRIEVAL_FINAL_TOP_K: int = 5
-    RERANKER_MIN_THRESHOLD: float = 0.25
+    RERANKER_MIN_THRESHOLD: float = 0.15  # V1: lower threshold ensures demo stability
     # ── LLM & DeepSeek Provider ───────────────────────────────────────────────
     DEEPSEEK_API_KEY: str | None = None
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"

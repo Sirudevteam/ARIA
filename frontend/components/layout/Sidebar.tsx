@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
     activeColor: "text-cyan-400",
   },
   {
-    label: "Documents & SOPs",
+    label: "Knowledge Base",
     href: "/documents",
     icon: <FileText className="w-4 h-4" />,
     activeColor: "text-emerald-400",
@@ -72,7 +72,7 @@ export function Sidebar() {
           className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0"
           style={{ boxShadow: "0 0 12px rgba(14,165,233,0.3)", border: "1px solid rgba(14,165,233,0.3)" }}
         >
-          <Image src="/aria-logo.jpg" alt="ARIA" fill className="object-cover" priority />
+          <Image src="/aria-logo.jpg" alt="ARIA" fill sizes="36px" className="object-cover" priority />
         </div>
         <div className="flex flex-col leading-tight min-w-0">
           <span className="text-sm font-bold tracking-widest text-white">ARIA</span>

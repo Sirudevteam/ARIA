@@ -284,11 +284,25 @@ export default function DocumentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "READY":
-        return <Badge variant="outline" className="border-emerald-500/50 bg-emerald-950/50 text-emerald-300 text-[10px]">READY</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border border-emerald-500/40 bg-emerald-950/40 text-emerald-300">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            READY
+          </span>
+        );
       case "PROCESSING":
-        return <Badge variant="outline" className="border-sky-500/50 bg-sky-950/50 text-sky-300 text-[10px] animate-pulse">PROCESSING</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border border-sky-500/40 bg-sky-950/40 text-sky-300 animate-pulse">
+            <RefreshCw className="w-3 h-3 animate-spin text-sky-400" />
+            PROCESSING
+          </span>
+        );
       case "UPLOADED":
-        return <Badge variant="outline" className="border-blue-500/50 bg-blue-950/50 text-blue-300 text-[10px]">UPLOADED</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border border-blue-500/40 bg-blue-950/40 text-blue-300">
+            UPLOADED
+          </span>
+        );
       case "ARCHIVED":
         return <Badge variant="outline" className="border-slate-600 bg-slate-800 text-slate-400 text-[10px]">ARCHIVED</Badge>;
       case "FAILED":
@@ -298,47 +312,58 @@ export default function DocumentsPage() {
     }
   };
 
-  const getConfidentialityBadge = (level: string) => {
-    switch (level) {
-      case "restricted":
-        return <Badge variant="outline" className="border-rose-500/40 text-rose-400 bg-rose-950/30 text-[10px]">RESTRICTED</Badge>;
-      case "confidential":
-        return <Badge variant="outline" className="border-amber-500/40 text-amber-400 bg-amber-950/30 text-[10px]">CONFIDENTIAL</Badge>;
-      case "internal":
-        return <Badge variant="outline" className="border-sky-500/40 text-sky-400 bg-sky-950/30 text-[10px]">INTERNAL</Badge>;
+  const getDocTypeIcon = (docType: string, mimeType?: string) => {
+    switch (docType) {
+      case "manual":
+        return <FileText className="w-4 h-4 text-sky-400" />;
+      case "spec":
+        return <FileCode className="w-4 h-4 text-purple-400" />;
+      case "annotation_schema":
+        return <Layers className="w-4 h-4 text-emerald-400" />;
+      case "guide":
+        return <Info className="w-4 h-4 text-amber-400" />;
+      case "faq":
+        return <AlertCircle className="w-4 h-4 text-teal-400" />;
       default:
-        return <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-950/30 text-[10px]">PUBLIC</Badge>;
+        return <File className="w-4 h-4 text-slate-400" />;
     }
   };
 
-  const getDocTypeIcon = (type: string, mime?: string) => {
-    if (mime?.includes("pdf") || type === "manual") return <FileText className="w-4 h-4 text-rose-400" />;
-    if (mime?.includes("word") || type === "spec") return <FileText className="w-4 h-4 text-blue-400" />;
-    if (type === "annotation_schema") return <FileCode className="w-4 h-4 text-emerald-400" />;
-    return <File className="w-4 h-4 text-slate-400" />;
+  const getConfidentialityBadge = (conf: string) => {
+    switch (conf) {
+      case "restricted":
+        return <Badge variant="outline" className="border-rose-500/40 bg-rose-950/40 text-rose-300 text-[9px] uppercase">Restricted</Badge>;
+      case "confidential":
+        return <Badge variant="outline" className="border-amber-500/40 bg-amber-950/40 text-amber-300 text-[9px] uppercase">Confidential</Badge>;
+      case "internal":
+        return <Badge variant="outline" className="border-slate-700 bg-slate-900 text-slate-400 text-[9px] uppercase">Internal</Badge>;
+      default:
+        return <Badge variant="outline" className="text-[9px] uppercase">{conf}</Badge>;
+    }
   };
 
-  const formatBytes = (bytes?: number) => {
+  const formatBytes = (bytes?: number | null) => {
     if (!bytes) return "—";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-5">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <FileText className="w-6 h-6 text-sky-400" />
-            Knowledge Base Documents
-            <Badge variant="outline" className="text-xs text-sky-300 border-sky-500/30 bg-sky-950/40 ml-1 font-mono">
-              {totalCount} Total
+          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            <FileText className="w-5 h-5 text-sky-400" />
+            Knowledge Base
+            <Badge variant="outline" className="text-[10px] text-sky-300 border-sky-500/30 bg-sky-950/40 ml-1 font-mono">
+              {totalCount} Documents
             </Badge>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400">
-            Manage 3D LiDAR annotation SOPs, sensor calibration manuals, schemas, and multi-version documents.
+          <p className="text-xs text-slate-400">
+            Upload 3D LiDAR annotation guidelines, calibration specs, and SOPs for verified RAG retrieval.
           </p>
         </div>
 

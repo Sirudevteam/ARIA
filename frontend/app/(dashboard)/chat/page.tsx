@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -65,20 +65,20 @@ interface ConversationSession {
 
 const DEFAULT_PROMPT_SUGGESTIONS = [
   {
-    title: "QC Rules & Occlusion",
-    query: "What is occlusion and what are the categorization standards for 3D annotation?",
+    title: "Partially Occluded Vehicles",
+    query: "What is the correct rule for partially occluded vehicles?",
   },
   {
-    title: "Cuboid Fitting & Yaw",
-    query: "What are the 3D bounding box rules for vehicles and yaw angle alignment?",
+    title: "3D Cuboid Placement",
+    query: "How should a 3D cuboid be placed?",
   },
   {
-    title: "Tracking & Point Density",
-    query: "What is the minimum laser point density threshold required per vehicle object?",
+    title: "Common Annotation Errors",
+    query: "What are the common annotation errors?",
   },
   {
-    title: "ISO 8855 Coordinates",
-    query: "What standard coordinate orientation do LiDAR sensors use according to ISO 8855?",
+    title: "QC Procedure",
+    query: "What is the QC procedure for an annotation?",
   },
 ];
 
@@ -99,7 +99,7 @@ export default function ChatPage() {
   // Chat UI state
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingStatusText, setStreamingStatusText] = useState("Retrieving context...");
+  const [streamingStatusText, setStreamingStatusText] = useState("Searching annotation knowledge...");
   const [showConfig, setShowConfig] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [expandedReasoning, setExpandedReasoning] = useState<Record<string, boolean>>({});
@@ -116,7 +116,7 @@ export default function ChatPage() {
   // Hyperparameters
   const [candidateK, setCandidateK] = useState<number>(20);
   const [topK, setTopK] = useState<number>(5);
-  const [minThreshold, setMinThreshold] = useState<number>(0.25);
+  const [minThreshold, setMinThreshold] = useState<number>(0.15);
   const [temperature, setTemperature] = useState<number>(0.2);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -388,7 +388,7 @@ export default function ChatPage() {
 
       setInputValue("");
       setIsStreaming(true);
-      setStreamingStatusText("Retrieving verified perception context (Hybrid + Reranker)...");
+      setStreamingStatusText("Searching annotation knowledge...");
 
       // Extract conversation history
       const historyPayload: ChatMessage[] = messages
@@ -415,7 +415,7 @@ export default function ChatPage() {
           },
           {
             onCitations: (citations) => {
-              setStreamingStatusText("Synthesizing grounded answer with DeepSeek...");
+              setStreamingStatusText("Generating grounded answer...");
               setSessions((prev) =>
                 prev.map((s) => {
                   if (s.id === activeSessionId) {
@@ -850,36 +850,35 @@ export default function ChatPage() {
                 <Bot className="w-7 h-7 text-sky-400" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-semibold text-white">
-                  Ask anything about annotation & QC
+                <h3 className="text-base font-bold text-white">
+                  How can ARIA help?
                 </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Grounded directly in your verified SOPs, ISO 8855 standards,
-                  and point cloud calibration schemas.
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Ask questions about annotation guidelines, object classes, occlusion, QC and validation.
                 </p>
               </div>
 
               {/* Suggestion chips */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
                 {DEFAULT_PROMPT_SUGGESTIONS.map((item, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(item.query)}
-                    className="group p-3 rounded-xl text-left transition-all flex flex-col gap-1"
+                    className="group p-3.5 rounded-xl text-left transition-all flex flex-col gap-1.5 cursor-pointer"
                     style={{
                       background: "rgba(14,165,233,0.04)",
-                      border: "1px solid rgba(14,165,233,0.12)",
+                      border: "1px solid rgba(14,165,233,0.14)",
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.borderColor = "rgba(14,165,233,0.3)")
+                      (e.currentTarget.style.borderColor = "rgba(14,165,233,0.4)")
                     }
                     onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = "rgba(14,165,233,0.12)")
+                      (e.currentTarget.style.borderColor = "rgba(14,165,233,0.14)")
                     }
                   >
                     <span className="text-xs font-semibold text-slate-200 group-hover:text-sky-300 transition flex items-center justify-between">
                       {item.title}
-                      <ArrowUpRight className="w-3 h-3 opacity-50" />
+                      <ArrowUpRight className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 group-hover:text-sky-300" />
                     </span>
                     <span className="text-[11px] text-slate-500 line-clamp-2 text-left">
                       {item.query}
@@ -979,48 +978,44 @@ export default function ChatPage() {
                     msg.citations.length > 0 && (
                       <div
                         className="mt-3.5 pt-3 space-y-2"
-                        style={{ borderTop: "1px solid rgba(14,165,233,0.1)" }}
+                        style={{ borderTop: "1px solid rgba(14,165,233,0.12)" }}
                       >
-                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500">
-                          <FileText className="w-3 h-3 text-sky-500" />
-                          {msg.citations.length} Verified Source
-                          {msg.citations.length !== 1 ? "s" : ""}
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-300">
+                          <FileText className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Sources ({msg.citations.length} Verified Citations)</span>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {msg.citations.map((c, idx) => (
                             <button
                               key={c.chunk_id || idx}
                               onClick={() =>
                                 setActiveCitationModal({ citation: c, index: idx + 1 })
                               }
-                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] text-slate-300 hover:text-white transition-all cursor-pointer group"
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs text-slate-200 hover:text-white transition-all cursor-pointer group"
                               style={{
                                 background: "rgba(14,165,233,0.06)",
-                                border: "1px solid rgba(14,165,233,0.15)",
+                                border: "1px solid rgba(14,165,233,0.18)",
                               }}
                               onMouseEnter={(e) =>
                                 (e.currentTarget.style.borderColor =
-                                  "rgba(14,165,233,0.35)")
+                                  "rgba(14,165,233,0.45)")
                               }
                               onMouseLeave={(e) =>
                                 (e.currentTarget.style.borderColor =
-                                  "rgba(14,165,233,0.15)")
+                                  "rgba(14,165,233,0.18)")
                               }
                             >
-                              <span
-                                className="text-[9px] font-bold text-sky-400 w-4 h-4 rounded flex items-center justify-center shrink-0"
-                                style={{ background: "rgba(14,165,233,0.15)" }}
-                              >
-                                {idx + 1}
-                              </span>
-                              <span className="font-medium truncate max-w-[140px]">
-                                {c.document_title}
-                              </span>
-                              {c.page != null && (
-                                <span className="text-slate-600 font-mono">
-                                  p.{c.page}
+                              <span className="text-base">📄</span>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-semibold text-white truncate">
+                                  {c.document_title}
                                 </span>
-                              )}
+                                {c.page != null && (
+                                  <span className="text-[10px] text-slate-400 font-mono">
+                                    Page {c.page}
+                                  </span>
+                                )}
+                              </div>
                             </button>
                           ))}
                         </div>
