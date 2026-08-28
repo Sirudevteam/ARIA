@@ -22,6 +22,7 @@ from app.schemas.document import (
     DocumentListResponse,
     DocumentVersionResponse,
 )
+from app.services.document.ingestion import process_and_embed_document
 from app.services.document.storage import storage_service
 
 
@@ -200,7 +201,17 @@ class DocumentManager:
         db.add(version_1)
         await db.commit()
 
-        # 6. Re-query and return fresh document detail
+        # 6. Extract text, generate chunks, compute BGE-M3 embeddings, and save to pgvector
+        await process_and_embed_document(
+            db=db,
+            document=document,
+            version=version_1,
+            file_bytes=file_bytes,
+            filename=clean_name,
+            mime_type=mime_type,
+        )
+
+        # 7. Re-query and return fresh document detail
         return await DocumentManager.get_document_detail(db=db, doc_id=doc_id)
 
     @staticmethod
@@ -271,7 +282,17 @@ class DocumentManager:
 
         await db.commit()
 
-        # 6. Return fresh document detail
+        # 6. Extract text and embed new version chunks
+        await process_and_embed_document(
+            db=db,
+            document=document,
+            version=new_version,
+            file_bytes=file_bytes,
+            filename=clean_name,
+            mime_type=mime_type,
+        )
+
+        # 7. Return fresh document detail
         return await DocumentManager.get_document_detail(db=db, doc_id=doc_id)
 
     @staticmethod

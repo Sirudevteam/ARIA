@@ -167,7 +167,7 @@ class HybridRetrievalEngine:
         stmt = (
             select(DocumentChunk)
             .join(Document, Document.id == DocumentChunk.document_id)
-            .outerjoin(DocumentVersion, DocumentVersion.id == DocumentChunk.version_id)
+            .outerjoin(DocumentVersion, DocumentVersion.id == DocumentChunk.document_version_id)
             .options(
                 selectinload(DocumentChunk.document).selectinload(Document.project),
                 selectinload(DocumentChunk.version),
@@ -206,7 +206,7 @@ class HybridRetrievalEngine:
             stmt = stmt.where(
                 or_(
                     DocumentVersion.is_current == True,
-                    DocumentChunk.version_id == None,
+                    DocumentChunk.document_version_id == None,
                 )
             )
 

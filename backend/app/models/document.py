@@ -76,12 +76,15 @@ class Document(Base, UUIDMixin, TimestampMixin):
         Enum(DocStatus, name="doc_status"), default=DocStatus.uploaded, nullable=False
     )
     confidentiality: Mapped[str] = mapped_column(String, default="internal", nullable=False)
-    source_url: Mapped[str] = mapped_column(Text, nullable=True)
     file_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=True)
     mime_type: Mapped[str] = mapped_column(String, nullable=True)
     page_count: Mapped[int] = mapped_column(Integer, nullable=True)
     language: Mapped[str] = mapped_column(String, default="en", nullable=False)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
+
+    @property
+    def source_url(self) -> Optional[str]:
+        return self.metadata_.get("source_url") if self.metadata_ else None
 
     # Relationships
     project: Mapped["Project"] = relationship(back_populates="documents")
@@ -136,20 +139,28 @@ class DocumentChunk(Base, UUIDMixin, CreatedAtMixin):
     document_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
     )
-    version_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("document_versions.id", ondelete="SET NULL"), nullable=True
+    document_version_id: Mapped[uuid.UUID] = mapped_column(
+        "document_version_id", UUID(as_uuid=True), ForeignKey("document_versions.id", ondelete="SET NULL"), nullable=True
     )
+
+    @property
+    def version_id(self) -> Optional[uuid.UUID]:
+        return self.document_version_id
+
+    @version_id.setter
+    def version_id(self, value: Optional[uuid.UUID]) -> None:
+        self.document_version_id = value
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     token_count: Mapped[int] = mapped_column(Integer, nullable=True)
     status: Mapped[ChunkStatus] = mapped_column(
         Enum(ChunkStatus, name="chunk_status"), default=ChunkStatus.pending, nullable=False
     )
-    # 1536-dimensional embedding vector for pgvector
-    embedding: Mapped[list[float]] = mapped_column(Vector(1536), nullable=True)
+    # 1024-dimensional embedding vector for BGE-M3 in pgvector
+    embedding: Mapped[list[float]] = mapped_column(Vector(1024), nullable=True)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
 
     # Relationships
     document: Mapped["Document"] = relationship(back_populates="chunks")
-    version: Mapped["DocumentVersion"] = relationship()
+    version: Mapped["DocumentVersion"] = relationship(foreign_keys=[document_version_id])
     sources: Mapped[list["MessageSource"]] = relationship(back_populates="chunk")
