@@ -1,4 +1,4 @@
-﻿# 🚀 ARIA V1 Prototype: Project Status & Demo Readiness Report
+# 🚀 ARIA V1 Prototype: Project Status & Demo Readiness Report
 
 **Project**: ARIA (Annotation RAG Intelligent Assistant)  
 **Target Milestone**: Manager Demonstration  
@@ -67,12 +67,35 @@
 
 ---
 
-## 🛠️ Commands to Run Demo
+## 🐳 Docker Deployment (Recommended)
+
+1. **Start all containers in background**:
+   ```bash
+   docker compose up --build -d
+   ```
+
+2. **View live logs**:
+   ```bash
+   docker compose logs -f
+   ```
+
+3. **Stop containers**:
+   ```bash
+   docker compose down
+   ```
+
+4. **Container Status**:
+   - `aria_backend`: Running FastAPI on `http://localhost:8000` (Status: Healthy)
+   - `aria_frontend`: Running Next.js 16 standalone on `http://localhost:3000`
+
+---
+
+## 🛠️ Alternative: Run Locally Without Docker
 
 1. **Start Backend Server**:
    ```powershell
    cd backend
-   .venv\Scripts\uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   .venv\Scripts\python run.py
    ```
 2. **Start Frontend Server**:
    ```powershell
