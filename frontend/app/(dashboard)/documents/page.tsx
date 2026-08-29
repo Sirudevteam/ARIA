@@ -243,10 +243,14 @@ export default function DocumentsPage() {
       return;
     }
     try {
+      // Optimistic removal for instant UI feedback
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
       await documentsService.deleteDocument(doc.id);
       await fetchDocuments();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to delete document:", err);
+      alert(`Could not delete document: ${err?.message || "Internal server error"}`);
+      await fetchDocuments();
     }
   };
 
