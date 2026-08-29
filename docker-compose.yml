@@ -29,9 +29,13 @@ services:
       args:
         NEXT_PUBLIC_API_URL: http://localhost:8000
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_mock_publishable_key_for_aria}
-        CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-sk_test_mock_secret_key_for_aria_clerk_auth}
     container_name: aria_frontend
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_mock_publishable_key_for_aria}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY:-sk_test_mock_secret_key_for_aria_clerk_auth}
     ports:
       - "3000:3000"
     depends_on:
