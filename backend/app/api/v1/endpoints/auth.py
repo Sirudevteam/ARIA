@@ -36,13 +36,13 @@ async def get_my_profile(
     """Fetch current user's profile with fully resolved authorization context."""
 
     # 1. Fetch user's team memberships
-    stmt_teams = (
-        select(Team)
-        .join(TeamMember, TeamMember.team_id == Team.id)
-        .where(TeamMember.user_id == current_user.id)
-    )
-    res_teams = await db.execute(stmt_teams)
-    teams = res_teams.scalars().all()
+    teams = []
+    if current_user.team_id:
+        stmt_teams = select(Team).where(Team.id == current_user.team_id)
+        res_teams = await db.execute(stmt_teams)
+        t_val = res_teams.scalar_one_or_none()
+        if t_val:
+            teams = [t_val]
 
     # 2. Fetch user's project access
     user_role_name = current_user.role.name.upper() if current_user.role else "VIEWER"

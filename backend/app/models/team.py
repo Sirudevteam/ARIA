@@ -28,16 +28,12 @@ class Team(Base, UUIDMixin, TimestampMixin):
     department_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
     )
-    created_by: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
-    )
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
 
     # Relationships
     organization: Mapped["Organization"] = relationship(back_populates="teams")
     department: Mapped["Department"] = relationship(back_populates="teams")
-    members: Mapped[list["TeamMember"]] = relationship(back_populates="team", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Team {self.name}>"

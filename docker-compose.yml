@@ -1,46 +1,17 @@
-version: "3.9"
-
 services:
-  # ─── PostgreSQL Database ────────────────────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
-    container_name: lidar_postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-lidar_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lidar_password}
-      POSTGRES_DB: ${POSTGRES_DB:-lidar_db}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./supabase/migrations:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lidar_user} -d ${POSTGRES_DB:-lidar_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - lidar_network
-
   # ─── FastAPI Backend ────────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: lidar_backend
+    container_name: aria_backend
     restart: unless-stopped
     env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lidar_user}:${POSTGRES_PASSWORD:-lidar_password}@postgres:5432/${POSTGRES_DB:-lidar_db}
+      - ./backend/.env
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - ./backend/storage:/app/storage
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
@@ -48,29 +19,28 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - lidar_network
+      - aria_network
 
   # ─── Next.js Frontend ───────────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: lidar_frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: aria_frontend
     restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
       - "3000:3000"
     depends_on:
       - backend
     networks:
-      - lidar_network
-
-volumes:
-  postgres_data:
+      - aria_network
 
 networks:
-  lidar_network:
-    driver: bridge
+  aria_network:
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+        - subnet: 2001:db8:1::/64
