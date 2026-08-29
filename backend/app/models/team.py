@@ -37,25 +37,3 @@ class Team(Base, UUIDMixin, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<Team {self.name}>"
-
-
-class TeamMember(Base):
-    __tablename__ = "team_members"
-
-    team_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True
-    )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
-    )
-    role_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("roles.id", ondelete="SET NULL"), nullable=True
-    )
-    joined_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-
-    # Relationships
-    team: Mapped["Team"] = relationship(back_populates="members")
-    user: Mapped["User"] = relationship()
-    role: Mapped["Role"] = relationship()

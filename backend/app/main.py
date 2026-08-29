@@ -51,11 +51,22 @@ def create_app() -> FastAPI:
     # ── CORS ──────────────────────────────────────────────────────────────────
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins_list,
-        allow_credentials=True,
+        allow_origins=["*"] if settings.DEBUG else settings.cors_origins_list,
+        allow_credentials=True if not (settings.DEBUG and "*" in settings.cors_origins_list) else False,
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$",
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # ── Global Exception Handler ──────────────────────────────────────────────
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request, exc):
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(exc), "type": type(exc).__name__},
+        )
 
     # ── Routers ───────────────────────────────────────────────────────────────
     app.include_router(v1_router)

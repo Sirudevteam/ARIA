@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, DBSession, get_current_user
 from app.models.project import Project, ProjectMember
-from app.models.team import Team, TeamMember
+from app.models.team import Team
 from app.models.user import User
 from app.schemas.auth import (
     OrganizationInfo,

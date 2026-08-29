@@ -8,7 +8,7 @@ from app.models.organization import Organization              # noqa: F401
 from app.models.department import Department                  # noqa: F401
 from app.models.role import Role, RoleScope                  # noqa: F401
 from app.models.user import User, UserStatus                 # noqa: F401
-from app.models.team import Team, TeamMember                 # noqa: F401
+from app.models.team import Team                                # noqa: F401
 from app.models.project import Project, ProjectMember, ProjectStatus  # noqa: F401
 from app.models.document import (                            # noqa: F401
     Document, DocumentVersion, DocumentChunk,
@@ -28,7 +28,7 @@ __all__ = [
     "Department",
     "Role", "RoleScope",
     "User", "UserStatus",
-    "Team", "TeamMember",
+    "Team",
     "Project", "ProjectMember", "ProjectStatus",
     "Document", "DocumentVersion", "DocumentChunk",
     "DocStatus", "DocType", "ChunkStatus",

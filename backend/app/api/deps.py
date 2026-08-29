@@ -18,7 +18,7 @@ from app.models.document import Document
 from app.models.organization import Organization
 from app.models.project import Project, ProjectMember
 from app.models.role import Role
-from app.models.team import Team, TeamMember
+from app.models.team import Team
 from app.models.user import User, UserStatus
 
 # ── Security Scheme ────────────────────────────────────────────────────────────
@@ -62,15 +62,9 @@ async def get_current_user(
         )
 
     # Lookup the user in the database by ID or email
-    from sqlalchemy import or_
-
-    conditions = [User.id == payload.user_id]
-    if payload.email:
-        conditions.append(User.email == payload.email)
-
     stmt = (
         select(User)
-        .where(or_(*conditions))
+        .where(User.id == payload.user_id)
         .options(
             selectinload(User.role),
             selectinload(User.organization),
@@ -78,6 +72,18 @@ async def get_current_user(
     )
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
+
+    if not user and payload.email:
+        stmt_email = (
+            select(User)
+            .where(User.email == payload.email)
+            .options(
+                selectinload(User.role),
+                selectinload(User.organization),
+            )
+        )
+        res_email = await db.execute(stmt_email)
+        user = res_email.scalars().first()
 
     if not user:
         # Auto-provision verified Supabase user into database
