@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 import { AuthProvider } from "@/components/providers/auth-provider";
 
 const geistSans = Geist({
@@ -26,13 +27,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_mock_publishable_key_for_aria"}
     >
-      <body className="h-full bg-slate-950 text-foreground">
-        <AuthProvider>{children}</AuthProvider>
-      </body>
-    </html>
+      <html
+        lang="en"
+        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      >
+        <body className="h-full bg-slate-950 text-foreground">
+          <AuthProvider>{children}</AuthProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

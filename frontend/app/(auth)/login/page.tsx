@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,33 +19,35 @@ const DEMO_USERS = [
 ];
 
 function LoginForm() {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, signup } = useAuth();
+  const { login, signup, switchDemoRole } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleClerkLogin = async () => {
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
-      if (isSignUp) {
-        const { error } = await signup(email, password, name);
-        if (error) { setErrorMessage(error); return; }
-      } else {
-        const { error } = await login(email, password);
-        if (error) { setErrorMessage(error); return; }
-      }
-      router.push(redirectPath);
+      const { error } = await login("");
+      if (error) setErrorMessage(error);
     } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : "Authentication failed");
+      setErrorMessage(err instanceof Error ? err.message : "Failed to open Clerk Sign In");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClerkSignUp = async () => {
+    setErrorMessage(null);
+    setIsSubmitting(true);
+    try {
+      const { error } = await signup("", "");
+      if (error) setErrorMessage(error);
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : "Failed to open Clerk Sign Up");
     } finally {
       setIsSubmitting(false);
     }
@@ -55,12 +57,9 @@ function LoginForm() {
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
-      const { error } = await login(demoEmail, "Autocruise2026!");
-      if (error) {
-        setErrorMessage(error);
-      } else {
-        router.push(redirectPath);
-      }
+      // @ts-expect-error demoRole is RoleName
+      await switchDemoRole(demoRole, demoEmail);
+      router.push(redirectPath);
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : `Failed demo login as ${demoRole}`);
     } finally {
@@ -78,14 +77,12 @@ function LoginForm() {
       }}
     >
       {/* Header */}
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 text-center">
         <h2 className="text-lg font-bold text-white tracking-tight">
-          {isSignUp ? "Create Account" : "Access Workspace"}
+          Access ARIA Workspace
         </h2>
         <p className="text-xs text-slate-500">
-          {isSignUp
-            ? "Register your enterprise credentials"
-            : "Enter your credentials to access ARIA"}
+          Sign in via Clerk or select a verified enterprise demo role
         </p>
       </div>
 
@@ -97,90 +94,39 @@ function LoginForm() {
         </div>
       )}
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-3.5">
-        {isSignUp && (
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-              <User className="w-3 h-3" /> Full Name
-            </label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Alex Rivera"
-              className="w-full px-3 py-2 rounded-md text-sm text-white placeholder-slate-600 outline-none transition focus:ring-1 focus:ring-sky-500"
-              style={{ background: "#040c19", border: "1px solid rgba(255,255,255,0.08)" }}
-            />
-          </div>
-        )}
-
-        <div className="space-y-1.5">
-          <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-            <Mail className="w-3 h-3" /> Enterprise Email
-          </label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@autocruise.example.com"
-            className="w-full px-3 py-2 rounded-md text-sm text-white placeholder-slate-600 outline-none transition focus:ring-1 focus:ring-sky-500"
-            style={{ background: "#040c19", border: "1px solid rgba(255,255,255,0.08)" }}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-            <Lock className="w-3 h-3" /> Password
-          </label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••••••"
-            className="w-full px-3 py-2 rounded-md text-sm text-white placeholder-slate-600 outline-none transition focus:ring-1 focus:ring-sky-500"
-            style={{ background: "#040c19", border: "1px solid rgba(255,255,255,0.08)" }}
-          />
-        </div>
-
+      {/* Clerk Action Buttons */}
+      <div className="space-y-3">
         <button
-          type="submit"
+          type="button"
+          onClick={handleClerkLogin}
           disabled={isSubmitting}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-semibold text-white transition-all"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-semibold text-white transition-all bg-sky-500 hover:bg-sky-400"
           style={{
-            background: isSubmitting ? "rgba(14,165,233,0.4)" : "rgba(14,165,233,1)",
             boxShadow: "0 0 20px rgba(14,165,233,0.25)",
           }}
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Verifying session...</span>
+              <span>Connecting to Clerk...</span>
             </>
           ) : (
             <>
-              <span>{isSignUp ? "Register Account" : "Access ARIA"}</span>
+              <span>Sign In with Clerk</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>
-      </form>
 
-      {/* Toggle */}
-      <p className="text-center text-xs text-slate-600">
-        {isSignUp ? "Already have an account?" : "Need to create an account?"}
-        {" "}
         <button
           type="button"
-          onClick={() => { setIsSignUp(!isSignUp); setErrorMessage(null); }}
-          className="text-sky-400 hover:text-sky-300 font-medium transition-colors"
+          onClick={handleClerkSignUp}
+          disabled={isSubmitting}
+          className="w-full py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white transition-colors border border-slate-700/60 hover:bg-slate-800/40"
         >
-          {isSignUp ? "Sign In" : "Sign Up"}
+          Create New Clerk Account
         </button>
-      </p>
+      </div>
 
       {/* Demo quick-logins */}
       <div className="pt-1 border-t border-slate-800/60 space-y-2.5">

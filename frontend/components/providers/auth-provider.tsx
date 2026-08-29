@@ -1,14 +1,19 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
-import { api, APIError } from "@/lib/api";
+import { useUser, useAuth as useClerkAuth, useClerk } from "@clerk/nextjs";
+import { api, APIError, setAuthToken } from "@/lib/api";
 import { UserProfileResponse, RoleName } from "@/types/auth";
 
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  avatar_url?: string | null;
+}
+
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
   profile: UserProfileResponse | null;
   role: RoleName | null;
   effectivePermissions: string[];
@@ -16,6 +21,7 @@ interface AuthContextType {
   login: (email: string, password?: string) => Promise<{ error: string | null }>;
   signup: (email: string, password?: string, name?: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
+  switchDemoRole: (role: RoleName, email?: string) => Promise<void>;
   hasRole: (allowedRoles: RoleName[]) => boolean;
   hasPermission: (permission: string) => boolean;
   hasProjectAccess: (projectId: string) => boolean;
@@ -25,12 +31,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfileResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user: clerkUser, isLoaded: isClerkUserLoaded } = useUser();
+  const { getToken, signOut: clerkSignOut } = useClerkAuth();
+  const clerk = useClerk();
 
-  const supabase = createClient();
+  const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+  const [demoUser, setDemoUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -52,87 +59,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    async function initAuth() {
+    async function syncClerkAuth() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && isMounted) {
-          setSession(session);
-          setUser(session.user);
-          await fetchUserProfile();
+        if (!isClerkUserLoaded) return;
+
+        if (clerkUser) {
+          const token = await getToken();
+          setAuthToken(token);
+          if (isMounted) {
+            setDemoUser(null);
+            await fetchUserProfile();
+          }
+        } else {
+          // Check for saved demo token in localStorage
+          const localToken = typeof window !== "undefined" ? localStorage.getItem("aria_auth_token") : null;
+          if (localToken) {
+            setAuthToken(localToken);
+            await fetchUserProfile();
+          } else {
+            setAuthToken(null);
+            setProfile(null);
+          }
         }
       } catch (e) {
-        console.error("Auth initialization error:", e);
+        console.error("Clerk auth sync error:", e);
       } finally {
         if (isMounted) setIsLoading(false);
       }
     }
 
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        if (!isMounted) return;
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-
-        if (newSession) {
-          await fetchUserProfile();
-        } else {
-          setProfile(null);
-        }
-        setIsLoading(false);
-      }
-    );
+    syncClerkAuth();
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
     };
-  }, [supabase, fetchUserProfile]);
+  }, [clerkUser, isClerkUserLoaded, getToken, fetchUserProfile]);
 
-  const login = async (email: string, password?: string): Promise<{ error: string | null }> => {
+  const login = async (email: string): Promise<{ error: string | null }> => {
     try {
       setIsLoading(true);
-      if (password) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) return { error: error.message };
-      } else {
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: `${window.location.origin}/chat` },
-        });
-        if (error) return { error: error.message };
-      }
-      await fetchUserProfile();
+      clerk.openSignIn();
       return { error: null };
     } catch (err: unknown) {
-      return { error: err instanceof Error ? err.message : "Failed to sign in" };
+      return { error: err instanceof Error ? err.message : "Failed to open sign in" };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signup = async (
-    email: string,
-    password?: string,
-    name?: string
-  ): Promise<{ error: string | null }> => {
+  const signup = async (): Promise<{ error: string | null }> => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password: password || "tempPassword123!",
-        options: {
-          data: { name: name || email.split("@")[0] },
-        },
-      });
-      if (error) return { error: error.message };
+      clerk.openSignUp();
       return { error: null };
     } catch (err: unknown) {
-      return { error: err instanceof Error ? err.message : "Failed to create account" };
+      return { error: err instanceof Error ? err.message : "Failed to open sign up" };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const switchDemoRole = async (roleName: RoleName, email?: string) => {
+    try {
+      setIsLoading(true);
+      // Construct demo token payload for instant presentation switching
+      const demoEmail = email || `${roleName.toLowerCase()}@autocruise.ai`;
+      // Request demo token / set token
+      const mockToken = btoa(JSON.stringify({
+        sub: `demo_${roleName.toLowerCase()}`,
+        email: demoEmail,
+        role: roleName,
+        alg: "HS256"
+      }));
+      setAuthToken(mockToken);
+      setDemoUser({
+        id: `demo_${roleName.toLowerCase()}`,
+        email: demoEmail,
+        name: `${roleName} User`,
+      });
+      await fetchUserProfile();
+    } catch (e) {
+      console.error("Demo role switch error:", e);
     } finally {
       setIsLoading(false);
     }
@@ -140,12 +147,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     setIsLoading(true);
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+    setAuthToken(null);
+    setDemoUser(null);
     setProfile(null);
+    try {
+      if (clerkUser) {
+        await clerkSignOut();
+      }
+    } catch (e) {
+      console.warn("Sign out warning:", e);
+    }
     setIsLoading(false);
   };
+
+  const user: AuthUser | null = clerkUser
+    ? {
+        id: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        name: clerkUser.fullName || clerkUser.firstName || "Clerk User",
+        avatar_url: clerkUser.imageUrl,
+      }
+    : demoUser;
 
   const role: RoleName | null = (profile?.role?.name as RoleName) || null;
   const effectivePermissions = profile?.effective_permissions || [];
@@ -174,14 +196,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        session,
         profile,
         role,
         effectivePermissions,
-        isLoading,
+        isLoading: isLoading || !isClerkUserLoaded,
         login,
         signup,
         logout,
+        switchDemoRole,
         hasRole,
         hasPermission,
         hasProjectAccess,

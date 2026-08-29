@@ -41,13 +41,22 @@ class Settings(BaseSettings):
         "postgresql+psycopg://lidar_user:lidar_password@localhost:5432/lidar_db"
     )
 
-    # ── Supabase Auth / JWT ───────────────────────────────────────────────────
-    SUPABASE_URL: str = "https://your-project.supabase.co"
-    SUPABASE_ANON_KEY: str = "your_supabase_anon_key"
-    SUPABASE_SERVICE_ROLE_KEY: str = "your_service_role_key"
-    # Default secret for local dev/testing if not set in environment
-    SUPABASE_JWT_SECRET: str = "super-secret-jwt-token-with-at-least-32-characters-long"
-    JWT_ALGORITHM: str = "HS256"
+    # ── Authentication (Clerk & Local JWT) ──────────────────────────────────
+    AUTH_PROVIDER: str = "clerk"  # "clerk", "local"
+    CLERK_SECRET_KEY: str | None = None
+    CLERK_PUBLISHABLE_KEY: str | None = None
+    CLERK_JWKS_URL: str | None = None
+    CLERK_JWT_SECRET: str = "clerk-jwt-default-secret-key-32-chars-long"
+    JWT_ALGORITHM: str = "RS256"
+
+    # ── Object Storage (Cloudflare R2 / S3 / Local) ───────────────────────────
+    STORAGE_BACKEND: str = "r2"  # "r2", "local"
+    R2_ACCOUNT_ID: str | None = None
+    R2_ACCESS_KEY_ID: str | None = None
+    R2_SECRET_ACCESS_KEY: str | None = None
+    R2_BUCKET_NAME: str = "aria-documents"
+    R2_ENDPOINT_URL: str | None = None
+    R2_PUBLIC_URL_PREFIX: str | None = None
     # ── Embedding & Vector Search ─────────────────────────────────────────────
     EMBEDDING_PROVIDER: str = "bge_m3"  # "bge_m3", "openai", "mock"
     EMBEDDING_MODEL: str = "BAAI/bge-m3"

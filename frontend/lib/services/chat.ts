@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/client";
 import { RetrievedChunkResult } from "@/lib/services/search";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -49,9 +48,13 @@ export interface StreamEventHandlers {
 async function getAuthToken(): Promise<string | null> {
   try {
     if (typeof window === "undefined") return null;
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
+    // @ts-expect-error Clerk is on window
+    if (window.Clerk?.session) {
+      // @ts-expect-error Clerk getToken
+      const token = await window.Clerk.session.getToken();
+      if (token) return token;
+    }
+    return localStorage.getItem("aria_auth_token");
   } catch {
     return null;
   }

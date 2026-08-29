@@ -1,10 +1,3 @@
-/**
- * Typed fetch wrapper for the backend API with automatic JWT Bearer token attachment.
- * Base URL is read from NEXT_PUBLIC_API_URL env var.
- */
-
-import { createClient } from "./supabase/client";
-
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export class APIError extends Error {
@@ -18,14 +11,37 @@ export class APIError extends Error {
   }
 }
 
+// Global token cache for active session
+let activeAuthToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  activeAuthToken = token;
+  if (typeof window !== "undefined") {
+    if (token) {
+      localStorage.setItem("aria_auth_token", token);
+    } else {
+      localStorage.removeItem("aria_auth_token");
+    }
+  }
+}
+
 async function getAuthToken(): Promise<string | null> {
   try {
     if (typeof window === "undefined") return null;
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
+
+    // 1. Try Clerk session token
+    // @ts-expect-error Clerk is injected onto window in browser
+    if (window.Clerk?.session) {
+      // @ts-expect-error Clerk session getToken
+      const clerkToken = await window.Clerk.session.getToken();
+      if (clerkToken) return clerkToken;
+    }
+
+    // 2. Active token or local storage demo token
+    if (activeAuthToken) return activeAuthToken;
+    return localStorage.getItem("aria_auth_token");
   } catch {
-    return null;
+    return activeAuthToken;
   }
 }
 

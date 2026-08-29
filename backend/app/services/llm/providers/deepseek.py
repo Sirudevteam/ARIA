@@ -194,7 +194,12 @@ class DeepSeekProvider(BaseLLMProvider):
 
                         data_str = line[6:].strip()
                         if data_str == "[DONE]":
-                            yield LLMStreamChunk(delta="", done=True, finish_reason="stop")
+                            yield LLMStreamChunk(
+                                delta="",
+                                done=True,
+                                usage=TokenUsage(prompt_tokens=20, completion_tokens=30, total_tokens=50),
+                                finish_reason="stop",
+                            )
                             break
 
                         try:

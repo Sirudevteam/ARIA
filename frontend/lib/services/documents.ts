@@ -1,5 +1,4 @@
 import { api, APIError } from "@/lib/api";
-import { createClient } from "@/lib/supabase/client";
 import {
   Department,
   DocumentDetail,
@@ -8,6 +7,21 @@ import {
 } from "@/types/document";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+async function getAuthToken(): Promise<string | null> {
+  try {
+    if (typeof window === "undefined") return null;
+    // @ts-expect-error Clerk is on window
+    if (window.Clerk?.session) {
+      // @ts-expect-error Clerk getToken
+      const token = await window.Clerk.session.getToken();
+      if (token) return token;
+    }
+    return localStorage.getItem("aria_auth_token");
+  } catch {
+    return null;
+  }
+}
 
 export interface DocumentFilters {
   q?: string;
@@ -46,10 +60,7 @@ export const documentsService = {
     formData: FormData,
     onProgress?: (percent: number) => void
   ): Promise<DocumentDetail> {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-
+    const token = await getAuthToken();
     const url = `${BASE_URL}/api/v1/projects/${projectId}/documents/upload`;
 
     return new Promise((resolve, reject) => {
@@ -99,10 +110,7 @@ export const documentsService = {
     documentId: string,
     formData: FormData
   ): Promise<DocumentDetail> {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-
+    const token = await getAuthToken();
     const url = `${BASE_URL}/api/v1/documents/${documentId}/versions`;
 
     const res = await fetch(url, {
@@ -137,10 +145,7 @@ export const documentsService = {
     versionNumber?: number,
     suggestedFilename?: string
   ): Promise<void> {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-
+    const token = await getAuthToken();
     const url = `${BASE_URL}/api/v1/documents/${documentId}/download${
       versionNumber ? `?version_number=${versionNumber}` : ""
     }`;
