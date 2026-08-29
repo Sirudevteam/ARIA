@@ -26,18 +26,27 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_mock_publishable_key_for_aria"}
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const hasValidClerkKey = Boolean(publishableKey && !publishableKey.includes("mock"));
+
+  const content = (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <html
-        lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
-      >
-        <body className="h-full bg-slate-950 text-foreground">
-          <AuthProvider>{children}</AuthProvider>
-        </body>
-      </html>
+      <body className="h-full bg-slate-950 text-foreground">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
+    </html>
+  );
+
+  if (!hasValidClerkKey) {
+    return content;
+  }
+
+  return (
+    <ClerkProvider publishableKey={publishableKey}>
+      {content}
     </ClerkProvider>
   );
 }

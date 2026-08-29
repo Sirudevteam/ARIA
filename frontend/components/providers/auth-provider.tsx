@@ -18,8 +18,8 @@ interface AuthContextType {
   role: RoleName | null;
   effectivePermissions: string[];
   isLoading: boolean;
-  login: (email: string, password?: string) => Promise<{ error: string | null }>;
-  signup: (email: string, password?: string, name?: string) => Promise<{ error: string | null }>;
+  login: (email?: string, password?: string) => Promise<{ error: string | null }>;
+  signup: (email?: string, password?: string, name?: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   switchDemoRole: (role: RoleName, email?: string) => Promise<void>;
   hasRole: (allowedRoles: RoleName[]) => boolean;
@@ -30,7 +30,156 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+// ── 1. Local Auth Implementation (when Clerk keys not set or demo mode) ────
+function LocalAuthProvider({ children }: { children: React.ReactNode }) {
+  const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+  const [demoUser, setDemoUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const data = await api.get<UserProfileResponse>("/api/v1/auth/me");
+      setProfile(data);
+    } catch (err) {
+      if (err instanceof APIError && err.status === 401) {
+        setProfile(null);
+      } else {
+        console.warn("Failed to fetch user profile from backend:", err);
+      }
+    }
+  }, []);
+
+  const refreshProfile = async () => {
+    await fetchUserProfile();
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function initLocalAuth() {
+      try {
+        const localToken = typeof window !== "undefined" ? localStorage.getItem("aria_auth_token") : null;
+        if (localToken) {
+          setAuthToken(localToken);
+          await fetchUserProfile();
+        } else {
+          // Default seeded user: deenadeena3726 for instant access
+          const defaultToken = btoa(JSON.stringify({
+            sub: "a4960c51-8cb2-4972-a3b8-2e3474539dbc",
+            email: "deenadeena3726@gmail.com",
+            role: "SUPER_ADMIN",
+            alg: "HS256"
+          }));
+          setAuthToken(defaultToken);
+          setDemoUser({
+            id: "a4960c51-8cb2-4972-a3b8-2e3474539dbc",
+            email: "deenadeena3726@gmail.com",
+            name: "deenadeena3726",
+          });
+          await fetchUserProfile();
+        }
+      } catch (e) {
+        console.error("Local auth init error:", e);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    initLocalAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchUserProfile]);
+
+  const login = async (): Promise<{ error: string | null }> => {
+    return { error: null };
+  };
+
+  const signup = async (): Promise<{ error: string | null }> => {
+    return { error: null };
+  };
+
+  const switchDemoRole = async (roleName: RoleName, email?: string) => {
+    try {
+      setIsLoading(true);
+      const demoEmail = email || `${roleName.toLowerCase()}@autocruise.ai`;
+      const mockToken = btoa(JSON.stringify({
+        sub: `demo_${roleName.toLowerCase()}`,
+        email: demoEmail,
+        role: roleName,
+        alg: "HS256"
+      }));
+      setAuthToken(mockToken);
+      setDemoUser({
+        id: `demo_${roleName.toLowerCase()}`,
+        email: demoEmail,
+        name: `${roleName} User`,
+      });
+      await fetchUserProfile();
+    } catch (e) {
+      console.error("Demo role switch error:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    setIsLoading(true);
+    setAuthToken(null);
+    setDemoUser(null);
+    setProfile(null);
+    setIsLoading(false);
+  };
+
+  const user = demoUser;
+  const role: RoleName | null = (profile?.role?.name as RoleName) || null;
+  const effectivePermissions = profile?.effective_permissions || [];
+
+  const hasRole = useCallback((allowedRoles: RoleName[]): boolean => {
+    if (!role) return false;
+    if (role === "SUPER_ADMIN") return true;
+    return allowedRoles.includes(role);
+  }, [role]);
+
+  const hasPermission = useCallback((permission: string): boolean => {
+    if (effectivePermissions.includes("*")) return true;
+    if (effectivePermissions.includes(permission)) return true;
+    const [domain] = permission.split(".");
+    return effectivePermissions.includes(`${domain}.*`);
+  }, [effectivePermissions]);
+
+  const hasProjectAccess = useCallback((projectId: string): boolean => {
+    if (!profile) return false;
+    if (profile.role?.name === "SUPER_ADMIN" || profile.role?.name === "ADMIN") return true;
+    return profile.projects.some((p) => p.project_id === projectId);
+  }, [profile]);
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        role,
+        effectivePermissions,
+        isLoading,
+        login,
+        signup,
+        logout,
+        switchDemoRole,
+        hasRole,
+        hasPermission,
+        hasProjectAccess,
+        refreshProfile,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+// ── 2. Clerk Auth Implementation (when real Clerk keys are provided) ───────
+function ClerkAuthProviderInner({ children }: { children: React.ReactNode }) {
   const { user: clerkUser, isLoaded: isClerkUserLoaded } = useUser();
   const { getToken, signOut: clerkSignOut } = useClerkAuth();
   const clerk = useClerk();
@@ -71,7 +220,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await fetchUserProfile();
           }
         } else {
-          // Check for saved demo token in localStorage
           const localToken = typeof window !== "undefined" ? localStorage.getItem("aria_auth_token") : null;
           if (localToken) {
             setAuthToken(localToken);
@@ -95,7 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [clerkUser, isClerkUserLoaded, getToken, fetchUserProfile]);
 
-  const login = async (email: string): Promise<{ error: string | null }> => {
+  const login = async (): Promise<{ error: string | null }> => {
     try {
       setIsLoading(true);
       clerk.openSignIn();
@@ -122,9 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const switchDemoRole = async (roleName: RoleName, email?: string) => {
     try {
       setIsLoading(true);
-      // Construct demo token payload for instant presentation switching
       const demoEmail = email || `${roleName.toLowerCase()}@autocruise.ai`;
-      // Request demo token / set token
       const mockToken = btoa(JSON.stringify({
         sub: `demo_${roleName.toLowerCase()}`,
         email: demoEmail,
@@ -181,7 +327,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasPermission = useCallback((permission: string): boolean => {
     if (effectivePermissions.includes("*")) return true;
     if (effectivePermissions.includes(permission)) return true;
-    // Check wildcard scope like "project.*"
     const [domain] = permission.split(".");
     return effectivePermissions.includes(`${domain}.*`);
   }, [effectivePermissions]);
@@ -213,6 +358,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+// ── 3. Main Exported AuthProvider Component ────────────────────────────────
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const hasValidClerkKey = Boolean(publishableKey && !publishableKey.includes("mock"));
+
+  if (hasValidClerkKey) {
+    return <ClerkAuthProviderInner>{children}</ClerkAuthProviderInner>;
+  }
+
+  return <LocalAuthProvider>{children}</LocalAuthProvider>;
 }
 
 export function useAuth() {
