@@ -1,4 +1,3 @@
-import { NextResponse, type NextRequest } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isPublicRoute = createRouteMatcher([
@@ -9,23 +8,11 @@ const isPublicRoute = createRouteMatcher([
   "/_next(.*)",
 ]);
 
-const hasRealClerkKeys = Boolean(
-  process.env.CLERK_SECRET_KEY &&
-  !process.env.CLERK_SECRET_KEY.includes("mock") &&
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-  !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes("mock")
-);
-
-export default function middleware(request: NextRequest, event: any) {
-  if (!hasRealClerkKeys) {
-    return NextResponse.next();
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) {
+    await auth.protect();
   }
-  return clerkMiddleware(async (auth, req) => {
-    if (!isPublicRoute(req)) {
-      await auth.protect();
-    }
-  })(request, event);
-}
+});
 
 export const config = {
   matcher: [

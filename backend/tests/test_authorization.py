@@ -357,14 +357,12 @@ async def test_200_profile_me_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_200_profile_me_with_local_demo_token(client: AsyncClient):
-    """Frontend local demo base64 JSON tokens authenticate in development."""
-    token = make_base64_json_token(
-        {
-            "sub": str(entities.admin_id),
-            "email": "admin@autocruise.test",
-            "role": "ADMIN",
-        }
+async def test_200_profile_me_with_clerk_jwt_token(client: AsyncClient):
+    """Clerk JWT tokens authenticate successfully."""
+    token = create_access_token(
+        user_id=entities.admin_id,
+        email="admin@autocruise.test",
+        role="ADMIN",
     )
     headers = {"Authorization": f"Bearer {token}"}
 

@@ -1,27 +1,26 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useUser, useAuth as useClerkAuth, useClerk } from "@clerk/nextjs";
 import { api, APIError, setAuthToken } from "@/lib/api";
 import { UserProfileResponse, RoleName } from "@/types/auth";
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   email: string;
   name: string;
   avatar_url?: string | null;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: AuthUser | null;
   profile: UserProfileResponse | null;
   role: RoleName | null;
   effectivePermissions: string[];
   isLoading: boolean;
-  login: (email?: string, password?: string) => Promise<{ error: string | null }>;
-  signup: (email?: string, password?: string, name?: string) => Promise<{ error: string | null }>;
+  login: () => Promise<void>;
+  signup: () => Promise<void>;
   logout: () => Promise<void>;
-  switchDemoRole: (role: RoleName, email?: string) => Promise<void>;
   hasRole: (allowedRoles: RoleName[]) => boolean;
   hasPermission: (permission: string) => boolean;
   hasProjectAccess: (projectId: string) => boolean;
@@ -30,160 +29,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// ── 1. Local Auth Implementation (when Clerk keys not set or demo mode) ────
-function LocalAuthProvider({ children }: { children: React.ReactNode }) {
-  const [profile, setProfile] = useState<UserProfileResponse | null>(null);
-  const [demoUser, setDemoUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchUserProfile = useCallback(async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("aria_auth_token") : null;
-    if (!token) {
-      setProfile(null);
-      return;
-    }
-    try {
-      const data = await api.get<UserProfileResponse>("/api/v1/auth/me");
-      setProfile(data);
-    } catch (err) {
-      if (err instanceof APIError && err.status === 401) {
-        setProfile(null);
-        setAuthToken(null);
-      } else {
-        console.warn("Failed to fetch user profile from backend:", err);
-      }
-    }
-  }, []);
-
-  const refreshProfile = async () => {
-    await fetchUserProfile();
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function initLocalAuth() {
-      try {
-        const localToken = typeof window !== "undefined" ? localStorage.getItem("aria_auth_token") : null;
-        if (localToken) {
-          setAuthToken(localToken);
-          await fetchUserProfile();
-        } else {
-          setAuthToken(null);
-          setDemoUser(null);
-          setProfile(null);
-        }
-      } catch (e) {
-        console.error("Local auth init error:", e);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    initLocalAuth();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [fetchUserProfile]);
-
-  const login = async (): Promise<{ error: string | null }> => {
-    return { error: null };
-  };
-
-  const signup = async (): Promise<{ error: string | null }> => {
-    return { error: null };
-  };
-
-  const switchDemoRole = async (roleName: RoleName, email?: string) => {
-    try {
-      setIsLoading(true);
-      const demoEmail = email || `${roleName.toLowerCase()}@autocruise.ai`;
-      const mockToken = btoa(JSON.stringify({
-        sub: `demo_${roleName.toLowerCase()}`,
-        email: demoEmail,
-        role: roleName,
-        alg: "HS256"
-      }));
-      setAuthToken(mockToken);
-      setDemoUser({
-        id: `demo_${roleName.toLowerCase()}`,
-        email: demoEmail,
-        name: `${roleName} User`,
-      });
-      await fetchUserProfile();
-    } catch (e) {
-      console.error("Demo role switch error:", e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    setIsLoading(true);
-    setAuthToken(null);
-    setDemoUser(null);
-    setProfile(null);
-    setIsLoading(false);
-  };
-
-  const user = demoUser;
-  const role: RoleName | null = (profile?.role?.name as RoleName) || null;
-  const effectivePermissions = useMemo(
-    () => profile?.effective_permissions ?? [],
-    [profile?.effective_permissions]
-  );
-
-  const hasRole = useCallback((allowedRoles: RoleName[]): boolean => {
-    if (!role) return false;
-    if (role === "SUPER_ADMIN") return true;
-    return allowedRoles.includes(role);
-  }, [role]);
-
-  const hasPermission = useCallback((permission: string): boolean => {
-    if (effectivePermissions.includes("*")) return true;
-    if (effectivePermissions.includes(permission)) return true;
-    const [domain] = permission.split(".");
-    return effectivePermissions.includes(`${domain}.*`);
-  }, [effectivePermissions]);
-
-  const hasProjectAccess = useCallback((projectId: string): boolean => {
-    if (!profile) return false;
-    if (profile.role?.name === "SUPER_ADMIN" || profile.role?.name === "ADMIN") return true;
-    return profile.projects.some((p) => p.project_id === projectId);
-  }, [profile]);
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        role,
-        effectivePermissions,
-        isLoading,
-        login,
-        signup,
-        logout,
-        switchDemoRole,
-        hasRole,
-        hasPermission,
-        hasProjectAccess,
-        refreshProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-// ── 2. Clerk Auth Implementation (when real Clerk keys are provided) ───────
-function ClerkAuthProviderInner({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user: clerkUser, isLoaded: isClerkUserLoaded } = useUser();
   const { getToken, signOut: clerkSignOut } = useClerkAuth();
   const clerk = useClerk();
 
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
-  const [demoUser, setDemoUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserProfile = useCallback(async () => {
@@ -207,7 +58,7 @@ function ClerkAuthProviderInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    async function syncClerkAuth() {
+    async function syncClerkSession() {
       try {
         if (!isClerkUserLoaded) return;
 
@@ -215,110 +66,62 @@ function ClerkAuthProviderInner({ children }: { children: React.ReactNode }) {
           const token = await getToken();
           setAuthToken(token);
           if (isMounted) {
-            setDemoUser(null);
             await fetchUserProfile();
           }
         } else {
-          const localToken = typeof window !== "undefined" ? localStorage.getItem("aria_auth_token") : null;
-          if (localToken) {
-            setAuthToken(localToken);
-            await fetchUserProfile();
-          } else {
-            setAuthToken(null);
+          setAuthToken(null);
+          if (isMounted) {
             setProfile(null);
           }
         }
       } catch (e) {
         console.error("Clerk auth sync error:", e);
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
-    syncClerkAuth();
+    syncClerkSession();
 
     return () => {
       isMounted = false;
     };
   }, [clerkUser, isClerkUserLoaded, getToken, fetchUserProfile]);
 
-  const login = async (): Promise<{ error: string | null }> => {
-    try {
-      setIsLoading(true);
-      clerk.openSignIn();
-      return { error: null };
-    } catch (err: unknown) {
-      return { error: err instanceof Error ? err.message : "Failed to open sign in" };
-    } finally {
-      setIsLoading(false);
-    }
+  const login = async () => {
+    clerk.openSignIn();
   };
 
-  const signup = async (): Promise<{ error: string | null }> => {
-    try {
-      setIsLoading(true);
-      clerk.openSignUp();
-      return { error: null };
-    } catch (err: unknown) {
-      return { error: err instanceof Error ? err.message : "Failed to open sign up" };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const switchDemoRole = async (roleName: RoleName, email?: string) => {
-    try {
-      setIsLoading(true);
-      const demoEmail = email || `${roleName.toLowerCase()}@autocruise.ai`;
-      const mockToken = btoa(JSON.stringify({
-        sub: `demo_${roleName.toLowerCase()}`,
-        email: demoEmail,
-        role: roleName,
-        alg: "HS256"
-      }));
-      setAuthToken(mockToken);
-      setDemoUser({
-        id: `demo_${roleName.toLowerCase()}`,
-        email: demoEmail,
-        name: `${roleName} User`,
-      });
-      await fetchUserProfile();
-    } catch (e) {
-      console.error("Demo role switch error:", e);
-    } finally {
-      setIsLoading(false);
-    }
+  const signup = async () => {
+    clerk.openSignUp();
   };
 
   const logout = async () => {
     setIsLoading(true);
     setAuthToken(null);
-    setDemoUser(null);
     setProfile(null);
     try {
-      if (clerkUser) {
-        await clerkSignOut();
-      }
+      await clerkSignOut();
     } catch (e) {
-      console.warn("Sign out warning:", e);
+      console.warn("Clerk sign out error:", e);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const user: AuthUser | null = clerkUser
     ? {
         id: clerkUser.id,
         email: clerkUser.primaryEmailAddress?.emailAddress || "",
-        name: clerkUser.fullName || clerkUser.firstName || "Clerk User",
+        name: clerkUser.fullName || clerkUser.firstName || clerkUser.username || "User",
         avatar_url: clerkUser.imageUrl,
       }
-    : demoUser;
+    : null;
 
   const role: RoleName | null = (profile?.role?.name as RoleName) || null;
-  const effectivePermissions = useMemo(
-    () => profile?.effective_permissions ?? [],
-    [profile?.effective_permissions]
-  );
+  const effectivePermissions = profile?.effective_permissions || [];
 
   const hasRole = useCallback((allowedRoles: RoleName[]): boolean => {
     if (!role) return false;
@@ -346,11 +149,10 @@ function ClerkAuthProviderInner({ children }: { children: React.ReactNode }) {
         profile,
         role,
         effectivePermissions,
-        isLoading: isLoading || !isClerkUserLoaded,
+        isLoading: !isClerkUserLoaded || isLoading,
         login,
         signup,
         logout,
-        switchDemoRole,
         hasRole,
         hasPermission,
         hasProjectAccess,
@@ -360,18 +162,6 @@ function ClerkAuthProviderInner({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-// ── 3. Main Exported AuthProvider Component ────────────────────────────────
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const hasValidClerkKey = Boolean(publishableKey && !publishableKey.includes("mock"));
-
-  if (hasValidClerkKey) {
-    return <ClerkAuthProviderInner>{children}</ClerkAuthProviderInner>;
-  }
-
-  return <LocalAuthProvider>{children}</LocalAuthProvider>;
 }
 
 export function useAuth() {
