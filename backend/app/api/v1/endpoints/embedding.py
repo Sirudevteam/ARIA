@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.api.deps import DBSession, get_current_user, get_document_with_access
 from app.models.document import Document
 from app.models.project import Project
@@ -92,7 +93,7 @@ async def reembed_document_chunks(
     force: bool = Query(True, description="Force re-embedding even if content hash matches"),
     context: Tuple[Document, Project] = Depends(get_document_with_access),
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:
     """Force re-embedding of document chunks."""
     doc, _ = context

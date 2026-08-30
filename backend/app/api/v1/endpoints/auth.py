@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.database import get_db
 from app.api.deps import CurrentUser, DBSession, get_current_user
 from app.models.project import Project, ProjectMember
 from app.models.team import Team
@@ -31,7 +32,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication & Profile"])
 )
 async def get_my_profile(
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> UserProfileResponse:
     """Fetch current user's profile with fully resolved authorization context."""
 
@@ -114,7 +115,7 @@ async def get_my_profile(
 async def update_my_profile(
     body: UpdateProfileRequest,
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> UserProfileResponse:
     """Update profile attributes for the authenticated user."""
     if body.name is not None:

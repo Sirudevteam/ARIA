@@ -10,6 +10,7 @@ import uuid
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.api.deps import (
     DBSession,
     get_current_user,
@@ -37,7 +38,7 @@ router = APIRouter(prefix="/search", tags=["Hybrid Retrieval & Search"])
 async def hybrid_retrieve(
     body: RetrievalRequest,
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> RetrievalResponse:
     """Execute 2-stage hybrid retrieval & reranking across user's accessible scope."""
     # 1. Resolve user authorization context
@@ -94,7 +95,7 @@ async def project_hybrid_retrieve(
     body: RetrievalRequest,
     context: Tuple[Project, Optional[ProjectMember]] = Depends(get_project_and_membership),
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> RetrievalResponse:
     """Execute 2-stage hybrid retrieval & reranking scoped to an authenticated project."""
     project, _ = context

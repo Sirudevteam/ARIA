@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.api.deps import DBSession, get_current_user
 from app.models.user import User
 from app.schemas.llm import ChatFeedbackRequest, ChatFeedbackResponse, RAGChatRequest, RAGChatResponse
@@ -30,7 +31,7 @@ router = APIRouter(prefix="/chat", tags=["RAG Chat & LLM Generation"])
 async def chat_completions(
     body: RAGChatRequest,
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> RAGChatResponse:
     """Non-streaming RAG chat response with verified citations."""
     user_context = await hybrid_retrieval_engine.resolve_user_context(db=db, user=current_user)
@@ -62,7 +63,7 @@ async def chat_completions(
 async def chat_stream(
     body: RAGChatRequest,
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Real-time SSE streaming RAG chat endpoint."""
     user_context = await hybrid_retrieval_engine.resolve_user_context(db=db, user=current_user)
@@ -106,7 +107,7 @@ async def chat_stream(
 async def submit_chat_feedback(
     body: ChatFeedbackRequest,
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> ChatFeedbackResponse:
     """Log user feedback on RAG response."""
     feedback_id = uuid.uuid4()

@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.database import get_db
 from app.api.deps import (
     CurrentUser,
     DBSession,
@@ -43,7 +44,7 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 async def create_project(
     req: ProjectCreateRequest,
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> ProjectSummaryResponse:
     """Create a new project and add the creator as member."""
     org_id = current_user.organization_id
@@ -106,7 +107,7 @@ async def create_project(
 )
 async def list_accessible_projects(
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> List[ProjectSummaryResponse]:
     """Fetch all projects available to the authenticated user."""
     user_role_name = current_user.role.name.upper() if current_user.role else "VIEWER"
@@ -203,7 +204,7 @@ async def get_project_by_id(
 )
 async def list_project_members(
     context: Tuple[Project, Optional[ProjectMember]] = Depends(get_project_and_membership),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> List[ProjectMemberResponse]:
     """List members assigned to the project."""
     project, _ = context
@@ -240,7 +241,7 @@ async def list_project_members(
 )
 async def list_project_documents(
     context: Tuple[Project, Optional[ProjectMember]] = Depends(get_project_and_membership),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> List[DocumentSummaryResponse]:
     """Fetch document catalog within the authorized project."""
     project, _ = context

@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.api.deps import DBSession, get_current_user, require_roles
 from app.models.document import Document
 from app.models.project import Project
@@ -137,7 +138,7 @@ MOCK_AUDIT_LOGS: List[dict] = [
 )
 async def get_admin_overview_kpis(
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> AdminOverviewKPIs:
     """Retrieve platform KPI metrics."""
     # Count real documents, users, and projects in DB
@@ -270,7 +271,7 @@ async def get_audit_logs(
 async def resolve_knowledge_gap(
     body: KnowledgeGapResolutionRequest,
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> KnowledgeGapResolutionResponse:
     """Resolve an identified knowledge gap by creating an indexed SOP chunk."""
     chunk_id = str(uuid.uuid4())

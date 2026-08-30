@@ -21,6 +21,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.api.deps import (
     DBSession,
     get_current_user,
@@ -61,7 +62,7 @@ async def upload_document(
     language: str = Form("en", description="Language code"),
     context: Tuple[Project, Optional[ProjectMember]] = Depends(get_project_and_membership),
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> DocumentDetailResponse:
     """Handle multipart document upload and initialize version 1."""
     project, _ = context
@@ -103,7 +104,7 @@ async def list_and_search_documents(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(50, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> DocumentListResponse:
     """List and search documents with tenant and project RBAC boundaries."""
     return await document_manager.list_and_search_documents(
@@ -127,7 +128,7 @@ async def list_and_search_documents(
 )
 async def get_document_stats(
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ):
     from sqlalchemy import func
     from app.models.document import DocumentChunk
@@ -153,7 +154,7 @@ async def get_document_stats(
 )
 async def get_document_details(
     context: Tuple[Document, Project] = Depends(get_document_with_access),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> DocumentDetailResponse:
     """Fetch single document metadata after validating project membership."""
     doc, _ = context
@@ -172,7 +173,7 @@ async def upload_new_version(
     change_summary: Optional[str] = Form(None, description="Summary of changes in this version"),
     context: Tuple[Document, Project] = Depends(get_document_with_access),
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> DocumentDetailResponse:
     """Upload a new version for an existing document."""
     doc, _ = context
@@ -199,7 +200,7 @@ async def archive_document(
     archive: bool = Query(True, description="True to archive, False to unarchive"),
     context: Tuple[Document, Project] = Depends(get_document_with_access),
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> DocumentDetailResponse:
     """Toggle document ARCHIVED state."""
     doc, _ = context
@@ -215,7 +216,7 @@ async def delete_document(
     document_id: uuid.UUID,
     context: Tuple[Document, Project] = Depends(get_document_with_access),
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ):
     """Delete document and physical files."""
     doc, _ = context
@@ -231,7 +232,7 @@ async def download_document_file(
     document_id: uuid.UUID,
     version_number: Optional[int] = Query(None, description="Specific version number (defaults to current)"),
     context: Tuple[Document, Project] = Depends(get_document_with_access),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ):
     """Stream file binary for download."""
     doc, _ = context

@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.database import get_db
 from app.api.deps import CurrentUser, DBSession, get_current_user, require_roles
 from app.models.user import User
 from app.schemas.auth import OrganizationInfo, RoleInfo, UserProfileResponse
@@ -26,7 +27,7 @@ router = APIRouter(prefix="/users", tags=["Users Management"])
 )
 async def list_users(
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> List[UserProfileResponse]:
     """List users within the same tenant organization."""
     user_role = current_user.role.name.upper() if current_user.role else "VIEWER"
@@ -70,7 +71,7 @@ async def list_users(
 async def get_user_by_id(
     user_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    db: DBSession = None,
+    db: AsyncSession = Depends(get_db),
 ) -> UserProfileResponse:
     """Fetch single user details in the same organization."""
     stmt = (
