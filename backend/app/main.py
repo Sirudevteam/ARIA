@@ -26,6 +26,17 @@ async def lifespan(app: FastAPI):
     print(f"[STARTUP] {settings.APP_NAME} v{settings.APP_VERSION} starting...")
     print(f"   Environment : {settings.APP_ENV}")
     print(f"   Debug mode  : {settings.DEBUG}")
+
+    # Ensure all tables exist in database
+    try:
+        from app.core.database import engine
+        from app.models import Base
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print("[STARTUP] Database tables verified.")
+    except Exception as e:
+        print(f"[STARTUP] Database verification error: {e}")
+
     yield
     # Shutdown
     print(f"[SHUTDOWN] {settings.APP_NAME} shutting down...")
