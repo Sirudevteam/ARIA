@@ -28,14 +28,14 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: http://localhost:8000
-        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_Y2xlcmsuZXhhbXBsZS5jb20k}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_b25lLW1vb3NlLTc0MjAuY2xlcmsuYWNjb3VudHMuZGV2JA}
     container_name: aria_frontend
     restart: unless-stopped
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_Y2xlcmsuZXhhbXBsZS5jb20k}
-      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY:-sk_test_mock_secret_key_for_aria_clerk_auth}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_b25lLW1vb3NlLTc0MjAuY2xlcmsuYWNjb3VudHMuZGV2JA}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY:-sk_test_mock_secret_key_for_aria}
     ports:
       - "3000:3000"
     depends_on:
