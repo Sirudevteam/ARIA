@@ -114,6 +114,33 @@ class EmbeddingService:
             doc.metadata_ = doc_meta
             doc.status = DocStatus.ready
 
+        # 4. Synchronize points with Qdrant Vector DB
+        try:
+            from app.services.vector_db.qdrant_service import qdrant_service
+            qdrant_payloads = []
+            for chunk in chunks:
+                if chunk.embedding is not None:
+                    qdrant_payloads.append({
+                        "chunk_id": chunk.id,
+                        "document_id": document_id,
+                        "organization_id": doc.organization_id if doc else None,
+                        "project_id": doc.project_id if doc else None,
+                        "department_id": doc.department_id if doc else None,
+                        "confidentiality": doc.confidentiality if doc else "INTERNAL",
+                        "doc_type": doc.doc_type if doc else "OTHER",
+                        "document_title": doc.title if doc else "",
+                        "chunk_index": chunk.chunk_index,
+                        "page_number": chunk.page_number,
+                        "token_count": chunk.token_count,
+                        "content": chunk.content,
+                        "dense_embedding": chunk.embedding,
+                        "metadata": chunk.metadata_ or {},
+                    })
+            if qdrant_payloads:
+                await qdrant_service.upsert_chunks(qdrant_payloads)
+        except Exception:
+            pass
+
         await db.commit()
 
         return {

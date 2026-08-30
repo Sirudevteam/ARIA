@@ -37,6 +37,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[STARTUP] Database verification error: {e}")
 
+    # Ensure Qdrant collection & hybrid vector indexes exist
+    try:
+        from app.services.vector_db.qdrant_service import qdrant_service
+        await qdrant_service.ensure_collection()
+        print("[STARTUP] Qdrant vector database initialized.")
+    except Exception as e:
+        print(f"[STARTUP] Qdrant initialization note: {e}")
+
     yield
     # Shutdown
     print(f"[SHUTDOWN] {settings.APP_NAME} shutting down...")

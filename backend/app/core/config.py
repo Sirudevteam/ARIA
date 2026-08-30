@@ -57,6 +57,17 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME: str = "aria-documents"
     R2_ENDPOINT_URL: str | None = None
     R2_PUBLIC_URL_PREFIX: str | None = None
+    # ── Qdrant Vector Database & Hybrid Engine ───────────────────────────────
+    VECTOR_DB_BACKEND: str = "qdrant"  # "qdrant", "pgvector", "memory"
+    QDRANT_HOST: str = "localhost"
+    QDRANT_PORT: int = 6333
+    QDRANT_GRPC_PORT: int = 6334
+    QDRANT_URL: str | None = None
+    QDRANT_API_KEY: str | None = None
+    QDRANT_COLLECTION: str = "aria_chunks"
+    QDRANT_PREFER_GRPC: bool = False
+    QDRANT_TIMEOUT_SECONDS: float = 10.0
+
     # ── Embedding & Vector Search ─────────────────────────────────────────────
     EMBEDDING_PROVIDER: str = "bge_m3"  # "bge_m3", "openai", "mock"
     EMBEDDING_MODEL: str = "BAAI/bge-m3"

@@ -12,12 +12,13 @@ PyJWT[crypto]>=2.9.0
 cryptography>=43.0.0
 
 # =============================================================================
-# Database
+# Database & Vector Engine (Qdrant & PostgreSQL)
 # =============================================================================
 sqlalchemy>=2.0.36
 # psycopg3 binary wheels available for Python 3.14
 psycopg[binary]>=3.3.4
 pgvector>=0.3.6
+qdrant-client>=1.12.0
 alembic>=1.14.0
 
 # =============================================================================

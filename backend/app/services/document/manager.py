@@ -448,15 +448,22 @@ class DocumentManager:
         db: AsyncSession,
         doc: Document,
     ) -> Dict[str, Any]:
-        """Delete document from database and delete physical storage files."""
-        # 1. Delete physical storage files
+        """Delete document from database, purge Qdrant vector points, and delete storage files."""
+        # 1. Delete physical storage files from Cloudflare R2 / local
         storage_service.delete_document_files(
             org_id=doc.organization_id,
             project_id=doc.project_id,
             doc_id=doc.id,
         )
 
-        # 2. Delete database record
+        # 2. Delete vector embeddings from Qdrant
+        try:
+            from app.services.vector_db.qdrant_service import qdrant_service
+            await qdrant_service.delete_document_chunks(doc.id)
+        except Exception:
+            pass
+
+        # 3. Delete database record
         doc_id = doc.id
         doc_title = doc.title
         await db.delete(doc)

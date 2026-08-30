@@ -163,7 +163,53 @@ class HybridRetrievalEngine:
             if not target_project_ids and user_context.role_name != "SUPER_ADMIN":
                 return []
 
-        # Build candidate chunks query with all security & status filters
+        # =========================================================================
+        # 1.5. QDRANT NATIVE HYBRID RETRIEVAL (Dense BGE-M3 + Sparse BM25 + RRF)
+        # =========================================================================
+        query_vector = await embedding_service.embed_query(query)
+
+        try:
+            from app.services.vector_db.qdrant_service import qdrant_service
+            qdrant_hits = await qdrant_service.hybrid_search(
+                query=query,
+                dense_vector=query_vector,
+                organization_id=user_context.organization_id if user_context.role_name != "SUPER_ADMIN" else None,
+                allowed_project_ids=list(target_project_ids) if target_project_ids else None,
+                department_ids=filters.department_ids if filters.department_ids else None,
+                current_version_only=filters.current_version_only,
+                top_k=top_k,
+            )
+
+            if qdrant_hits:
+                qdrant_results: List[RetrievedChunk] = []
+                for idx, hit in enumerate(qdrant_hits):
+                    c_id_str = hit.get("chunk_id")
+                    d_id_str = hit.get("document_id")
+                    meta = hit.get("metadata", {})
+                    qdrant_results.append(
+                        RetrievedChunk(
+                            chunk_id=uuid.UUID(c_id_str) if c_id_str else uuid.uuid4(),
+                            document_id=uuid.UUID(d_id_str) if d_id_str else uuid.uuid4(),
+                            document_title=hit.get("document_title") or "Document",
+                            doc_type=hit.get("doc_type", "OTHER"),
+                            version_number=int(hit.get("version_number", 1)),
+                            page=int(hit["page_number"]) if hit.get("page_number") is not None else None,
+                            section=hit.get("section_heading"),
+                            content=hit.get("content", ""),
+                            similarity_score=round(hit.get("rrf_score", 0.0), 4),
+                            keyword_score=round(hit.get("rrf_score", 0.0), 4),
+                            combined_score=round(hit.get("rrf_score", 0.0), 4),
+                            dense_rank=idx + 1,
+                            keyword_rank=idx + 1,
+                            match_channel="both",
+                            metadata=meta,
+                        )
+                    )
+                return qdrant_results
+        except Exception:
+            pass
+
+        # Build candidate chunks query with all security & status filters (PostgreSQL fallback)
         stmt = (
             select(DocumentChunk)
             .join(Document, Document.id == DocumentChunk.document_id)
