@@ -1,12 +1,25 @@
 "use client";
 
-import React, { Suspense } from "react";
-import { SignIn } from "@clerk/nextjs";
+import React, { Suspense, useState, useEffect } from "react";
+import { SignIn, SignUp } from "@clerk/nextjs";
 import { VehicleWireframe } from "@/components/ui/VehicleWireframe";
 import { LidarBackground } from "@/components/ui/LidarBackground";
 import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const checkHash = () => {
+        setIsSignUp(window.location.hash.includes("sign-up"));
+      };
+      checkHash();
+      window.addEventListener("hashchange", checkHash);
+      return () => window.removeEventListener("hashchange", checkHash);
+    }
+  }, []);
+
   return (
     <div className="relative min-h-screen flex bg-[#020817] overflow-hidden">
       <LidarBackground opacity={0.14} />
@@ -70,7 +83,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right form panel: Clerk SignIn */}
+      {/* Right form panel: Clerk SignIn / SignUp */}
       <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
         <Suspense
           fallback={
@@ -80,26 +93,49 @@ export default function LoginPage() {
             </div>
           }
         >
-          <SignIn
-            routing="hash"
-            signUpUrl="/login#sign-up"
-            fallbackRedirectUrl="/dashboard"
-            appearance={{
-              elements: {
-                rootBox: "w-full max-w-md",
-                card: "bg-[#080f1e]/95 border border-sky-500/20 shadow-2xl shadow-sky-500/10 text-white rounded-xl backdrop-blur-xl",
-                headerTitle: "text-white font-bold tracking-tight text-lg",
-                headerSubtitle: "text-slate-400 text-xs",
-                socialButtonsBlockButton: "bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white",
-                formButtonPrimary: "bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/25",
-                formFieldLabel: "text-slate-300 text-xs font-medium",
-                formFieldInput: "bg-slate-900/80 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-500",
-                footerActionLink: "text-sky-400 hover:text-sky-300",
-                identityPreviewText: "text-slate-200",
-                identityPreviewEditButton: "text-sky-400 hover:text-sky-300",
-              },
-            }}
-          />
+          {isSignUp ? (
+            <SignUp
+              routing="hash"
+              signInUrl="/login#sign-in"
+              fallbackRedirectUrl="/dashboard"
+              appearance={{
+                elements: {
+                  rootBox: "w-full max-w-md",
+                  card: "bg-[#080f1e]/95 border border-sky-500/20 shadow-2xl shadow-sky-500/10 text-white rounded-xl backdrop-blur-xl",
+                  headerTitle: "text-white font-bold tracking-tight text-lg",
+                  headerSubtitle: "text-slate-400 text-xs",
+                  socialButtonsBlockButton: "bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white",
+                  formButtonPrimary: "bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/25",
+                  formFieldLabel: "text-slate-300 text-xs font-medium",
+                  formFieldInput: "bg-slate-900/80 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-500",
+                  footerActionLink: "text-sky-400 hover:text-sky-300",
+                  identityPreviewText: "text-slate-200",
+                  identityPreviewEditButton: "text-sky-400 hover:text-sky-300",
+                },
+              }}
+            />
+          ) : (
+            <SignIn
+              routing="hash"
+              signUpUrl="/login#sign-up"
+              fallbackRedirectUrl="/dashboard"
+              appearance={{
+                elements: {
+                  rootBox: "w-full max-w-md",
+                  card: "bg-[#080f1e]/95 border border-sky-500/20 shadow-2xl shadow-sky-500/10 text-white rounded-xl backdrop-blur-xl",
+                  headerTitle: "text-white font-bold tracking-tight text-lg",
+                  headerSubtitle: "text-slate-400 text-xs",
+                  socialButtonsBlockButton: "bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white",
+                  formButtonPrimary: "bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/25",
+                  formFieldLabel: "text-slate-300 text-xs font-medium",
+                  formFieldInput: "bg-slate-900/80 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-500",
+                  footerActionLink: "text-sky-400 hover:text-sky-300",
+                  identityPreviewText: "text-slate-200",
+                  identityPreviewEditButton: "text-sky-400 hover:text-sky-300",
+                },
+              }}
+            />
+          )}
         </Suspense>
       </div>
     </div>
