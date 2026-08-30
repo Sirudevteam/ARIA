@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { documentsService, DocumentFilters } from "@/lib/services/documents";
 import {
   Department,
@@ -16,7 +15,6 @@ import {
   FileText,
   Upload,
   Search,
-  Filter,
   RefreshCw,
   Download,
   Trash2,
@@ -25,22 +23,15 @@ import {
   Info,
   CheckCircle2,
   AlertCircle,
-  Clock,
-  Shield,
   Layers,
   Plus,
   X,
   FileCode,
-  FileSpreadsheet,
   File,
-  Folder,
   FolderPlus,
-  Lock,
 } from "lucide-react";
 
 export default function DocumentsPage() {
-  const { user, role, hasRole } = useAuth();
-
   // State
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -54,7 +45,6 @@ export default function DocumentsPage() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedDocType, setSelectedDocType] = useState<string>("");
-  const [selectedConfidentiality, setSelectedConfidentiality] = useState<string>("");
 
   // Modals & Drawers
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -100,7 +90,6 @@ export default function DocumentsPage() {
         department_id: selectedDepartment || undefined,
         status: selectedStatus || undefined,
         doc_type: selectedDocType || undefined,
-        confidentiality: selectedConfidentiality || undefined,
       };
       const res = await documentsService.listDocuments(filters);
       setDocuments(res.items);
@@ -116,7 +105,6 @@ export default function DocumentsPage() {
     selectedDepartment,
     selectedStatus,
     selectedDocType,
-    selectedConfidentiality,
   ]);
 
   // Initial Data Fetch
@@ -247,9 +235,10 @@ export default function DocumentsPage() {
       setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
       await documentsService.deleteDocument(doc.id);
       await fetchDocuments();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to delete document:", err);
-      alert(`Could not delete document: ${err?.message || "Internal server error"}`);
+      const message = err instanceof Error ? err.message : "Internal server error";
+      alert(`Could not delete document: ${message}`);
       await fetchDocuments();
     }
   };
@@ -316,7 +305,7 @@ export default function DocumentsPage() {
     }
   };
 
-  const getDocTypeIcon = (docType: string, mimeType?: string) => {
+  const getDocTypeIcon = (docType: string) => {
     switch (docType) {
       case "manual":
         return <FileText className="w-4 h-4 text-sky-400" />;
@@ -515,7 +504,7 @@ export default function DocumentsPage() {
                     {/* Title */}
                     <td className="py-3 px-4">
                       <div className="flex items-start gap-2.5">
-                        <div className="mt-0.5 shrink-0">{getDocTypeIcon(doc.doc_type, doc.mime_type)}</div>
+                        <div className="mt-0.5 shrink-0">{getDocTypeIcon(doc.doc_type)}</div>
                         <div className="space-y-0.5">
                           <button
                             type="button"

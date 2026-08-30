@@ -1,9 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { RetrievedChunkResult } from "@/lib/services/search";
-import { X, FileText, Hash, Copy, Check, Award, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { X, FileText, Hash, Copy, Check, Award } from "lucide-react";
 
 interface CitationModalProps {
   citation: RetrievedChunkResult;

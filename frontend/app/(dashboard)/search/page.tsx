@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { searchService, RetrievedChunkResult } from "@/lib/services/search";
 import { ProjectSummary } from "@/types/document";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +10,6 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
-  Layers,
   FileText,
   Bookmark,
   HelpCircle,
@@ -27,19 +25,17 @@ import {
 } from "lucide-react";
 
 export default function SearchPage() {
-  const { user } = useAuth();
-
   // State
   const [query, setQuery] = useState("");
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [alpha, setAlpha] = useState<number>(0.5); // 0.0 = Keyword, 1.0 = Vector
-  const [fusionMode, setFusionMode] = useState<"rrf" | "weighted">("rrf");
-  const [candidateK, setCandidateK] = useState<number>(20);
+  const fusionMode: "rrf" | "weighted" = "rrf";
+  const candidateK = 20;
   const [topK, setTopK] = useState<number>(5);
   const [enableRerank, setEnableRerank] = useState<boolean>(true);
   const [minRelevanceThreshold, setMinRelevanceThreshold] = useState<number>(0.25);
-  const [currentVersionOnly, setCurrentVersionOnly] = useState<boolean>(true);
+  const currentVersionOnly = true;
 
   // Results
   const [results, setResults] = useState<RetrievedChunkResult[]>([]);

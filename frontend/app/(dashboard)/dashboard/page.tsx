@@ -3,21 +3,16 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
 import { documentsService } from "@/lib/services/documents";
 import { VehicleWireframe } from "@/components/ui/VehicleWireframe";
 import { LidarBackground } from "@/components/ui/LidarBackground";
-import { Badge } from "@/components/ui/badge";
 import {
   MessageSquareDot,
   FileText,
   Cpu,
-  Database,
   Layers3,
   ArrowRight,
-  Sparkles,
   HelpCircle,
-  Shield,
   ScanLine,
 } from "lucide-react";
 
@@ -29,7 +24,6 @@ const EXAMPLE_QUESTIONS = [
 ];
 
 export default function DashboardPage() {
-  const { user, profile, role } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<{ total_documents: number; total_chunks: number; rag_status: string }>({
     total_documents: 0,

@@ -5,8 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { VehicleWireframe } from "@/components/ui/VehicleWireframe";
 import { LidarBackground } from "@/components/ui/LidarBackground";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, ShieldCheck, Lock, Mail, User, AlertCircle, ArrowRight } from "lucide-react";
+import { Loader2, ShieldCheck, AlertCircle, ArrowRight } from "lucide-react";
 
 /* ── Demo role config ───────────────────────────────────────────────── */
 const DEMO_USERS = [

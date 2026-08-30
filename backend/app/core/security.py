@@ -2,6 +2,8 @@
 Authentication and security utilities for Clerk & JWT validation.
 """
 
+import base64
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 import uuid
@@ -65,27 +67,67 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
+def _decode_local_demo_token(token: str) -> Optional[TokenPayload]:
+    """
+    Decode the frontend's development-only demo token format.
+
+    The local UI stores btoa(JSON.stringify(claims)), which is not a JWT. Keep
+    support scoped to non-production and only for one-segment base64 JSON tokens
+    so malformed or forged JWTs cannot bypass signature verification.
+    """
+    if settings.is_production or "." in token:
+        return None
+
+    padding = "=" * (-len(token) % 4)
+    padded_token = token + padding
+
+    try:
+        try:
+            decoded = base64.b64decode(padded_token, validate=True)
+        except Exception:
+            decoded = base64.urlsafe_b64decode(padded_token)
+
+        claims = json.loads(decoded.decode("utf-8"))
+    except Exception:
+        return None
+
+    if not isinstance(claims, dict) or not (claims.get("sub") or claims.get("email")):
+        return None
+
+    payload = TokenPayload(**claims)
+    if payload.exp is not None and payload.exp < int(datetime.now(timezone.utc).timestamp()):
+        raise AuthError("Authentication token has expired. Please log in again.", 401)
+
+    return payload
+
+
 def decode_jwt_token(token: str) -> TokenPayload:
     """
     Decode and verify a Clerk / Bearer JWT token.
     Supports:
     1. Clerk JWKS (RS256) via CLERK_JWKS_URL
     2. Symmetric HMAC (HS256/HS384/HS512) with CLERK_JWT_SECRET (test suite / dev)
-    3. Graceful fallback claims extraction
+    3. Development-only base64 JSON demo tokens from the local frontend
     """
     try:
+        local_demo_payload = _decode_local_demo_token(token)
+        if local_demo_payload:
+            return local_demo_payload
+
         # Check token header to inspect algorithm and key ID
         try:
             header = jwt.get_unverified_header(token)
             alg = header.get("alg", "RS256")
             kid = header.get("kid")
-        except Exception:
-            alg = "HS256"
-            kid = None
+        except Exception as e:
+            raise AuthError(f"Invalid authentication token: {str(e)}", 401)
 
         # 1. Clerk JWKS asymmetric verification (RS256)
-        jwks_client = get_jwks_client()
-        if jwks_client and kid and alg.startswith("RS"):
+        if alg.startswith("RS"):
+            jwks_client = get_jwks_client()
+            if not jwks_client or not kid:
+                raise AuthError("Invalid authentication token: missing JWKS configuration or key id", 401)
+
             try:
                 signing_key = jwks_client.get_signing_key_from_jwt(token)
                 payload = jwt.decode(
@@ -97,9 +139,8 @@ def decode_jwt_token(token: str) -> TokenPayload:
                 return TokenPayload(**payload)
             except jwt.ExpiredSignatureError:
                 raise AuthError("Authentication token has expired. Please log in again.", 401)
-            except Exception as e:
-                # Fall through to symmetric / fallback
-                pass
+            except Exception:
+                raise AuthError("Invalid authentication token: signature verification failed", 401)
 
         # 2. Symmetric HMAC verification (HS256 / dev tokens)
         if alg.startswith("HS"):
@@ -118,17 +159,19 @@ def decode_jwt_token(token: str) -> TokenPayload:
             except Exception as e:
                 raise AuthError(f"Invalid authentication token: {str(e)}", 401)
 
-        # 3. Graceful claims extraction fallback (dev / test mock tokens)
-        try:
-            payload = jwt.decode(
-                token,
-                options={"verify_signature": False, "verify_aud": False, "verify_exp": True},
-            )
-            return TokenPayload(**payload)
-        except jwt.ExpiredSignatureError:
-            raise AuthError("Authentication token has expired. Please log in again.", 401)
-        except Exception as e:
-            raise AuthError(f"Invalid authentication token: {str(e)}", 401)
+        if alg == "none" and not settings.is_production:
+            try:
+                payload = jwt.decode(
+                    token,
+                    options={"verify_signature": False, "verify_aud": False, "verify_exp": True},
+                )
+                return TokenPayload(**payload)
+            except jwt.ExpiredSignatureError:
+                raise AuthError("Authentication token has expired. Please log in again.", 401)
+            except Exception as e:
+                raise AuthError(f"Invalid authentication token: {str(e)}", 401)
+
+        raise AuthError(f"Invalid authentication token: unsupported algorithm '{alg}'", 401)
 
     except AuthError:
         raise

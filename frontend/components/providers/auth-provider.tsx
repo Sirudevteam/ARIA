@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { useUser, useAuth as useClerkAuth, useClerk } from "@clerk/nextjs";
 import { api, APIError, setAuthToken } from "@/lib/api";
 import { UserProfileResponse, RoleName } from "@/types/auth";
@@ -37,12 +37,18 @@ function LocalAuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserProfile = useCallback(async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("aria_auth_token") : null;
+    if (!token) {
+      setProfile(null);
+      return;
+    }
     try {
       const data = await api.get<UserProfileResponse>("/api/v1/auth/me");
       setProfile(data);
     } catch (err) {
       if (err instanceof APIError && err.status === 401) {
         setProfile(null);
+        setAuthToken(null);
       } else {
         console.warn("Failed to fetch user profile from backend:", err);
       }
@@ -63,20 +69,9 @@ function LocalAuthProvider({ children }: { children: React.ReactNode }) {
           setAuthToken(localToken);
           await fetchUserProfile();
         } else {
-          // Default seeded user: deenadeena3726 for instant access
-          const defaultToken = btoa(JSON.stringify({
-            sub: "a4960c51-8cb2-4972-a3b8-2e3474539dbc",
-            email: "deenadeena3726@gmail.com",
-            role: "SUPER_ADMIN",
-            alg: "HS256"
-          }));
-          setAuthToken(defaultToken);
-          setDemoUser({
-            id: "a4960c51-8cb2-4972-a3b8-2e3474539dbc",
-            email: "deenadeena3726@gmail.com",
-            name: "deenadeena3726",
-          });
-          await fetchUserProfile();
+          setAuthToken(null);
+          setDemoUser(null);
+          setProfile(null);
         }
       } catch (e) {
         console.error("Local auth init error:", e);
@@ -134,7 +129,10 @@ function LocalAuthProvider({ children }: { children: React.ReactNode }) {
 
   const user = demoUser;
   const role: RoleName | null = (profile?.role?.name as RoleName) || null;
-  const effectivePermissions = profile?.effective_permissions || [];
+  const effectivePermissions = useMemo(
+    () => profile?.effective_permissions ?? [],
+    [profile?.effective_permissions]
+  );
 
   const hasRole = useCallback((allowedRoles: RoleName[]): boolean => {
     if (!role) return false;
@@ -195,6 +193,7 @@ function ClerkAuthProviderInner({ children }: { children: React.ReactNode }) {
     } catch (err) {
       if (err instanceof APIError && err.status === 401) {
         setProfile(null);
+        setAuthToken(null);
       } else {
         console.warn("Failed to fetch user profile from backend:", err);
       }
@@ -316,7 +315,10 @@ function ClerkAuthProviderInner({ children }: { children: React.ReactNode }) {
     : demoUser;
 
   const role: RoleName | null = (profile?.role?.name as RoleName) || null;
-  const effectivePermissions = profile?.effective_permissions || [];
+  const effectivePermissions = useMemo(
+    () => profile?.effective_permissions ?? [],
+    [profile?.effective_permissions]
+  );
 
   const hasRole = useCallback((allowedRoles: RoleName[]): boolean => {
     if (!role) return false;

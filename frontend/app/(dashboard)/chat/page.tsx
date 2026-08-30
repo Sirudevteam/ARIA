@@ -1,27 +1,19 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { searchService, RetrievedChunkResult } from "@/lib/services/search";
 import { chatService, ChatMessage, TokenUsage } from "@/lib/services/chat";
 import { ProjectSummary } from "@/types/document";
 import { MarkdownRenderer } from "@/components/chat/MarkdownRenderer";
 import { CitationModal } from "@/components/chat/CitationModal";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Send,
   Sparkles,
   Bot,
-  User as UserIcon,
   FileText,
-  Bookmark,
-  Zap,
   SlidersHorizontal,
   ChevronDown,
   ChevronRight,
-  RefreshCw,
   BrainCircuit,
   ArrowUpRight,
   Square,
@@ -37,8 +29,6 @@ import {
   Menu,
   X,
   Clock,
-  Layers,
-  Folder,
 } from "lucide-react";
 
 interface MessageItem {
@@ -83,10 +73,9 @@ const DEFAULT_PROMPT_SUGGESTIONS = [
 ];
 
 const STORAGE_KEY = "aria_chat_sessions_v2";
+const EMPTY_MESSAGES: MessageItem[] = [];
 
 export default function ChatPage() {
-  const { user } = useAuth();
-
   // Sessions state (loaded from localStorage on mount)
   const [sessions, setSessions] = useState<ConversationSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
@@ -124,32 +113,47 @@ export default function ChatPage() {
 
   // Load sessions from localStorage
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSessions(parsed);
-          setActiveSessionId(parsed[0].id);
-          setIsLoaded(true);
-          return;
+    let isMounted = true;
+
+    async function loadStoredSessions() {
+      await Promise.resolve();
+
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            if (!isMounted) return;
+            setSessions(parsed);
+            setActiveSessionId(parsed[0].id);
+            setIsLoaded(true);
+            return;
+          }
         }
+      } catch {
+        // Fallback
       }
-    } catch {
-      // Fallback
+
+      if (!isMounted) return;
+
+      // Default initial session
+      const initialSession: ConversationSession = {
+        id: `session-${Date.now()}`,
+        title: "New Conversation",
+        createdAt: new Date().toISOString(),
+        dateCategory: "Today",
+        messages: [],
+      };
+      setSessions([initialSession]);
+      setActiveSessionId(initialSession.id);
+      setIsLoaded(true);
     }
 
-    // Default initial session
-    const initialSession: ConversationSession = {
-      id: `session-${Date.now()}`,
-      title: "New Conversation",
-      createdAt: new Date().toISOString(),
-      dateCategory: "Today",
-      messages: [],
+    loadStoredSessions();
+
+    return () => {
+      isMounted = false;
     };
-    setSessions([initialSession]);
-    setActiveSessionId(initialSession.id);
-    setIsLoaded(true);
   }, []);
 
   // Persist sessions to localStorage
@@ -179,7 +183,7 @@ export default function ChatPage() {
 
   // Active session helper
   const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
-  const messages = activeSession?.messages || [];
+  const messages = activeSession?.messages || EMPTY_MESSAGES;
 
   // Group sessions by date
   const todaySessions = sessions.filter((s) => s.dateCategory === "Today");

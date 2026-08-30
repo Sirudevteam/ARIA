@@ -47,7 +47,7 @@ export function AutomotiveLidarAnimation() {
     // Simulation State
     let angle = 0;
     let roadOffset = 0;
-    let lastFrameTime = performance.now();
+    const lastFrameTime = performance.now();
     let frameCount = 0;
     let fpsTimer = performance.now();
 

@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Building, Shield, FolderGit2, Users, CheckCircle2, Key, RefreshCw } from "lucide-react";
+import { User, Building, FolderGit2, Key, RefreshCw } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, profile, role, effectivePermissions, refreshProfile, isLoading } = useAuth();

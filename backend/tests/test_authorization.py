@@ -3,7 +3,9 @@ Unit & Integration Tests for Authentication and Multi-Layer Authorization.
 Tests 401 unauthenticated, 403 status/role/project/document failures, and 200 success flows.
 """
 
+import base64
 from datetime import datetime, timedelta, timezone
+import json
 import os
 from typing import AsyncGenerator
 import uuid
@@ -60,6 +62,18 @@ class TestEntities:
 
 
 entities = TestEntities()
+
+
+def make_base64_json_token(claims: dict) -> str:
+    """Match the frontend's local demo token format."""
+    return base64.b64encode(json.dumps(claims).encode("utf-8")).decode("ascii")
+
+
+def make_unsigned_jwt_like_token(header: dict, payload: dict) -> str:
+    """Create a parseable JWT-shaped token without a valid signature."""
+    encoded_header = base64.urlsafe_b64encode(json.dumps(header).encode("utf-8")).rstrip(b"=").decode("ascii")
+    encoded_payload = base64.urlsafe_b64encode(json.dumps(payload).encode("utf-8")).rstrip(b"=").decode("ascii")
+    return f"{encoded_header}.{encoded_payload}.forged-signature"
 
 
 @pytest_asyncio.fixture(scope="module", autouse=True)
@@ -227,6 +241,25 @@ async def test_401_invalid_jwt_token(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_401_unverified_rs_jwt_token(client: AsyncClient, monkeypatch: pytest.MonkeyPatch):
+    """JWT-shaped RS tokens must not fall back to unsigned claims extraction."""
+    from app.core import security as security_module
+
+    monkeypatch.setattr(security_module, "get_jwks_client", lambda: None)
+
+    forged_token = make_unsigned_jwt_like_token(
+        {"alg": "RS256", "kid": "fake-key"},
+        {"sub": str(entities.admin_id), "email": "admin@autocruise.test"},
+    )
+    headers = {"Authorization": f"Bearer {forged_token}"}
+
+    resp = await client.get("/api/v1/auth/me", headers=headers)
+
+    assert resp.status_code == 401
+    assert "Invalid authentication token" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_401_expired_jwt_token(client: AsyncClient):
     """Requests with expired JWT must return 401."""
     expired_token = create_access_token(
@@ -321,6 +354,26 @@ async def test_200_profile_me_success(client: AsyncClient):
     assert data["role"]["name"] == "ANNOTATOR"
     assert len(data["projects"]) == 1
     assert data["projects"][0]["project_name"] == "Project Alpha (Urban)"
+
+
+@pytest.mark.asyncio
+async def test_200_profile_me_with_local_demo_token(client: AsyncClient):
+    """Frontend local demo base64 JSON tokens authenticate in development."""
+    token = make_base64_json_token(
+        {
+            "sub": str(entities.admin_id),
+            "email": "admin@autocruise.test",
+            "role": "ADMIN",
+        }
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = await client.get("/api/v1/auth/me", headers=headers)
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["email"] == "admin@autocruise.test"
+    assert data["role"]["name"] == "ADMIN"
 
 
 @pytest.mark.asyncio

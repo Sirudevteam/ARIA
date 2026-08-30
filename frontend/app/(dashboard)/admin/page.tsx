@@ -1,13 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { adminService } from "@/lib/services/admin";
 import {
   AdminOverviewKPIs,
-  AIUsageStats,
   AuditLogEntry,
-  FeedbackAnalytics,
   UnansweredQueryItem,
 } from "@/types/admin";
 import { Badge } from "@/components/ui/badge";
@@ -16,35 +13,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import {
   Activity,
   AlertCircle,
-  ArrowUpRight,
-  BarChart3,
-  Bot,
   BrainCircuit,
   CheckCircle2,
-  Clock,
   Database,
-  FileCode,
   FileText,
   Folder,
   HelpCircle,
-  History,
-  Layers,
   LayoutDashboard,
   MessageSquare,
   Plus,
   RefreshCw,
-  Search,
   Settings,
   Shield,
-  ShieldAlert,
   ShieldCheck,
-  Sparkles,
-  ThumbsDown,
   ThumbsUp,
-  TrendingUp,
-  UserCheck,
   Users,
-  XCircle,
   Zap,
 } from "lucide-react";
 
@@ -63,8 +46,6 @@ type AdminSection =
   | "settings";
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth();
-
   // Selected Section (Default: Dashboard)
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
 
@@ -80,10 +61,7 @@ export default function AdminDashboardPage() {
     avg_latency_ms: 320.5,
   });
   const [unanswered, setUnanswered] = useState<UnansweredQueryItem[]>([]);
-  const [aiUsage, setAiUsage] = useState<AIUsageStats | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackAnalytics | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Unanswered status update simulation
   const [handledUnansweredIds, setHandledUnansweredIds] = useState<Record<string, string>>({});
@@ -139,24 +117,17 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function loadAdminData() {
       try {
-        setIsLoading(true);
-        const [kpisData, unansData, usageData, fbData, logsData] = await Promise.all([
+        const [kpisData, unansData, logsData] = await Promise.all([
           adminService.getOverviewKPIs(),
           adminService.getUnansweredQuestions(),
-          adminService.getAIUsageStats(),
-          adminService.getFeedbackAnalytics(),
           adminService.getAuditLogs(20),
         ]);
 
         setKpis(kpisData);
         setUnanswered(unansData);
-        setAiUsage(usageData);
-        setFeedback(fbData);
         setAuditLogs(logsData);
       } catch (err) {
         console.error("Admin dashboard data load error:", err);
-      } finally {
-        setIsLoading(false);
       }
     }
     loadAdminData();
