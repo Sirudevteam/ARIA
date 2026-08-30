@@ -93,76 +93,49 @@ export default function LoginPage() {
             </div>
           }
         >
-          <div className="w-full max-w-md space-y-3">
-            {/* Mode Switcher Tabs */}
-            <div className="flex bg-[#080f1e]/90 p-1 rounded-xl border border-sky-500/20 backdrop-blur-md">
-              <button
-                type="button"
-                onClick={() => setIsSignUp(false)}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
-                  !isSignUp
-                    ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsSignUp(true)}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
-                  isSignUp
-                    ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Create Account (Sign Up)
-              </button>
-            </div>
-
-            {/* Clerk Form Component */}
-            {isSignUp ? (
-              <SignUp
-                routing="hash"
-                fallbackRedirectUrl="/dashboard"
-                appearance={{
-                  elements: {
-                    rootBox: "w-full",
-                    card: "bg-[#080f1e]/95 border border-sky-500/20 shadow-2xl shadow-sky-500/10 text-white rounded-xl backdrop-blur-xl",
-                    headerTitle: "text-white font-bold tracking-tight text-lg",
-                    headerSubtitle: "text-slate-400 text-xs",
-                    socialButtonsBlockButton: "bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white",
-                    formButtonPrimary: "bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/25",
-                    formFieldLabel: "text-slate-300 text-xs font-medium",
-                    formFieldInput: "bg-slate-900/80 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-500",
-                    footerActionLink: "text-sky-400 hover:text-sky-300",
-                    identityPreviewText: "text-slate-200",
-                    identityPreviewEditButton: "text-sky-400 hover:text-sky-300",
-                  },
-                }}
-              />
-            ) : (
-              <SignIn
-                routing="hash"
-                fallbackRedirectUrl="/dashboard"
-                appearance={{
-                  elements: {
-                    rootBox: "w-full",
-                    card: "bg-[#080f1e]/95 border border-sky-500/20 shadow-2xl shadow-sky-500/10 text-white rounded-xl backdrop-blur-xl",
-                    headerTitle: "text-white font-bold tracking-tight text-lg",
-                    headerSubtitle: "text-slate-400 text-xs",
-                    socialButtonsBlockButton: "bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white",
-                    formButtonPrimary: "bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/25",
-                    formFieldLabel: "text-slate-300 text-xs font-medium",
-                    formFieldInput: "bg-slate-900/80 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-500",
-                    footerActionLink: "text-sky-400 hover:text-sky-300",
-                    identityPreviewText: "text-slate-200",
-                    identityPreviewEditButton: "text-sky-400 hover:text-sky-300",
-                  },
-                }}
-              />
-            )}
-          </div>
+          {isSignUp ? (
+            <SignUp
+              routing="hash"
+              signInUrl="/login#sign-in"
+              fallbackRedirectUrl="/dashboard"
+              appearance={{
+                elements: {
+                  rootBox: "w-full max-w-md",
+                  card: "bg-[#080f1e]/95 border border-sky-500/20 shadow-2xl shadow-sky-500/10 text-white rounded-xl backdrop-blur-xl",
+                  headerTitle: "text-white font-bold tracking-tight text-lg",
+                  headerSubtitle: "text-slate-400 text-xs",
+                  socialButtonsBlockButton: "bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white",
+                  formButtonPrimary: "bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/25",
+                  formFieldLabel: "text-slate-300 text-xs font-medium",
+                  formFieldInput: "bg-slate-900/80 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-500",
+                  footerActionLink: "text-sky-400 hover:text-sky-300",
+                  identityPreviewText: "text-slate-200",
+                  identityPreviewEditButton: "text-sky-400 hover:text-sky-300",
+                },
+              }}
+            />
+          ) : (
+            <SignIn
+              routing="hash"
+              signUpUrl="/login#sign-up"
+              fallbackRedirectUrl="/dashboard"
+              appearance={{
+                elements: {
+                  rootBox: "w-full max-w-md",
+                  card: "bg-[#080f1e]/95 border border-sky-500/20 shadow-2xl shadow-sky-500/10 text-white rounded-xl backdrop-blur-xl",
+                  headerTitle: "text-white font-bold tracking-tight text-lg",
+                  headerSubtitle: "text-slate-400 text-xs",
+                  socialButtonsBlockButton: "bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white",
+                  formButtonPrimary: "bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/25",
+                  formFieldLabel: "text-slate-300 text-xs font-medium",
+                  formFieldInput: "bg-slate-900/80 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-500",
+                  footerActionLink: "text-sky-400 hover:text-sky-300",
+                  identityPreviewText: "text-slate-200",
+                  identityPreviewEditButton: "text-sky-400 hover:text-sky-300",
+                },
+              }}
+            />
+          )}
         </Suspense>
       </div>
     </div>
