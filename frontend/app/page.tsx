@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ export default function RootPage() {
       if (user) {
         router.replace("/dashboard");
       } else {
-        router.replace("/login");
+        router.replace("/sign-in");
       }
     }
   }, [user, isLoading, router]);
