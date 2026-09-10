@@ -1,0 +1,127 @@
+✅ 1. First Normal Form (1NF)
+Rule: No repeating groups or arrays. Each column must contain atomic values.
+
+🚫 Unnormalized Table:
+StudentID	Name	Courses
+1	Alice	Math, English
+2	Bob	Science, Math
+
+✅ 1NF Table:
+StudentID	Name	Course
+1	Alice	Math
+1	Alice	English
+2	Bob	Science
+2	Bob	Math
+
+✅ 2. Second Normal Form (2NF)
+Rule: Must be in 1NF and no partial dependency (non-key attribute depends on whole primary key).
+
+🚫 1NF Table with Partial Dependency:
+StudentID	CourseID	StudentName	CourseName
+1	C101	Alice	Math
+
+StudentName depends only on StudentID
+
+✅ 2NF (Split Tables):
+Students Table
+
+StudentID	StudentName
+1	Alice
+
+Courses Table
+
+CourseID	CourseName
+C101	Math
+
+Enrollments Table
+
+StudentID	CourseID
+1	C101
+
+✅ 3. Third Normal Form (3NF)
+Rule: Must be in 2NF and no transitive dependency (non-key depends on another non-key).
+
+🚫 2NF Table:
+EmployeeID	Name	DeptID	DeptName
+101	John	10	HR
+
+DeptName depends on DeptID, which is not the primary key.
+
+✅ 3NF (Split):
+Departments Table
+
+DeptID	DeptName
+10	HR
+
+Employees Table
+
+EmployeeID	Name	DeptID
+101	John	10
+
+✅ 4. Boyce-Codd Normal Form (BCNF)
+Rule: Stronger version of 3NF — every determinant must be a candidate key.
+
+🚫 Problem Table:
+Course	Instructor	Room
+Math	Alice	R1
+
+Course → Instructor
+
+Instructor → Room
+But Instructor is not a candidate key.
+
+✅ BCNF Solution:
+Split into:
+Course_Instructor
+
+Course	Instructor
+Math	Alice
+
+Instructor_Room
+
+Instructor	Room
+Alice	R1
+
+✅ 5. Fourth Normal Form (4NF)
+Rule: Must be in BCNF and no multi-valued dependencies.
+
+🚫 Table with Multi-Valued Dependencies:
+Student	Course	Hobby
+Alice	Math	Chess
+Alice	Math	Painting
+
+Independent sets of data combined.
+
+✅ 4NF Tables:
+Student_Course
+
+Student	Course
+Alice	Math
+
+Student_Hobby
+
+Student	Hobby
+Alice	Chess
+Alice	Painting
+
+✅ 6. Fifth Normal Form (5NF)
+Rule: Deals with join dependency — data should not be reconstructible from multiple joins.
+
+🚫 3-way relationship Table:
+Supplier	Product	Location
+S1	P1	L1
+
+Split into:
+Supplier_Product
+
+Supplier	Product
+
+Product_Location
+
+Product	Location
+
+Supplier_Location
+
+Supplier	Location
+
+Reconstruction must give original table using natural joins.

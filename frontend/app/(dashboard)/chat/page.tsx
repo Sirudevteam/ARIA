@@ -996,55 +996,93 @@ export default function ChatPage() {
                     </div>
                   ) : null}
 
-                  {/* Citations */}
+                  {/* Sources (Deduplicated & Clean Minimalist Grouping) */}
                   {msg.role === "assistant" &&
                     msg.citations &&
-                    msg.citations.length > 0 && (
-                      <div
-                        className="mt-3.5 pt-3 space-y-2"
-                        style={{ borderTop: "1px solid rgba(14,165,233,0.12)" }}
-                      >
-                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-300">
-                          <FileText className="w-3.5 h-3.5 text-sky-400" />
-                          <span>Sources ({msg.citations.length} Verified Citations)</span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {msg.citations.map((c, idx) => (
-                            <button
-                              key={c.chunk_id || idx}
-                              onClick={() =>
-                                setActiveCitationModal({ citation: c, index: idx + 1 })
-                              }
-                              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs text-slate-200 hover:text-white transition-all cursor-pointer group"
-                              style={{
-                                background: "rgba(14,165,233,0.06)",
-                                border: "1px solid rgba(14,165,233,0.18)",
-                              }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.borderColor =
-                                  "rgba(14,165,233,0.45)")
-                              }
-                              onMouseLeave={(e) =>
-                                (e.currentTarget.style.borderColor =
-                                  "rgba(14,165,233,0.18)")
-                              }
-                            >
-                              <span className="text-base">📄</span>
-                              <div className="flex flex-col min-w-0">
-                                <span className="font-semibold text-white truncate">
-                                  {c.document_title}
+                    msg.citations.length > 0 && (() => {
+                      const docGroups: {
+                        title: string;
+                        docType?: string;
+                        pages: number[];
+                        items: { citation: any; index: number }[];
+                      }[] = [];
+
+                      msg.citations.forEach((c, idx) => {
+                        const title = c.document_title || "Reference Document";
+                        let group = docGroups.find((g) => g.title === title);
+                        if (!group) {
+                          group = {
+                            title,
+                            docType: c.doc_type,
+                            pages: [],
+                            items: [],
+                          };
+                          docGroups.push(group);
+                        }
+                        if (c.page != null && !group.pages.includes(c.page)) {
+                          group.pages.push(c.page);
+                        }
+                        group.items.push({ citation: c, index: idx + 1 });
+                      });
+
+                      return (
+                        <div
+                          className="mt-3.5 pt-3 space-y-2"
+                          style={{ borderTop: "1px solid rgba(14,165,233,0.12)" }}
+                        >
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-300">
+                            <FileText className="w-3.5 h-3.5 text-sky-400" />
+                            <span>
+                              {docGroups.length === 1
+                                ? `Source Document (${msg.citations.length} Verified Chunks)`
+                                : `Sources (${docGroups.length} Documents · ${msg.citations.length} Verified Chunks)`}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            {docGroups.map((group) => (
+                              <div
+                                key={group.title}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
+                                style={{
+                                  background: "rgba(14,165,233,0.06)",
+                                  border: "1px solid rgba(14,165,233,0.2)",
+                                }}
+                              >
+                                <span className="text-sm">📄</span>
+                                <span className="font-semibold text-white truncate max-w-[240px]" title={group.title}>
+                                  {group.title}
                                 </span>
-                                {c.page != null && (
-                                  <span className="text-[10px] text-slate-400 font-mono">
-                                    Page {c.page}
+                                {group.pages.length > 0 && (
+                                  <span className="text-[10px] text-sky-300 font-mono bg-sky-950/80 px-1.5 py-0.5 rounded border border-sky-500/25">
+                                    {group.pages.length === 1
+                                      ? `Page ${group.pages[0]}`
+                                      : `Pages ${group.pages.sort((a: number, b: number) => a - b).join(", ")}`}
                                   </span>
                                 )}
+                                <div className="flex items-center gap-1 border-l border-sky-500/20 pl-1.5 ml-0.5">
+                                  {group.items.map((item) => (
+                                    <button
+                                      key={item.index}
+                                      onClick={() =>
+                                        setActiveCitationModal({
+                                          citation: item.citation,
+                                          index: item.index,
+                                        })
+                                      }
+                                      className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-sky-300 bg-sky-500/15 hover:bg-sky-400 hover:text-slate-950 border border-sky-500/30 transition cursor-pointer"
+                                      title={`View citation [${item.index}] text excerpt`}
+                                    >
+                                      [{item.index}]
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
-                            </button>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                 </div>
 
                 {/* Message meta toolbar (assistant) */}

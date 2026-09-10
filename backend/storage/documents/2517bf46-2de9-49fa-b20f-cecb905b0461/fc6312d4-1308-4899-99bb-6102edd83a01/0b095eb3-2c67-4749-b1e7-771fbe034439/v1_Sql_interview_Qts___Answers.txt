@@ -1,0 +1,137 @@
+SQL Test Questions:
+
+ 1.    What is Sql Automation?
+
+ 2.    What is Database?
+ 
+ 3.    What is DBMS ?
+ 
+ 4.    What is RDMS ?
+
+ 5.    List out the SQL Servers types?
+
+ 6.    What is indexes ?
+
+ 7.    What is procedures explain with examples?
+
+ 8.    How to create the Procedure explain with examples?
+
+ 9.    What is triggers?
+
+ 10.   List out the trigger timings?
+
+ 11.   List out the Dbms Keys?
+
+ 12.   What is Primary key Explain Briefly?
+
+ 13.   What is Foreign Key explain Briefly?
+
+ 14.   What is Commit ?
+
+ 15    What is Rollback?
+
+ 16.   What is Variables in Procedures ?
+
+ 17.   List out the Data types in my SQL ?
+
+ 18.   What is my SQL ?
+
+ 19.   What is Transactions ?
+
+ 20.   What is Join triggers?
+
+
+
+
+
+1. What is Sql Automation?
+SQL automation refers to the process of automating SQL tasks such as query execution, data loading, backups, or any repetitive database management tasks using scripts, jobs, or schedulers.
+
+2. What is Database?
+A database is an organized collection of structured information, or data, typically stored electronically in a computer system. It is managed by a database management system (DBMS) to ensure data integrity, security, and efficient access.
+
+3. What is DBMS?
+DBMS stands for Database Management System. It is software that facilitates the creation, management, and use of databases. It allows users and applications to interact with databases rather than dealing directly with the data stored in them.
+
+4. What is RDMS?
+RDMS stands for Relational Database Management System. It refers to a type of DBMS that stores data in a structured format, using rows and columns in tables to establish relationships between different pieces of data.
+
+5. List out the SQL Server types?
+Common types of SQL servers include:
+Microsoft SQL Server
+MySQL Server
+PostgreSQL
+Oracle Database
+SQLite
+
+6. What are indexes?
+Indexes in databases are data structures used to improve the speed of data retrieval operations on a database table at the cost of additional space and slower writes. Indexes are created on columns in a table to speed up the query process.
+
+7. What are procedures, explain with examples?
+Procedures (also known as stored procedures) are precompiled collections of SQL statements and procedural logic stored in the database. They can be invoked with parameters and are often used for complex queries or tasks.
+
+8. How to create a Procedure, explain with examples?
+Example:
+sql
+Copy code
+CREATE PROCEDURE InsertEmployee
+@EmpID int,
+@EmpName varchar(50),
+@Salary decimal(10, 2)
+AS
+BEGIN
+    INSERT INTO Employees (EmpID, EmpName, Salary)
+    VALUES (@EmpID, @EmpName, @Salary);
+END;
+
+
+
+9. What are triggers?
+Triggers are special types of stored procedures that are automatically executed (fired) when certain events (e.g., INSERT, UPDATE, DELETE) occur in a table. They are used to enforce business rules, maintain data integrity, or automate complex database operations.
+
+10. List out the trigger timings?
+Triggers can fire at different timings:
+BEFORE (or FOR) trigger: Executes before the triggering action.
+AFTER trigger: Executes after the triggering action.
+INSTEAD OF trigger: Executes in place of the triggering action.
+
+11. List out the DBMS keys?
+DBMS keys include:
+Primary Key
+Foreign Key
+Candidate Key
+Super Key
+
+12. What is Primary Key, explain briefly?
+A Primary Key is a column or set of columns that uniquely identifies each row in a table. It must contain unique values and cannot contain NULL values. Primary keys enforce entity integrity and are typically indexed for fast data retrieval.
+
+13. What is Foreign Key, explain briefly?
+A Foreign Key is a column or a set of columns in one table that refers to the Primary Key in another table. It establishes and enforces a link between data in two tables, ensuring referential integrity.
+
+14. What is Comment?
+Comments in SQL are used to document SQL code and improve its readability without affecting its execution. They can be single-line (-- comment) or multi-line (/* comment */).
+
+15. What is Rollback?
+Rollback in SQL is a command that reverts the database to its previous state by undoing the transactions that have not been permanently saved. It is used to undo changes made during a transaction or set of transactions.
+
+16. What are Variables in Procedures?
+Variables in SQL procedures are placeholders for storing data values temporarily. They are used to pass data between SQL statements within a procedure or between different procedures.
+
+17. List out the Data types in MySQL?
+Common data types in MySQL include:
+INT
+VARCHAR
+DECIMAL
+DATE
+TIMESTAMP
+TEXT
+BLOB
+
+18. What is MySQL?
+MySQL is an open-source relational database management system (RDBMS) that uses SQL (Structured Query Language). It is widely used for managing databases in various applications ranging from small websites to large data warehouses.
+
+19. What are Transactions?
+Transactions in SQL are sequences of one or more SQL operations treated as a single logical unit of work. They are executed either completely (committed) or not at all (rolled back) to maintain data integrity and consistency.
+
+20. What is Join in SQL?
+Join in SQL combines rows from two or more tables based on a related column between them. Common types of joins include INNER JOIN, LEFT JOIN (or LEFT OUTER JOIN), RIGHT JOIN (or RIGHT OUTER JOIN), and FULL JOIN.
