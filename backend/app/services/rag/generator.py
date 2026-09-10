@@ -65,9 +65,11 @@ class RAGGeneratorService:
 
         # Refusal check when no relevant context chunks are available (Req 14)
         if not citations:
+            name_str = (user_context.user_name or "").strip()
+            intro = f"Here is your answer, {name_str}, based on the document:\n\n" if name_str and name_str.lower() not in ("user", "none", "null") else "Here is your answer based on the document:\n\n"
             return RAGChatResponse(
                 query=query,
-                answer="Based on the available documentation in this project, no relevant information was found to answer your question.",
+                answer=f"{intro}I could not find relevant information in the uploaded project documents to answer your question.",
                 reasoning_content=None,
                 citations=[],
                 model=self._llm_provider.model_name,
@@ -80,6 +82,7 @@ class RAGGeneratorService:
             query=query,
             citations=citations,
             conversation_history=conversation_history,
+            user_name=user_context.user_name,
         )
 
         # 3. Call LLM Provider
@@ -130,8 +133,10 @@ class RAGGeneratorService:
 
         # Refusal check when no relevant context chunks are available (Req 14)
         if not citations:
+            name_str = (user_context.user_name or "").strip()
+            intro = f"Here is your answer, {name_str}, based on the document:\n\n" if name_str and name_str.lower() not in ("user", "none", "null") else "Here is your answer based on the document:\n\n"
             yield f"data: {json.dumps({'type': 'citations', 'count': 0, 'citations': []})}\n\n"
-            yield f"data: {json.dumps({'type': 'delta', 'delta': 'Based on the available documentation in this project, no relevant information was found to answer your question.'})}\n\n"
+            yield f"data: {json.dumps({'type': 'delta', 'delta': f'{intro}I could not find relevant information in the uploaded project documents to answer your question.'})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'finish_reason': 'stop'})}\n\n"
             yield "data: [DONE]\n\n"
             return
@@ -149,6 +154,7 @@ class RAGGeneratorService:
             query=query,
             citations=citations,
             conversation_history=conversation_history,
+            user_name=user_context.user_name,
         )
 
         # 4. Stream LLM tokens

@@ -54,6 +54,7 @@ class RAGChatRequest(BaseModel):
     """API payload for grounded RAG conversational question answering."""
 
     query: str = Field(..., min_length=1, description="User's natural language question")
+    user_name: Optional[str] = Field(None, description="Optional display name of the user asking the question")
     project_id: Optional[uuid.UUID] = Field(None, description="Optional scoped project filter")
     conversation_history: List[ChatMessage] = Field(default_factory=list, description="Prior conversational context")
     stream: bool = Field(True, description="Whether to stream response via Server-Sent Events (SSE)")

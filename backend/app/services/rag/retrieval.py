@@ -116,6 +116,7 @@ class HybridRetrievalEngine:
 
         return UserContext(
             user_id=user.id,
+            user_name=user.name or (user.email.split("@")[0] if user.email else None),
             organization_id=user.organization_id,
             role_name=role_name,
             accessible_project_ids=accessible_projects,

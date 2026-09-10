@@ -18,6 +18,7 @@ export interface TokenUsage {
 
 export interface RAGChatRequest {
   query: string;
+  user_name?: string;
   project_id?: string;
   conversation_history?: ChatMessage[];
   stream?: boolean;

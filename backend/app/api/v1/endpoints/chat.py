@@ -35,6 +35,8 @@ async def chat_completions(
 ) -> RAGChatResponse:
     """Non-streaming RAG chat response with verified citations."""
     user_context = await hybrid_retrieval_engine.resolve_user_context(db=db, user=current_user)
+    if body.user_name and body.user_name.strip():
+        user_context.user_name = body.user_name.strip()
 
     filters = RetrievalFilters(
         project_ids=[body.project_id] if body.project_id else None,
@@ -67,6 +69,8 @@ async def chat_stream(
 ) -> StreamingResponse:
     """Real-time SSE streaming RAG chat endpoint."""
     user_context = await hybrid_retrieval_engine.resolve_user_context(db=db, user=current_user)
+    if body.user_name and body.user_name.strip():
+        user_context.user_name = body.user_name.strip()
 
     filters = RetrievalFilters(
         project_ids=[body.project_id] if body.project_id else None,

@@ -14,6 +14,7 @@ class UserContext(BaseModel):
     """Authenticated user context for pre-retrieval authorization filtering."""
 
     user_id: uuid.UUID
+    user_name: Optional[str] = None
     organization_id: uuid.UUID
     role_name: str
     accessible_project_ids: List[uuid.UUID] = Field(default_factory=list)

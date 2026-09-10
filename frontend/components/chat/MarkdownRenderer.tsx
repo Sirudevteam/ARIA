@@ -158,40 +158,108 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
 
   function parseParagraphs(text: string) {
     const lines = text.split("\n");
-    const renderedLines: React.ReactNode[] = [];
+    const renderedElements: React.ReactNode[] = [];
+    let i = 0;
 
-    lines.forEach((line, lIdx) => {
+    while (i < lines.length) {
+      const line = lines[i];
       const trimmed = line.trim();
+
       if (!trimmed) {
-        renderedLines.push(<div key={`blank-${lIdx}`} className="h-1.5" />);
-        return;
+        renderedElements.push(<div key={`blank-${i}`} className="h-2" />);
+        i++;
+        continue;
+      }
+
+      // Check for Markdown Table (starts with | and has subsequent |---| separator)
+      if (trimmed.startsWith("|") && trimmed.endsWith("|") && i + 1 < lines.length && lines[i + 1].trim().startsWith("|") && lines[i + 1].includes("---")) {
+        const tableLines: string[] = [];
+        while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+          tableLines.push(lines[i].trim());
+          i++;
+        }
+
+        if (tableLines.length >= 2) {
+          const headerCells = tableLines[0]
+            .split("|")
+            .slice(1, -1)
+            .map((c) => c.trim());
+          const bodyRows = tableLines.slice(2).map((row) =>
+            row
+              .split("|")
+              .slice(1, -1)
+              .map((c) => c.trim())
+          );
+
+          renderedElements.push(
+            <div key={`table-${i}`} className="my-3 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950/60 shadow-sm">
+              <table className="w-full text-left text-xs border-collapse font-sans">
+                <thead>
+                  <tr className="bg-slate-900/90 border-b border-slate-800 text-slate-200">
+                    {headerCells.map((h, hIdx) => (
+                      <th key={hIdx} className="px-3 py-2 font-semibold">
+                        {renderInlineText(h)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {bodyRows.map((row, rIdx) => (
+                    <tr key={rIdx} className="hover:bg-slate-900/40 transition">
+                      {row.map((cell, cIdx) => (
+                        <td key={cIdx} className="px-3 py-2 text-slate-300">
+                          {renderInlineText(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+          continue;
+        }
+      }
+
+      // Blockquotes (> Quote)
+      if (trimmed.startsWith("> ")) {
+        renderedElements.push(
+          <div
+            key={`quote-${i}`}
+            className="my-2 border-l-2 border-sky-400/80 bg-sky-950/20 px-3 py-2 rounded-r-lg text-slate-300 text-xs italic"
+          >
+            {renderInlineText(trimmed.slice(2))}
+          </div>
+        );
+        i++;
+        continue;
       }
 
       // Headers
       if (trimmed.startsWith("### ")) {
-        renderedLines.push(
-          <h3 key={`h3-${lIdx}`} className="text-xs md:text-sm font-bold text-white mt-3 mb-1 flex items-center gap-1.5">
+        renderedElements.push(
+          <h3 key={`h3-${i}`} className="text-xs md:text-sm font-bold text-white mt-3.5 mb-1.5 flex items-center gap-1.5 tracking-tight">
             {renderInlineText(trimmed.slice(4))}
           </h3>
         );
       } else if (trimmed.startsWith("## ")) {
-        renderedLines.push(
-          <h2 key={`h2-${lIdx}`} className="text-sm md:text-base font-bold text-white mt-3.5 mb-1.5 border-b border-slate-800/80 pb-1">
+        renderedElements.push(
+          <h2 key={`h2-${i}`} className="text-sm md:text-base font-bold text-white mt-4 mb-2 border-b border-slate-800/80 pb-1.5 tracking-tight">
             {renderInlineText(trimmed.slice(3))}
           </h2>
         );
       } else if (trimmed.startsWith("# ")) {
-        renderedLines.push(
-          <h1 key={`h1-${lIdx}`} className="text-base md:text-lg font-bold text-white mt-4 mb-2">
+        renderedElements.push(
+          <h1 key={`h1-${i}`} className="text-base md:text-lg font-bold text-white mt-4 mb-2 tracking-tight">
             {renderInlineText(trimmed.slice(2))}
           </h1>
         );
       }
       // Bullet list item
       else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-        renderedLines.push(
-          <div key={`li-${lIdx}`} className="flex items-start gap-2 pl-2 text-slate-200 leading-relaxed">
-            <span className="text-sky-400 mt-1 text-[8px] shrink-0">●</span>
+        renderedElements.push(
+          <div key={`li-${i}`} className="flex items-start gap-2.5 pl-1.5 py-0.5 text-slate-200 leading-relaxed">
+            <span className="text-sky-400 mt-1.5 text-[6px] shrink-0">●</span>
             <div className="flex-1">{renderInlineText(trimmed.slice(2))}</div>
           </div>
         );
@@ -200,9 +268,9 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
       else if (/^\d+\.\s/.test(trimmed)) {
         const numMatch = trimmed.match(/^(\d+)\.\s(.*)$/);
         if (numMatch) {
-          renderedLines.push(
-            <div key={`nli-${lIdx}`} className="flex items-start gap-2 pl-2 text-slate-200 leading-relaxed">
-              <span className="font-mono text-sky-400 font-semibold text-[11px] shrink-0 mt-0.5">
+          renderedElements.push(
+            <div key={`nli-${i}`} className="flex items-start gap-2.5 pl-1.5 py-0.5 text-slate-200 leading-relaxed">
+              <span className="font-mono text-sky-400 font-bold text-xs shrink-0 mt-0.5 min-w-[1.25rem]">
                 {numMatch[1]}.
               </span>
               <div className="flex-1">{renderInlineText(numMatch[2])}</div>
@@ -212,15 +280,16 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
       }
       // Standard paragraph
       else {
-        renderedLines.push(
-          <p key={`p-${lIdx}`} className="text-slate-200 leading-relaxed">
+        renderedElements.push(
+          <p key={`p-${i}`} className="text-slate-200 leading-relaxed py-0.5">
             {renderInlineText(trimmed)}
           </p>
         );
       }
-    });
+      i++;
+    }
 
-    return renderedLines;
+    return renderedElements;
   }
 
   return <div className="space-y-1 text-xs md:text-sm leading-relaxed">{elements}</div>;

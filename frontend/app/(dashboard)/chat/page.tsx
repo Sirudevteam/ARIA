@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { searchService, RetrievedChunkResult } from "@/lib/services/search";
 import { chatService, ChatMessage, TokenUsage } from "@/lib/services/chat";
+import { useAuth } from "@/components/providers/auth-provider";
 import { ProjectSummary } from "@/types/document";
 import { MarkdownRenderer } from "@/components/chat/MarkdownRenderer";
 import { CitationModal } from "@/components/chat/CitationModal";
@@ -76,6 +77,8 @@ const STORAGE_KEY = "aria_chat_sessions_v2";
 const EMPTY_MESSAGES: MessageItem[] = [];
 
 export default function ChatPage() {
+  const { user } = useAuth();
+
   // Sessions state (loaded from localStorage on mount)
   const [sessions, setSessions] = useState<ConversationSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
@@ -418,6 +421,7 @@ export default function ChatPage() {
         await chatService.streamChatCompletion(
           {
             query,
+            user_name: user?.name || undefined,
             project_id: selectedProject || undefined,
             conversation_history: historyPayload,
             candidate_k: candidateK,
@@ -540,7 +544,7 @@ export default function ChatPage() {
         setStreamingStatusText("");
       }
     },
-    [inputValue, isStreaming, messages, activeSessionId, selectedProject, candidateK, topK, minThreshold, temperature]
+    [inputValue, isStreaming, messages, activeSessionId, selectedProject, candidateK, topK, minThreshold, temperature, user]
   );
 
   // Regenerate last response handler
