@@ -63,24 +63,10 @@ class RAGGeneratorService:
             enable_rerank=True,
         )
 
-        # Refusal check when no relevant context chunks are available (Req 14)
-        if not citations:
-            name_str = (user_context.user_name or "").strip()
-            intro = f"Here is your answer, {name_str}, based on the document:\n\n" if name_str and name_str.lower() not in ("user", "none", "null") else "Here is your answer based on the document:\n\n"
-            return RAGChatResponse(
-                query=query,
-                answer=f"{intro}I could not find relevant information in the uploaded project documents to answer your question.",
-                reasoning_content=None,
-                citations=[],
-                model=self._llm_provider.model_name,
-                usage=None,
-                latency_ms=0.0,
-            )
-
         # 2. Compose grounded prompt messages
         messages = prompt_composer.compose_messages(
             query=query,
-            citations=citations,
+            citations=citations or [],
             conversation_history=conversation_history,
             user_name=user_context.user_name,
         )
@@ -96,7 +82,7 @@ class RAGGeneratorService:
             query=query,
             answer=response.content,
             reasoning_content=response.reasoning_content,
-            citations=citations,
+            citations=citations or [],
             model=response.model,
             usage=response.usage,
             latency_ms=response.latency_ms,
@@ -131,28 +117,18 @@ class RAGGeneratorService:
             enable_rerank=True,
         )
 
-        # Refusal check when no relevant context chunks are available (Req 14)
-        if not citations:
-            name_str = (user_context.user_name or "").strip()
-            intro = f"Here is your answer, {name_str}, based on the document:\n\n" if name_str and name_str.lower() not in ("user", "none", "null") else "Here is your answer based on the document:\n\n"
-            yield f"data: {json.dumps({'type': 'citations', 'count': 0, 'citations': []})}\n\n"
-            yield f"data: {json.dumps({'type': 'delta', 'delta': f'{intro}I could not find relevant information in the uploaded project documents to answer your question.'})}\n\n"
-            yield f"data: {json.dumps({'type': 'done', 'finish_reason': 'stop'})}\n\n"
-            yield "data: [DONE]\n\n"
-            return
-
-        # 2. Emit citations metadata chunk via SSE
+        # 2. Emit citations metadata chunk via SSE (empty list if conversational query)
         citations_payload = {
             "type": "citations",
-            "count": len(citations),
-            "citations": [c.model_dump(mode="json") for c in citations],
+            "count": len(citations) if citations else 0,
+            "citations": [c.model_dump(mode="json") for c in citations] if citations else [],
         }
         yield f"data: {json.dumps(citations_payload)}\n\n"
 
         # 3. Compose grounded prompt messages
         messages = prompt_composer.compose_messages(
             query=query,
-            citations=citations,
+            citations=citations or [],
             conversation_history=conversation_history,
             user_name=user_context.user_name,
         )
