@@ -29,14 +29,19 @@ async def lifespan(app: FastAPI):
 
     # Ensure all tables exist in database
     try:
-        from app.core.database import engine, async_session_factory
+        from app.core.database import engine, AsyncSessionLocal
         from app.models import Base
+        from sqlalchemy import text
         async with engine.begin() as conn:
+            try:
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            except Exception:
+                pass
             await conn.run_sync(Base.metadata.create_all)
         print("[STARTUP] Database tables verified.")
 
         # Seed initial Roles, Organization, and Project if empty
-        async with async_session_factory() as session:
+        async with AsyncSessionLocal() as session:
             from sqlalchemy import select
             from app.models.role import Role, RoleScope
             from app.models.organization import Organization
@@ -79,7 +84,6 @@ async def lifespan(app: FastAPI):
                 proj = Project(
                     organization_id=org.id,
                     name="Urban 3D Perception Project",
-                    slug="urban-3d-perception",
                     description="LiDAR annotation, cuboid labeling, and point cloud segmentation",
                     status=ProjectStatus.active,
                     settings={"confidentiality": "INTERNAL"},
