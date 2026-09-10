@@ -96,6 +96,14 @@ export default function ChatPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
+  // Auto-dismiss error banner
+  useEffect(() => {
+    if (errorBanner) {
+      const timer = setTimeout(() => setErrorBanner(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorBanner]);
+
   // Closed-loop Feedback Modal State
   const [feedbackModalMsg, setFeedbackModalMsg] = useState<MessageItem | null>(null);
   const [feedbackReason, setFeedbackReason] = useState<string>("Missing guideline in SOP");
@@ -483,10 +491,14 @@ export default function ChatPage() {
               setStreamingStatusText("");
             },
             onError: (err) => {
-              setErrorBanner(err.message);
               setSessions((prev) =>
                 prev.map((s) => {
                   if (s.id === activeSessionId) {
+                    const existingMsg = s.messages.find((m) => m.id === assistantMsgId);
+                    if (existingMsg && existingMsg.content.trim().length > 0) {
+                      return s;
+                    }
+                    setErrorBanner(err.message);
                     return {
                       ...s,
                       messages: s.messages.map((m) =>
@@ -495,7 +507,7 @@ export default function ChatPage() {
                               ...m,
                               content:
                                 m.content ||
-                                "âš ï¸ Failed to generate grounded response. Please verify backend connection or check API keys.",
+                                "⚠️ Failed to generate grounded response. Please verify backend connection or check API keys.",
                               isError: true,
                             }
                           : m
@@ -513,7 +525,15 @@ export default function ChatPage() {
         );
       } catch (err: unknown) {
         if ((err as Error).name !== "AbortError") {
-          setErrorBanner((err as Error).message);
+          // Only show error if no response was produced
+          setSessions((prev) => {
+            const currentSession = prev.find((s) => s.id === activeSessionId);
+            const currentMsg = currentSession?.messages.find((m) => m.id === assistantMsgId);
+            if (!currentMsg || currentMsg.content.trim().length === 0) {
+              setErrorBanner((err as Error).message);
+            }
+            return prev;
+          });
         }
       } finally {
         setIsStreaming(false);

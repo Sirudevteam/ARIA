@@ -133,6 +133,7 @@ class RAGGeneratorService:
             yield f"data: {json.dumps({'type': 'citations', 'count': 0, 'citations': []})}\n\n"
             yield f"data: {json.dumps({'type': 'delta', 'delta': 'Based on the available documentation in this project, no relevant information was found to answer your question.'})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'finish_reason': 'stop'})}\n\n"
+            yield "data: [DONE]\n\n"
             return
 
         # 2. Emit citations metadata chunk via SSE
@@ -170,6 +171,9 @@ class RAGGeneratorService:
                     "reasoning_delta": chunk.reasoning_delta,
                 }
                 yield f"data: {json.dumps(token_payload)}\n\n"
+
+        # End of stream indicator
+        yield "data: [DONE]\n\n"
 
 
 rag_generator_service = RAGGeneratorService()

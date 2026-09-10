@@ -123,6 +123,7 @@ export const chatService = {
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
 
+    let hasReceivedData = false;
     try {
       while (true) {
         const { value, done } = await reader.read();
@@ -145,10 +146,13 @@ export const chatService = {
           try {
             const data = JSON.parse(dataStr);
             if (data.type === "citations") {
+              hasReceivedData = true;
               handlers.onCitations?.(data.citations || []);
             } else if (data.type === "delta") {
+              hasReceivedData = true;
               handlers.onDelta?.(data.delta || "", data.reasoning_delta);
             } else if (data.type === "done") {
+              hasReceivedData = true;
               handlers.onDone?.(data.usage, data.finish_reason);
             }
           } catch (parseErr) {
@@ -156,8 +160,10 @@ export const chatService = {
           }
         }
       }
+      handlers.onDone?.();
     } catch (err: unknown) {
-      if ((err as Error).name === "AbortError") {
+      if ((err as Error).name === "AbortError" || hasReceivedData) {
+        handlers.onDone?.();
         return;
       }
       handlers.onError?.(err as Error);
