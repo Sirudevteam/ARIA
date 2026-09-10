@@ -86,7 +86,7 @@ async def get_current_user(
         user = res_email.scalars().first()
 
     if not user:
-        # Auto-provision verified Supabase user into database
+        # Auto-provision verified Clerk user into database
         org_stmt = select(Organization).limit(1)
         org_res = await db.execute(org_stmt)
         org = org_res.scalar_one_or_none()
@@ -97,8 +97,8 @@ async def get_current_user(
 
         user = User(
             id=payload.user_id,
-            email=payload.email or f"{payload.user_id}@supabase.auth",
-            name=payload.user_metadata.get("name") or payload.email.split("@")[0] if payload.email else "Admin User",
+            email=payload.email or f"{payload.user_id}@clerk.auth",
+            name=payload.user_metadata.get("name") or (payload.email.split("@")[0] if payload.email else "Admin User"),
             organization_id=org.id if org else None,
             role_id=role.id if role else None,
             status=UserStatus.active,

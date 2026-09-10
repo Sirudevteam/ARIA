@@ -1,4 +1,26 @@
 services:
+  # ─── PostgreSQL Relational Database (Self-Hosted, No Supabase) ──────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: aria_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aria_user
+      POSTGRES_PASSWORD: aria_secure_password_2026
+      POSTGRES_DB: aria_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aria_user -d aria_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - aria_network
+
   # ─── Qdrant Vector Database & Hybrid Engine ─────────────────────────────────
   qdrant:
     image: qdrant/qdrant:v1.13.2
@@ -38,6 +60,7 @@ services:
       retries: 3
       start_period: 10s
     depends_on:
+      - postgres
       - qdrant
     networks:
       - aria_network
@@ -69,6 +92,7 @@ services:
       - aria_network
 
 volumes:
+  postgres_data:
   qdrant_storage:
 
 networks:

@@ -29,13 +29,67 @@ async def lifespan(app: FastAPI):
 
     # Ensure all tables exist in database
     try:
-        from app.core.database import engine
+        from app.core.database import engine, async_session_factory
         from app.models import Base
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         print("[STARTUP] Database tables verified.")
+
+        # Seed initial Roles, Organization, and Project if empty
+        async with async_session_factory() as session:
+            from sqlalchemy import select
+            from app.models.role import Role, RoleScope
+            from app.models.organization import Organization
+            from app.models.department import Department
+            from app.models.project import Project, ProjectStatus
+
+            res_role = await session.execute(select(Role).limit(1))
+            if not res_role.scalar_one_or_none():
+                roles = [
+                    Role(name="SUPER_ADMIN", scope=RoleScope.system, permissions=["*"], is_system=True, description="Full system access"),
+                    Role(name="ADMIN", scope=RoleScope.organization, permissions=["org:admin", "project:all", "doc:all", "chat:all"], is_system=True, description="Organization Admin"),
+                    Role(name="MANAGER", scope=RoleScope.organization, permissions=["project:manage", "doc:write", "chat:all"], is_system=True, description="Project Manager"),
+                    Role(name="QC_LEAD", scope=RoleScope.project, permissions=["doc:review", "doc:read", "chat:all"], is_system=True, description="Quality Control Lead"),
+                    Role(name="VALIDATOR", scope=RoleScope.project, permissions=["doc:read", "chat:all"], is_system=True, description="Dataset Validator"),
+                    Role(name="ANNOTATOR", scope=RoleScope.project, permissions=["doc:read", "chat:all"], is_system=True, description="3D LiDAR Annotator"),
+                    Role(name="VIEWER", scope=RoleScope.project, permissions=["doc:read", "chat:read"], is_system=True, description="Viewer"),
+                ]
+                session.add_all(roles)
+                await session.commit()
+
+            res_org = await session.execute(select(Organization).limit(1))
+            if not res_org.scalar_one_or_none():
+                org = Organization(
+                    name="Autonomous Perception AI",
+                    slug="autonomous-perception-ai",
+                    settings={"theme": "dark", "retrieval_mode": "hybrid"},
+                    is_active=True,
+                )
+                session.add(org)
+                await session.commit()
+                await session.refresh(org)
+
+                dept = Department(
+                    organization_id=org.id,
+                    name="3D Perception & LiDAR",
+                    description="Autonomous Driving LiDAR Perception and Annotation Group",
+                )
+                session.add(dept)
+
+                proj = Project(
+                    organization_id=org.id,
+                    name="Urban 3D Perception Project",
+                    slug="urban-3d-perception",
+                    description="LiDAR annotation, cuboid labeling, and point cloud segmentation",
+                    status=ProjectStatus.active,
+                    settings={"confidentiality": "INTERNAL"},
+                )
+                session.add(proj)
+                await session.commit()
+                print("[STARTUP] Default Organization, Roles, and Project seeded.")
+
     except Exception as e:
-        print(f"[STARTUP] Database verification error: {e}")
+        print(f"[STARTUP] Database initialization error: {e}")
 
     # Ensure Qdrant collection & hybrid vector indexes exist
     try:
