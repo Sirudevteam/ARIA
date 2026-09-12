@@ -41,6 +41,16 @@ class Settings(BaseSettings):
         "postgresql+psycopg://lidar_user:lidar_password@localhost:5432/lidar_db"
     )
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: str) -> str:
+        if isinstance(v, str):
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+psycopg://", 1)
+            elif v.startswith("postgresql://") and not v.startswith("postgresql+"):
+                return v.replace("postgresql://", "postgresql+psycopg://", 1)
+        return v
+
     # ── Authentication (Clerk & Local JWT) ──────────────────────────────────
     AUTH_PROVIDER: str = "clerk"  # "clerk", "local"
     CLERK_SECRET_KEY: str | None = None
