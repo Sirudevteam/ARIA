@@ -20,14 +20,35 @@ settings = get_settings()
 _jwks_client: Optional[PyJWKClient] = None
 
 
+def get_clerk_jwks_url() -> Optional[str]:
+    """Returns CLERK_JWKS_URL or auto-derives it from CLERK_PUBLISHABLE_KEY."""
+    if settings.CLERK_JWKS_URL:
+        return settings.CLERK_JWKS_URL
+    if settings.CLERK_PUBLISHABLE_KEY:
+        try:
+            # Clerk publishable key format: pk_test_<base64_encoded_domain> or pk_live_<base64_encoded_domain>
+            parts = settings.CLERK_PUBLISHABLE_KEY.split("_")
+            if len(parts) >= 3:
+                raw_b64 = parts[2]
+                # Pad base64 if needed
+                padded_b64 = raw_b64 + "=" * (-len(raw_b64) % 4)
+                domain = base64.b64decode(padded_b64).decode("utf-8").rstrip("$")
+                return f"https://{domain}/.well-known/jwks.json"
+        except Exception:
+            pass
+    return None
+
+
 def get_jwks_client() -> Optional[PyJWKClient]:
     """Initializes or returns cached PyJWKClient for Clerk JWKS verification."""
     global _jwks_client
-    if _jwks_client is None and settings.CLERK_JWKS_URL:
-        try:
-            _jwks_client = PyJWKClient(settings.CLERK_JWKS_URL, cache_keys=True, max_cached_keys=16)
-        except Exception:
-            _jwks_client = None
+    if _jwks_client is None:
+        jwks_url = get_clerk_jwks_url()
+        if jwks_url:
+            try:
+                _jwks_client = PyJWKClient(jwks_url, cache_keys=True, max_cached_keys=16)
+            except Exception:
+                _jwks_client = None
     return _jwks_client
 
 

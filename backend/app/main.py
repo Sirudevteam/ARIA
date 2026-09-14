@@ -130,7 +130,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=["*"] if settings.DEBUG else settings.cors_origins_list,
         allow_credentials=True if not (settings.DEBUG and "*" in settings.cors_origins_list) else False,
-        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$",
+        allow_origin_regex=r"^https?://(.*\.railway\.app|localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$",
         allow_methods=["*"],
         allow_headers=["*"],
     )

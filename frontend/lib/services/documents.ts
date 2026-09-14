@@ -1,12 +1,10 @@
-import { api, APIError } from "@/lib/api";
+import { api, APIError, getBaseUrl } from "@/lib/api";
 import {
   Department,
   DocumentDetail,
   DocumentListResponse,
   ProjectSummary,
 } from "@/types/document";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 async function getAuthToken(): Promise<string | null> {
   try {
@@ -61,7 +59,7 @@ export const documentsService = {
     onProgress?: (percent: number) => void
   ): Promise<DocumentDetail> {
     const token = await getAuthToken();
-    const url = `${BASE_URL}/api/v1/projects/${projectId}/documents/upload`;
+    const url = `${getBaseUrl()}/api/v1/projects/${projectId}/documents/upload`;
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -111,7 +109,7 @@ export const documentsService = {
     formData: FormData
   ): Promise<DocumentDetail> {
     const token = await getAuthToken();
-    const url = `${BASE_URL}/api/v1/documents/${documentId}/versions`;
+    const url = `${getBaseUrl()}/api/v1/documents/${documentId}/versions`;
 
     const res = await fetch(url, {
       method: "POST",
@@ -146,7 +144,7 @@ export const documentsService = {
     suggestedFilename?: string
   ): Promise<void> {
     const token = await getAuthToken();
-    const url = `${BASE_URL}/api/v1/documents/${documentId}/download${
+    const url = `${getBaseUrl()}/api/v1/documents/${documentId}/download${
       versionNumber ? `?version_number=${versionNumber}` : ""
     }`;
 

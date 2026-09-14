@@ -1,4 +1,16 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const getBaseUrl = (): string => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== "undefined") {
+    // If running in browser over HTTPS (production) and envUrl is localhost, fallback to relative path (proxied by Next.js rewrites)
+    if (!envUrl || (window.location.protocol === "https:" && envUrl.includes("localhost"))) {
+      return "";
+    }
+    return envUrl.replace(/\/$/, "");
+  }
+  return (envUrl ?? "http://localhost:8000").replace(/\/$/, "");
+};
+
+const BASE_URL = getBaseUrl();
 
 export class APIError extends Error {
   constructor(
@@ -49,7 +61,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const url = `${BASE_URL}${path}`;
+  const url = `${getBaseUrl()}${path}`;
 
   // Automatically attach Supabase access token if available and not overridden
   const token = await getAuthToken();

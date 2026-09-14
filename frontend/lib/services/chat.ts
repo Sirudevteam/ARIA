@@ -1,6 +1,5 @@
+import { getBaseUrl } from "@/lib/api";
 import { RetrievedChunkResult } from "@/lib/services/search";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -72,7 +71,7 @@ export const chatService = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const res = await fetch(`${BASE_URL}/api/v1/chat/completions`, {
+    const res = await fetch(`${getBaseUrl()}/api/v1/chat/completions`, {
       method: "POST",
       headers,
       body: JSON.stringify({ ...req, stream: false }),
@@ -100,7 +99,7 @@ export const chatService = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const res = await fetch(`${BASE_URL}/api/v1/chat/stream`, {
+    const res = await fetch(`${getBaseUrl()}/api/v1/chat/stream`, {
       method: "POST",
       headers,
       body: JSON.stringify({ ...req, stream: true }),
@@ -189,7 +188,7 @@ export const chatService = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const res = await fetch(`${BASE_URL}/api/v1/chat/feedback`, {
+    const res = await fetch(`${getBaseUrl()}/api/v1/chat/feedback`, {
       method: "POST",
       headers,
       body: JSON.stringify(req),
