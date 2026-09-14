@@ -56,7 +56,7 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
       return subParts.map((sub, sIdx) => {
         if (sub.startsWith("**") && sub.endsWith("**")) {
           return (
-            <strong key={`b-${pIdx}-${sIdx}`} className="font-semibold text-white">
+            <strong key={`b-${pIdx}-${sIdx}`} className="font-bold text-slate-900">
               {sub.slice(2, -2)}
             </strong>
           );
@@ -64,14 +64,14 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
           return (
             <code
               key={`c-${pIdx}-${sIdx}`}
-              className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-sky-300 font-mono text-[11px]"
+              className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-blue-700 font-mono text-[11px] font-semibold"
             >
               {sub.slice(1, -1)}
             </code>
           );
         } else if (sub.startsWith("*") && sub.endsWith("*")) {
           return (
-            <em key={`i-${pIdx}-${sIdx}`} className="italic text-slate-300">
+            <em key={`i-${pIdx}-${sIdx}`} className="italic text-slate-700">
               {sub.slice(1, -1)}
             </em>
           );
@@ -106,19 +106,19 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
     elements.push(
       <div
         key={`code-${currentCodeIdx}`}
-        className="my-3 rounded-lg overflow-hidden border border-slate-800 bg-slate-950 font-mono text-xs shadow-md"
+        className="my-3 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 font-mono text-xs shadow-xs"
       >
         {/* Code Header */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-slate-900/90 border-b border-slate-800 text-slate-400 text-[11px]">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-slate-800 border-b border-slate-700 text-slate-300 text-[11px]">
           <div className="flex items-center gap-1.5">
-            <Terminal className="w-3.5 h-3.5 text-sky-400" />
+            <Terminal className="w-3.5 h-3.5 text-blue-400" />
             <span className="uppercase tracking-wider font-semibold text-[10px] text-slate-300">
               {language}
             </span>
           </div>
           <button
             onClick={() => handleCopyCode(codeContent, currentCodeIdx)}
-            className="flex items-center gap-1 hover:text-white transition px-2 py-0.5 rounded bg-slate-800/60 hover:bg-slate-800"
+            className="flex items-center gap-1 hover:text-white transition px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300"
             title="Copy code snippet"
           >
             {copiedCodeIndex === currentCodeIdx ? (
@@ -136,7 +136,7 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
         </div>
 
         {/* Code Content */}
-        <pre className="p-3.5 overflow-x-auto text-slate-200 leading-relaxed font-mono">
+        <pre className="p-3.5 overflow-x-auto text-slate-100 leading-relaxed font-mono">
           <code>{codeContent}</code>
         </pre>
       </div>
@@ -192,22 +192,22 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
           );
 
           renderedElements.push(
-            <div key={`table-${i}`} className="my-3 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950/60 shadow-sm">
+            <div key={`table-${i}`} className="my-3 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-2xs">
               <table className="w-full text-left text-xs border-collapse font-sans">
                 <thead>
-                  <tr className="bg-slate-900/90 border-b border-slate-800 text-slate-200">
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-900">
                     {headerCells.map((h, hIdx) => (
-                      <th key={hIdx} className="px-3 py-2 font-semibold">
+                      <th key={hIdx} className="px-3 py-2 font-bold">
                         {renderInlineText(h)}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {bodyRows.map((row, rIdx) => (
-                    <tr key={rIdx} className="hover:bg-slate-900/40 transition">
+                    <tr key={rIdx} className="hover:bg-slate-50 transition">
                       {row.map((cell, cIdx) => (
-                        <td key={cIdx} className="px-3 py-2 text-slate-300">
+                        <td key={cIdx} className="px-3 py-2 text-slate-700">
                           {renderInlineText(cell)}
                         </td>
                       ))}
@@ -226,7 +226,7 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
         renderedElements.push(
           <div
             key={`quote-${i}`}
-            className="my-2 border-l-2 border-sky-400/80 bg-sky-950/20 px-3 py-2 rounded-r-lg text-slate-300 text-xs italic"
+            className="my-2 border-l-3 border-blue-600 bg-blue-50 px-3 py-2 rounded-r-lg text-slate-700 text-xs italic"
           >
             {renderInlineText(trimmed.slice(2))}
           </div>
@@ -238,19 +238,19 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
       // Headers
       if (trimmed.startsWith("### ")) {
         renderedElements.push(
-          <h3 key={`h3-${i}`} className="text-xs md:text-sm font-bold text-white mt-3.5 mb-1.5 flex items-center gap-1.5 tracking-tight">
+          <h3 key={`h3-${i}`} className="text-xs md:text-sm font-bold text-slate-900 mt-3.5 mb-1.5 flex items-center gap-1.5 tracking-tight">
             {renderInlineText(trimmed.slice(4))}
           </h3>
         );
       } else if (trimmed.startsWith("## ")) {
         renderedElements.push(
-          <h2 key={`h2-${i}`} className="text-sm md:text-base font-bold text-white mt-4 mb-2 border-b border-slate-800/80 pb-1.5 tracking-tight">
+          <h2 key={`h2-${i}`} className="text-sm md:text-base font-bold text-slate-900 mt-4 mb-2 border-b border-slate-200 pb-1.5 tracking-tight">
             {renderInlineText(trimmed.slice(3))}
           </h2>
         );
       } else if (trimmed.startsWith("# ")) {
         renderedElements.push(
-          <h1 key={`h1-${i}`} className="text-base md:text-lg font-bold text-white mt-4 mb-2 tracking-tight">
+          <h1 key={`h1-${i}`} className="text-base md:text-lg font-extrabold text-slate-900 mt-4 mb-2 tracking-tight">
             {renderInlineText(trimmed.slice(2))}
           </h1>
         );
@@ -258,8 +258,8 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
       // Bullet list item
       else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
         renderedElements.push(
-          <div key={`li-${i}`} className="flex items-start gap-2.5 pl-1.5 py-0.5 text-slate-200 leading-relaxed">
-            <span className="text-sky-400 mt-1.5 text-[6px] shrink-0">●</span>
+          <div key={`li-${i}`} className="flex items-start gap-2.5 pl-1.5 py-0.5 text-slate-800 leading-relaxed font-normal">
+            <span className="text-blue-600 mt-1.5 text-[6px] shrink-0">●</span>
             <div className="flex-1">{renderInlineText(trimmed.slice(2))}</div>
           </div>
         );
@@ -269,8 +269,8 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
         const numMatch = trimmed.match(/^(\d+)\.\s(.*)$/);
         if (numMatch) {
           renderedElements.push(
-            <div key={`nli-${i}`} className="flex items-start gap-2.5 pl-1.5 py-0.5 text-slate-200 leading-relaxed">
-              <span className="font-mono text-sky-400 font-bold text-xs shrink-0 mt-0.5 min-w-[1.25rem]">
+            <div key={`nli-${i}`} className="flex items-start gap-2.5 pl-1.5 py-0.5 text-slate-800 leading-relaxed font-normal">
+              <span className="font-mono text-blue-600 font-bold text-xs shrink-0 mt-0.5 min-w-[1.25rem]">
                 {numMatch[1]}.
               </span>
               <div className="flex-1">{renderInlineText(numMatch[2])}</div>
@@ -281,7 +281,7 @@ export function MarkdownRenderer({ content, onCitationClick }: MarkdownRendererP
       // Standard paragraph
       else {
         renderedElements.push(
-          <p key={`p-${i}`} className="text-slate-200 leading-relaxed py-0.5">
+          <p key={`p-${i}`} className="text-slate-800 leading-relaxed py-0.5 font-normal">
             {renderInlineText(trimmed)}
           </p>
         );

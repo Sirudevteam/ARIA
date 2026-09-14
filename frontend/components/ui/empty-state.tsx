@@ -19,16 +19,16 @@ export function EmptyState({ icon, title, description, action, className }: Empt
   return (
     <FadeIn>
       <div className={cn("flex flex-col items-center justify-center p-8 text-center", className)}>
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-2 border border-sky-400/20 shadow-[0_0_15px_rgba(56,189,248,0.1)] mb-4 text-sky-400">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 shadow-sm mb-4 text-blue-600">
           {icon}
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-        <p className="text-sm text-slate-400 max-w-sm mb-6">{description}</p>
+        <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
+        <p className="text-sm text-slate-500 max-w-sm mb-6">{description}</p>
         
         {action && (
           <button
             onClick={action.onClick}
-            className="inline-flex h-10 items-center justify-center rounded-md bg-sky-400 px-6 text-sm font-medium text-slate-950 transition-colors hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-blue-700 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
           >
             {action.label}
           </button>

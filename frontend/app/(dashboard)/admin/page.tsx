@@ -153,24 +153,24 @@ export default function AdminDashboardPage() {
       {/* ── Top Header ────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Shield className="w-6 h-6 text-sky-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
+            <Shield className="w-6 h-6 text-blue-600" />
             Enterprise Admin Dashboard
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-500">
             Platform governance, 7-tier RBAC, knowledge base telemetry, and AI operations control.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-sky-500/40 bg-sky-950/40 text-sky-300 text-xs py-1 px-2.5 font-mono">
+          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-xs py-1 px-2.5 font-mono">
             SUPER_ADMIN ACCESS
           </Badge>
           <Button
             size="sm"
             variant="outline"
             onClick={() => window.location.reload()}
-            className="h-8 border-slate-800 bg-slate-950 text-slate-300 hover:text-white text-xs gap-1.5"
+            className="h-8 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 text-xs gap-1.5"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Refresh
@@ -181,74 +181,74 @@ export default function AdminDashboardPage() {
       {/* ── Top 6 Core KPI Cards (Wireframe Specification) ─────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {/* 1. Documents */}
-        <Card className="border-slate-800 bg-slate-900/80 shadow-lg relative overflow-hidden">
+        <Card className="border-slate-200 bg-white shadow-xs relative overflow-hidden">
           <CardContent className="p-3.5 space-y-1">
-            <div className="flex items-center justify-between text-slate-400 text-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs">
               <span className="font-medium">Documents</span>
-              <FileText className="w-4 h-4 text-sky-400" />
+              <FileText className="w-4 h-4 text-blue-600" />
             </div>
-            <div className="text-2xl font-black text-white font-mono">{kpis.total_documents}</div>
-            <div className="text-[10px] text-slate-500 font-mono">248 active in storage</div>
+            <div className="text-2xl font-black text-slate-900 font-mono">{kpis.total_documents}</div>
+            <div className="text-[10px] text-slate-400 font-mono">248 active in storage</div>
           </CardContent>
         </Card>
 
         {/* 2. Users */}
-        <Card className="border-slate-800 bg-slate-900/80 shadow-lg relative overflow-hidden">
+        <Card className="border-slate-200 bg-white shadow-xs relative overflow-hidden">
           <CardContent className="p-3.5 space-y-1">
-            <div className="flex items-center justify-between text-slate-400 text-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs">
               <span className="font-medium">Users</span>
-              <Users className="w-4 h-4 text-emerald-400" />
+              <Users className="w-4 h-4 text-emerald-600" />
             </div>
-            <div className="text-2xl font-black text-white font-mono">{kpis.total_users}</div>
-            <div className="text-[10px] text-slate-500 font-mono">64 across 7 tiers</div>
+            <div className="text-2xl font-black text-slate-900 font-mono">{kpis.total_users}</div>
+            <div className="text-[10px] text-slate-400 font-mono">64 across 7 tiers</div>
           </CardContent>
         </Card>
 
         {/* 3. Projects */}
-        <Card className="border-slate-800 bg-slate-900/80 shadow-lg relative overflow-hidden">
+        <Card className="border-slate-200 bg-white shadow-xs relative overflow-hidden">
           <CardContent className="p-3.5 space-y-1">
-            <div className="flex items-center justify-between text-slate-400 text-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs">
               <span className="font-medium">Projects</span>
-              <Folder className="w-4 h-4 text-purple-400" />
+              <Folder className="w-4 h-4 text-purple-600" />
             </div>
-            <div className="text-2xl font-black text-white font-mono">{kpis.total_projects}</div>
-            <div className="text-[10px] text-slate-500 font-mono">8 active pipelines</div>
+            <div className="text-2xl font-black text-slate-900 font-mono">{kpis.total_projects}</div>
+            <div className="text-[10px] text-slate-400 font-mono">8 active pipelines</div>
           </CardContent>
         </Card>
 
         {/* 4. Questions */}
-        <Card className="border-slate-800 bg-slate-900/80 shadow-lg relative overflow-hidden">
+        <Card className="border-slate-200 bg-white shadow-xs relative overflow-hidden">
           <CardContent className="p-3.5 space-y-1">
-            <div className="flex items-center justify-between text-slate-400 text-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs">
               <span className="font-medium">Questions</span>
-              <MessageSquare className="w-4 h-4 text-cyan-400" />
+              <MessageSquare className="w-4 h-4 text-sky-600" />
             </div>
-            <div className="text-2xl font-black text-white font-mono">4,821</div>
-            <div className="text-[10px] text-slate-500 font-mono">4,821 answered</div>
+            <div className="text-2xl font-black text-slate-900 font-mono">4,821</div>
+            <div className="text-[10px] text-slate-400 font-mono">4,821 answered</div>
           </CardContent>
         </Card>
 
         {/* 5. Feedback */}
-        <Card className="border-slate-800 bg-slate-900/80 shadow-lg relative overflow-hidden">
+        <Card className="border-slate-200 bg-white shadow-xs relative overflow-hidden">
           <CardContent className="p-3.5 space-y-1">
-            <div className="flex items-center justify-between text-slate-400 text-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs">
               <span className="font-medium">Feedback</span>
-              <ThumbsUp className="w-4 h-4 text-emerald-400" />
+              <ThumbsUp className="w-4 h-4 text-emerald-600" />
             </div>
-            <div className="text-2xl font-black text-white font-mono">3,912</div>
-            <div className="text-[10px] text-emerald-400 font-mono">94.2% satisfaction</div>
+            <div className="text-2xl font-black text-slate-900 font-mono">3,912</div>
+            <div className="text-[10px] text-emerald-600 font-mono">94.2% satisfaction</div>
           </CardContent>
         </Card>
 
         {/* 6. Failed Queries */}
-        <Card className="border-slate-800 bg-slate-900/80 shadow-lg relative overflow-hidden">
+        <Card className="border-slate-200 bg-white shadow-xs relative overflow-hidden">
           <CardContent className="p-3.5 space-y-1">
-            <div className="flex items-center justify-between text-slate-400 text-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs">
               <span className="font-medium">Failed Queries</span>
-              <AlertCircle className="w-4 h-4 text-amber-400" />
+              <AlertCircle className="w-4 h-4 text-amber-600" />
             </div>
-            <div className="text-2xl font-black text-amber-400 font-mono">87</div>
-            <div className="text-[10px] text-amber-500/80 font-mono">87 flagged for SOP</div>
+            <div className="text-2xl font-black text-amber-600 font-mono">87</div>
+            <div className="text-[10px] text-amber-600/80 font-mono">87 flagged for SOP</div>
           </CardContent>
         </Card>
       </div>
@@ -257,7 +257,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         {/* Left Navigation Bar (3 cols) */}
         <div className="md:col-span-3 space-y-1">
-          <Card className="border-slate-800 bg-slate-900/70 p-2 space-y-1">
+          <Card className="border-slate-200 bg-white p-2 space-y-1 shadow-xs">
             <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Admin Sections
             </div>
@@ -267,12 +267,12 @@ export default function AdminDashboardPage() {
                 onClick={() => setActiveSection(sec.id)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
                   activeSection === sec.id
-                    ? "bg-sky-500/15 border border-sky-500/30 text-white shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent"
+                    ? "bg-blue-50 border border-blue-200 text-blue-700 shadow-xs font-semibold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent"
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className={activeSection === sec.id ? "text-sky-400" : "text-slate-500"}>
+                  <span className={activeSection === sec.id ? "text-blue-600" : "text-slate-400"}>
                     {sec.icon}
                   </span>
                   <span>{sec.label}</span>
@@ -282,8 +282,8 @@ export default function AdminDashboardPage() {
                     variant="outline"
                     className={`text-[10px] font-mono py-0 px-1.5 ${
                       activeSection === sec.id
-                        ? "border-sky-500/40 bg-sky-950/60 text-sky-300"
-                        : "border-slate-800 bg-slate-950 text-slate-500"
+                        ? "border-blue-200 bg-blue-100/60 text-blue-700"
+                        : "border-slate-200 bg-slate-50 text-slate-500"
                     }`}
                   >
                     {sec.badge}
@@ -301,57 +301,57 @@ export default function AdminDashboardPage() {
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "dashboard" && (
             <div className="space-y-4">
-              <Card className="border-slate-800 bg-slate-900/70">
-                <CardHeader className="pb-3 border-b border-slate-800/80">
-                  <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-sky-400" />
+              <Card className="border-slate-200 bg-white shadow-xs">
+                <CardHeader className="pb-3 border-b border-slate-100">
+                  <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-blue-600" />
                     RAG Query Throughput & Satisfaction Trends
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-xs text-slate-500">
                     Real-time telemetry across 4,821 queries and 3,912 feedback ratings.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                      <div className="text-[11px] text-slate-400">Average RAG Latency</div>
-                      <div className="text-xl font-bold text-white font-mono">320.5 ms</div>
-                      <div className="text-[10px] text-emerald-400">Retrieval + Rerank + Gen</div>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <div className="text-[11px] text-slate-500">Average RAG Latency</div>
+                      <div className="text-xl font-bold text-slate-900 font-mono">320.5 ms</div>
+                      <div className="text-[10px] text-emerald-600 font-medium">Retrieval + Rerank + Gen</div>
                     </div>
-                    <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                      <div className="text-[11px] text-slate-400">Precision Satisfaction</div>
-                      <div className="text-xl font-bold text-emerald-400 font-mono">94.2%</div>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <div className="text-[11px] text-slate-500">Precision Satisfaction</div>
+                      <div className="text-xl font-bold text-emerald-600 font-mono">94.2%</div>
                       <div className="text-[10px] text-slate-500">3,685 positive thumbs up</div>
                     </div>
-                    <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                      <div className="text-[11px] text-slate-400">Active Model Stack</div>
-                      <div className="text-sm font-bold text-sky-400 font-mono">DeepSeek-V3 + BGE-M3</div>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <div className="text-[11px] text-slate-500">Active Model Stack</div>
+                      <div className="text-sm font-bold text-blue-600 font-mono">DeepSeek-V3 + BGE-M3</div>
                       <div className="text-[10px] text-slate-500">Cross-Encoder: BGE-Reranker</div>
                     </div>
                   </div>
 
                   {/* System Health Status Grid */}
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                    <div className="text-xs font-semibold text-white flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                       Infrastructure & Service Health
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-                      <div className="p-2 rounded bg-slate-900 border border-slate-800 flex items-center justify-between">
-                        <span className="text-slate-400 text-[11px]">pgvector:</span>
-                        <span className="text-emerald-400 text-[11px]">HEALTHY (1024d)</span>
+                      <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
+                        <span className="text-slate-500 text-[11px]">pgvector:</span>
+                        <span className="text-emerald-600 text-[11px] font-semibold">HEALTHY (1024d)</span>
                       </div>
-                      <div className="p-2 rounded bg-slate-900 border border-slate-800 flex items-center justify-between">
-                        <span className="text-slate-400 text-[11px]">DeepSeek API:</span>
-                        <span className="text-emerald-400 text-[11px]">OPERATIONAL</span>
+                      <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
+                        <span className="text-slate-500 text-[11px]">DeepSeek API:</span>
+                        <span className="text-emerald-600 text-[11px] font-semibold">OPERATIONAL</span>
                       </div>
-                      <div className="p-2 rounded bg-slate-900 border border-slate-800 flex items-center justify-between">
-                        <span className="text-slate-400 text-[11px]">Supabase Auth:</span>
-                        <span className="text-emerald-400 text-[11px]">CONNECTED</span>
+                      <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
+                        <span className="text-slate-500 text-[11px]">Supabase Auth:</span>
+                        <span className="text-emerald-600 text-[11px] font-semibold">CONNECTED</span>
                       </div>
-                      <div className="p-2 rounded bg-slate-900 border border-slate-800 flex items-center justify-between">
-                        <span className="text-slate-400 text-[11px]">DMS Storage:</span>
-                        <span className="text-emerald-400 text-[11px]">248 DOCS</span>
+                      <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
+                        <span className="text-slate-500 text-[11px]">DMS Storage:</span>
+                        <span className="text-emerald-600 text-[11px] font-semibold">248 DOCS</span>
                       </div>
                     </div>
                   </div>
@@ -364,24 +364,24 @@ export default function AdminDashboardPage() {
           {/* SECTION 2: USERS (64 Users & 7 Role Tiers)                  */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "users" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80 flex flex-row items-center justify-between">
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                    <Users className="w-4 h-4 text-emerald-400" />
+                  <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-emerald-600" />
                     User Directory (64 Active Members)
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-xs text-slate-500">
                     7-Tier Role Hierarchy & Project Assignment Management.
                   </CardDescription>
                 </div>
-                <Button size="sm" className="bg-sky-500 hover:bg-sky-600 text-white text-xs h-8 gap-1.5">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 gap-1.5 shadow-xs">
                   <Plus className="w-3.5 h-3.5" /> Invite User
                 </Button>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-950 border-b border-slate-800 text-slate-400 font-semibold">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
                     <tr>
                       <th className="p-3">User</th>
                       <th className="p-3">Role Tier</th>
@@ -390,7 +390,7 @@ export default function AdminDashboardPage() {
                       <th className="p-3">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 font-sans">
+                  <tbody className="divide-y divide-slate-100 font-sans">
                     {[
                       { name: "Dr. Sarah Lead", email: "sarah.admin@autocruise.ai", role: "SUPER_ADMIN", dept: "Perception Core", projs: "All Projects", status: "Active" },
                       { name: "Marcus Rivera", email: "marcus.lead@autocruise.ai", role: "ADMIN", dept: "Sensor Fusion", projs: "Project Alpha, Beta", status: "Active" },
@@ -400,20 +400,20 @@ export default function AdminDashboardPage() {
                       { name: "Maya Patel", email: "maya.annot@autocruise.ai", role: "ANNOTATOR", dept: "LiDAR Annotation", projs: "Urban 3D Perception", status: "Active" },
                       { name: "James Wilson", email: "james.view@autocruise.ai", role: "VIEWER", dept: "Executive Audit", projs: "Urban 3D Perception", status: "Active" },
                     ].map((u, i) => (
-                      <tr key={i} className="hover:bg-slate-850/40">
-                        <td className="p-3 font-medium text-white">
+                      <tr key={i} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="p-3 font-medium text-slate-900">
                           <div>{u.name}</div>
                           <div className="text-[11px] text-slate-500 font-mono">{u.email}</div>
                         </td>
                         <td className="p-3">
-                          <Badge variant="outline" className="border-sky-500/30 bg-sky-950/40 text-sky-300 font-mono text-[10px]">
+                          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 font-mono text-[10px]">
                             {u.role}
                           </Badge>
                         </td>
-                        <td className="p-3 text-slate-300">{u.dept}</td>
-                        <td className="p-3 text-slate-400">{u.projs}</td>
+                        <td className="p-3 text-slate-700">{u.dept}</td>
+                        <td className="p-3 text-slate-500">{u.projs}</td>
                         <td className="p-3">
-                          <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 text-[10px]">
+                          <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">
                             {u.status}
                           </Badge>
                         </td>
@@ -429,13 +429,13 @@ export default function AdminDashboardPage() {
           {/* SECTION 3: TEAMS (6 Organizational Units)                   */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "teams" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80">
-                <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <Users className="w-4 h-4 text-purple-400" />
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-purple-600" />
                   Teams & Departments (6 Units)
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-slate-500">
                   Organizational squads and department leads.
                 </CardDescription>
               </CardHeader>
@@ -448,13 +448,13 @@ export default function AdminDashboardPage() {
                   { name: "HD Mapping & Coordinate Datum", lead: "David Kim", members: 7, docs: 12 },
                   { name: "Security & Validation Operations", lead: "James Wilson", members: 5, docs: 7 },
                 ].map((t, i) => (
-                  <div key={i} className="p-3.5 rounded-xl border border-slate-800 bg-slate-950 space-y-2">
+                  <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white text-xs">{t.name}</span>
-                      <Badge variant="outline" className="text-[10px] border-slate-800 text-slate-400">{t.members} Members</Badge>
+                      <span className="font-semibold text-slate-900 text-xs">{t.name}</span>
+                      <Badge variant="outline" className="text-[10px] border-slate-200 bg-white text-slate-600">{t.members} Members</Badge>
                     </div>
-                    <div className="text-[11px] text-slate-400">Lead: <span className="text-slate-200">{t.lead}</span></div>
-                    <div className="text-[10px] text-sky-400 font-mono">{t.docs} Assigned Documents</div>
+                    <div className="text-[11px] text-slate-500">Lead: <span className="text-slate-800 font-medium">{t.lead}</span></div>
+                    <div className="text-[10px] text-blue-600 font-mono font-medium">{t.docs} Assigned Documents</div>
                   </div>
                 ))}
               </CardContent>
@@ -465,13 +465,13 @@ export default function AdminDashboardPage() {
           {/* SECTION 4: PROJECTS (8 Active Perception Projects)          */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "projects" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80">
-                <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <Folder className="w-4 h-4 text-purple-400" />
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Folder className="w-4 h-4 text-purple-600" />
                   Perception Projects (8 Active Pipelines)
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-slate-500">
                   Isolated workspace boundaries and project access rules.
                 </CardDescription>
               </CardHeader>
@@ -486,14 +486,14 @@ export default function AdminDashboardPage() {
                   { name: "Project Eta (Traffic Delineation)", status: "Active", docs: 11, confidentiality: "Internal" },
                   { name: "Project Theta (Emergency Vehicle SOP)", status: "Active", docs: 7, confidentiality: "Internal" },
                 ].map((p, i) => (
-                  <div key={i} className="p-3.5 rounded-xl border border-slate-800 bg-slate-950 space-y-2">
+                  <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white text-xs">{p.name}</span>
-                      <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-300">{p.status}</Badge>
+                      <span className="font-semibold text-slate-900 text-xs">{p.name}</span>
+                      <Badge variant="outline" className="text-[10px] border-emerald-200 bg-emerald-50 text-emerald-700">{p.status}</Badge>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500">
                       <span>{p.docs} Documents</span>
-                      <Badge variant="outline" className="text-[9px] border-slate-800 text-slate-400">{p.confidentiality}</Badge>
+                      <Badge variant="outline" className="text-[9px] border-slate-200 bg-white text-slate-600">{p.confidentiality}</Badge>
                     </div>
                   </div>
                 ))}
@@ -505,50 +505,50 @@ export default function AdminDashboardPage() {
           {/* SECTION 5: DOCUMENTS (248 Active Documents)                 */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "documents" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80 flex flex-row items-center justify-between">
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-sky-400" />
+                  <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-600" />
                     Document Catalog (248 Indexed Documents)
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-xs text-slate-500">
                     PDF, DOCX, Markdown, and text storage with version tracking.
                   </CardDescription>
                 </div>
-                <Button size="sm" className="bg-sky-500 hover:bg-sky-600 text-white text-xs h-8">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 shadow-xs">
                   Upload Document
                 </Button>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
-                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                   <div>
-                    <div className="font-semibold text-white">Velodyne VLS-128 LiDAR Calibration Guide</div>
+                    <div className="font-semibold text-slate-900">Velodyne VLS-128 LiDAR Calibration Guide</div>
                     <div className="text-slate-500 text-[11px]">PDF · 48 Pages · 124 Chunks · SHA-256 Verified</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-sky-500/40 text-sky-300 text-[10px]">v2 (Current)</Badge>
-                    <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 text-[10px]">READY</Badge>
+                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-[10px]">v2 (Current)</Badge>
+                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">READY</Badge>
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                   <div>
-                    <div className="font-semibold text-white">3D Bounding Box & Occlusion Categorization SOP</div>
+                    <div className="font-semibold text-slate-900">3D Bounding Box & Occlusion Categorization SOP</div>
                     <div className="text-slate-500 text-[11px]">Markdown · 32 Pages · 86 Chunks · SHA-256 Verified</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-sky-500/40 text-sky-300 text-[10px]">v1 (Current)</Badge>
-                    <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 text-[10px]">READY</Badge>
+                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-[10px]">v1 (Current)</Badge>
+                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">READY</Badge>
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                   <div>
-                    <div className="font-semibold text-white">Long-Range Radar Doppler Velocity Specification</div>
+                    <div className="font-semibold text-slate-900">Long-Range Radar Doppler Velocity Specification</div>
                     <div className="text-slate-500 text-[11px]">DOCX · 24 Pages · 58 Chunks · SHA-256 Verified</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-sky-500/40 text-sky-300 text-[10px]">v1 (Current)</Badge>
-                    <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 text-[10px]">READY</Badge>
+                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-[10px]">v1 (Current)</Badge>
+                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">READY</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -559,36 +559,36 @@ export default function AdminDashboardPage() {
           {/* SECTION 6: KNOWLEDGE BASE (pgvector Indexing)               */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "knowledge-base" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80 flex flex-row items-center justify-between">
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                    <Database className="w-4 h-4 text-emerald-400" />
+                  <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Database className="w-4 h-4 text-emerald-600" />
                     pgvector Knowledge Base & Vector Index
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-xs text-slate-500">
                     BGE-M3 (1024d) embeddings and chunk deduplication status.
                   </CardDescription>
                 </div>
-                <Button size="sm" variant="outline" className="h-8 text-xs border-slate-800 text-sky-400 gap-1.5">
+                <Button size="sm" variant="outline" className="h-8 text-xs border-slate-200 bg-white text-blue-600 hover:bg-slate-50 gap-1.5">
                   <RefreshCw className="w-3.5 h-3.5" /> Re-embed All
                 </Button>
               </CardHeader>
               <CardContent className="p-4 space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px]">Total Chunks Embedded</div>
-                    <div className="text-xl font-bold text-white font-mono">12,450</div>
-                    <div className="text-[10px] text-emerald-400">100% Status: EMBEDDED</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px]">Total Chunks Embedded</div>
+                    <div className="text-xl font-bold text-slate-900 font-mono">12,450</div>
+                    <div className="text-[10px] text-emerald-600 font-medium">100% Status: EMBEDDED</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px]">Vector Dimensions</div>
-                    <div className="text-xl font-bold text-sky-400 font-mono">1024-dim</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px]">Vector Dimensions</div>
+                    <div className="text-xl font-bold text-blue-600 font-mono">1024-dim</div>
                     <div className="text-[10px] text-slate-500">Model: BAAI/bge-m3</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px]">HNSW Index Status</div>
-                    <div className="text-xl font-bold text-emerald-400 font-mono">OPTIMAL</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px]">HNSW Index Status</div>
+                    <div className="text-xl font-bold text-emerald-600 font-mono">OPTIMAL</div>
                     <div className="text-[10px] text-slate-500">Cosine Metric (1 - &lt;=&gt;)</div>
                   </div>
                 </div>
@@ -600,13 +600,13 @@ export default function AdminDashboardPage() {
           {/* SECTION 7: CONVERSATIONS (Session Logs)                    */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "conversations" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80">
-                <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-cyan-400" />
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-sky-600" />
                   Conversation Session Telemetry
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-slate-500">
                   Searchable employee chat queries across all projects.
                 </CardDescription>
               </CardHeader>
@@ -616,14 +616,14 @@ export default function AdminDashboardPage() {
                   { query: "What standard orientation do LiDAR coordinate axes use?", user: "maya.patel@autocruise.ai", time: "25 mins ago", citations: 2, latency: "285ms" },
                   { query: "Explain the optical calibration beam angle offset matrix.", user: "david.kim@autocruise.ai", time: "1 hour ago", citations: 4, latency: "340ms" },
                 ].map((c, i) => (
-                  <div key={i} className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1.5">
+                  <div key={i} className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white">{c.query}</span>
-                      <span className="text-[10px] text-slate-500 font-mono">{c.time}</span>
+                      <span className="font-semibold text-slate-900">{c.query}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{c.time}</span>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500">
                       <span>User: {c.user}</span>
-                      <span className="text-sky-400 font-mono">{c.citations} Citations · {c.latency}</span>
+                      <span className="text-blue-600 font-mono">{c.citations} Citations · {c.latency}</span>
                     </div>
                   </div>
                 ))}
@@ -635,48 +635,48 @@ export default function AdminDashboardPage() {
           {/* SECTION 8: FEEDBACK (3,912 Ratings Breakdown)              */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "feedback" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80">
-                <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <ThumbsUp className="w-4 h-4 text-emerald-400" />
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <ThumbsUp className="w-4 h-4 text-emerald-600" />
                   User Feedback & QA Analytics (3,912 Responses)
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-slate-500">
                   Satisfaction ratings: 94.2% Positive (3,685 thumbs up), 5.8% Negative (227).
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px]">Total Responses</div>
-                    <div className="text-2xl font-bold text-white font-mono">3,912</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px]">Total Responses</div>
+                    <div className="text-2xl font-bold text-slate-900 font-mono">3,912</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px]">Helpful Answers (👍)</div>
-                    <div className="text-2xl font-bold text-emerald-400 font-mono">3,685</div>
-                    <div className="text-[10px] text-emerald-500">94.2% positive rate</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px]">Helpful Answers (👍)</div>
+                    <div className="text-2xl font-bold text-emerald-600 font-mono">3,685</div>
+                    <div className="text-[10px] text-emerald-600 font-medium">94.2% positive rate</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px]">Needs Improvement (👎)</div>
-                    <div className="text-2xl font-bold text-red-400 font-mono">227</div>
-                    <div className="text-[10px] text-red-400/80">5.8% flagged</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px]">Needs Improvement (👎)</div>
+                    <div className="text-2xl font-bold text-red-600 font-mono">227</div>
+                    <div className="text-[10px] text-red-600/80 font-medium">5.8% flagged</div>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                  <div className="font-semibold text-white">Top Negative Feedback Root Causes:</div>
-                  <div className="space-y-1 text-slate-300">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="font-semibold text-slate-900">Top Negative Feedback Root Causes:</div>
+                  <div className="space-y-1.5 text-slate-700">
                     <div className="flex justify-between">
                       <span>• Missing edge-case annotation guideline in SOP</span>
-                      <span className="font-mono text-slate-400">112 occurrences</span>
+                      <span className="font-mono text-slate-500">112 occurrences</span>
                     </div>
                     <div className="flex justify-between">
                       <span>• Ambiguous 3D cuboid yaw angle standard</span>
-                      <span className="font-mono text-slate-400">64 occurrences</span>
+                      <span className="font-mono text-slate-500">64 occurrences</span>
                     </div>
                     <div className="flex justify-between">
                       <span>• Outdated version reference</span>
-                      <span className="font-mono text-slate-400">51 occurrences</span>
+                      <span className="font-mono text-slate-500">51 occurrences</span>
                     </div>
                   </div>
                 </div>
@@ -688,18 +688,18 @@ export default function AdminDashboardPage() {
           {/* SECTION 9: UNANSWERED QUESTIONS (87 Failed Queries Queue)   */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "unanswered-questions" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80 flex flex-row items-center justify-between">
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4 text-amber-400" />
+                  <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-amber-600" />
                     Unanswered Questions Queue (87 Flagged Queries)
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-xs text-slate-500">
                     Queries scoring below relevance threshold or lacking SOP documentation.
                   </CardDescription>
                 </div>
-                <Badge variant="outline" className="border-amber-500/40 bg-amber-950/40 text-amber-300 text-xs">
+                <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-xs">
                   87 Items Pending SOP Addition
                 </Badge>
               </CardHeader>
@@ -707,10 +707,10 @@ export default function AdminDashboardPage() {
                 {unanswered.map((item) => {
                   const isHandled = handledUnansweredIds[item.id] === "added_to_sop" || item.status === "added_to_sop";
                   return (
-                    <div key={item.id} className="p-3.5 rounded-xl border border-slate-800 bg-slate-950 space-y-2">
+                    <div key={item.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <span className="font-semibold text-white">{item.query}</span>
+                          <span className="font-semibold text-slate-900">{item.query}</span>
                           <div className="flex items-center gap-2 text-[11px] text-slate-500">
                             <span>Project: {item.project_name}</span>
                             <span>·</span>
@@ -722,14 +722,14 @@ export default function AdminDashboardPage() {
 
                         <div>
                           {isHandled ? (
-                            <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-950/30 text-[10px]">
+                            <Badge variant="outline" className="border-emerald-200 text-emerald-700 bg-emerald-50 text-[10px]">
                               <CheckCircle2 className="w-3 h-3 mr-1" /> Added to SOP (v2)
                             </Badge>
                           ) : (
                             <Button
                               size="sm"
                               onClick={() => handleOpenGapModal(item)}
-                              className="h-7 px-3 text-xs bg-sky-500 hover:bg-sky-600 text-white font-medium shadow-sm flex items-center gap-1 cursor-pointer"
+                              className="h-7 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-xs flex items-center gap-1 cursor-pointer"
                             >
                               <Zap className="w-3 h-3" /> Resolve Gap
                             </Button>
@@ -747,50 +747,50 @@ export default function AdminDashboardPage() {
           {/* SECTION 10: AI USAGE (Token Metrics & Telemetry)           */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "ai-usage" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80">
-                <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <BrainCircuit className="w-4 h-4 text-purple-400" />
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <BrainCircuit className="w-4 h-4 text-purple-600" />
                   DeepSeek AI Usage & Token Telemetry
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-slate-500">
                   Token consumption breakdown and cost estimation.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 font-mono">
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px] font-sans">Prompt Tokens</div>
-                    <div className="text-lg font-bold text-white">18.42 M</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px] font-sans">Prompt Tokens</div>
+                    <div className="text-lg font-bold text-slate-900">18.42 M</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px] font-sans">Completion Tokens</div>
-                    <div className="text-lg font-bold text-sky-400">6.21 M</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px] font-sans">Completion Tokens</div>
+                    <div className="text-lg font-bold text-blue-600">6.21 M</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px] font-sans">Total Tokens</div>
-                    <div className="text-lg font-bold text-emerald-400">24.63 M</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px] font-sans">Total Tokens</div>
+                    <div className="text-lg font-bold text-emerald-600">24.63 M</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="text-slate-400 text-[11px] font-sans">Estimated Cost</div>
-                    <div className="text-lg font-bold text-amber-400">$12.45 USD</div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="text-slate-500 text-[11px] font-sans">Estimated Cost</div>
+                    <div className="text-lg font-bold text-amber-600">$12.45 USD</div>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                  <div className="font-semibold text-white">Configured Model Endpoints:</div>
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="font-semibold text-slate-900">Configured Model Endpoints:</div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px]">
-                    <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400">LLM: </span>
-                      <span className="text-sky-300">deepseek-chat (V3)</span>
+                    <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                      <span className="text-slate-500">LLM: </span>
+                      <span className="text-blue-600 font-semibold">deepseek-chat (V3)</span>
                     </div>
-                    <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400">Embedding: </span>
-                      <span className="text-emerald-300">BAAI/bge-m3</span>
+                    <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                      <span className="text-slate-500">Embedding: </span>
+                      <span className="text-emerald-600 font-semibold">BAAI/bge-m3</span>
                     </div>
-                    <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400">Reranker: </span>
-                      <span className="text-purple-300">bge-reranker-v2-m3</span>
+                    <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                      <span className="text-slate-500">Reranker: </span>
+                      <span className="text-purple-600 font-semibold">bge-reranker-v2-m3</span>
                     </div>
                   </div>
                 </div>
@@ -802,19 +802,19 @@ export default function AdminDashboardPage() {
           {/* SECTION 11: AUDIT LOGS (Security Trail)                    */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "audit-logs" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80">
-                <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   Zero-Trust Security Audit Logs
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-slate-500">
                   Chronological access control, document upload, and authorization events.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-950 border-b border-slate-800 text-slate-400 font-semibold">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
                     <tr>
                       <th className="p-3">Timestamp</th>
                       <th className="p-3">Actor</th>
@@ -824,21 +824,21 @@ export default function AdminDashboardPage() {
                       <th className="p-3">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                  <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
                     {auditLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-850/40">
-                        <td className="p-3 text-slate-400">{log.timestamp}</td>
-                        <td className="p-3 text-white font-sans">{log.actor_email}</td>
-                        <td className="p-3 text-sky-400">{log.action}</td>
-                        <td className="p-3 text-slate-300">{log.resource_name}</td>
+                      <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="p-3 text-slate-500">{log.timestamp}</td>
+                        <td className="p-3 text-slate-900 font-sans font-medium">{log.actor_email}</td>
+                        <td className="p-3 text-blue-600 font-semibold">{log.action}</td>
+                        <td className="p-3 text-slate-700">{log.resource_name}</td>
                         <td className="p-3 text-slate-500">{log.ip_address}</td>
                         <td className="p-3">
                           <Badge
                             variant="outline"
                             className={`text-[9px] ${
                               log.status === "SUCCESS"
-                                ? "border-emerald-500/40 text-emerald-400"
-                                : "border-red-500/40 text-red-400"
+                                ? "border-emerald-200 text-emerald-700 bg-emerald-50"
+                                : "border-red-200 text-red-700 bg-red-50"
                             }`}
                           >
                             {log.status}
@@ -856,46 +856,46 @@ export default function AdminDashboardPage() {
           {/* SECTION 12: SETTINGS (RAG Hyperparameters)                 */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "settings" && (
-            <Card className="border-slate-800 bg-slate-900/70">
-              <CardHeader className="pb-3 border-b border-slate-800/80">
-                <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-sky-400" />
+            <Card className="border-slate-200 bg-white shadow-xs">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-blue-600" />
                   RAG Pipeline & Model Configuration
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-slate-500">
                   Tune 2-stage retrieval weights, reranker thresholds, and temperature.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-5 space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Stage 1 Candidate-K ({candidateK} Chunks)</label>
+                    <label className="text-slate-700 font-medium">Stage 1 Candidate-K ({candidateK} Chunks)</label>
                     <input
                       type="range"
                       min="5"
                       max="50"
                       value={candidateK}
                       onChange={(e) => setCandidateK(parseInt(e.target.value))}
-                      className="w-full accent-sky-500"
+                      className="w-full accent-blue-600"
                     />
                     <div className="text-[10px] text-slate-500">Initial high-recall retrieval batch before reranking.</div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Stage 2 Final Top-K ({topK} Chunks)</label>
+                    <label className="text-slate-700 font-medium">Stage 2 Final Top-K ({topK} Chunks)</label>
                     <input
                       type="range"
                       min="1"
                       max="10"
                       value={topK}
                       onChange={(e) => setTopK(parseInt(e.target.value))}
-                      className="w-full accent-sky-500"
+                      className="w-full accent-blue-600"
                     />
                     <div className="text-[10px] text-slate-500">High-precision citations sent to LLM prompt.</div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Min Relevance Threshold ({Math.round(minThreshold * 100)}%)</label>
+                    <label className="text-slate-700 font-medium">Min Relevance Threshold ({Math.round(minThreshold * 100)}%)</label>
                     <input
                       type="range"
                       min="0"
@@ -903,13 +903,13 @@ export default function AdminDashboardPage() {
                       step="0.05"
                       value={minThreshold}
                       onChange={(e) => setMinThreshold(parseFloat(e.target.value))}
-                      className="w-full accent-emerald-500"
+                      className="w-full accent-emerald-600"
                     />
                     <div className="text-[10px] text-slate-500">Prunes irrelevant chunks to prevent hallucination.</div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Generation Temperature ({temperature})</label>
+                    <label className="text-slate-700 font-medium">Generation Temperature ({temperature})</label>
                     <input
                       type="range"
                       min="0"
@@ -917,14 +917,14 @@ export default function AdminDashboardPage() {
                       step="0.05"
                       value={temperature}
                       onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                      className="w-full accent-sky-500"
+                      className="w-full accent-blue-600"
                     />
                     <div className="text-[10px] text-slate-500">Controls creativity vs strict factual adherence.</div>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 flex justify-end">
-                  <Button className="bg-sky-500 hover:bg-sky-600 text-white text-xs px-5">
+                <div className="pt-3 border-t border-slate-100 flex justify-end">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-5 shadow-xs">
                     Save Configuration
                   </Button>
                 </div>
@@ -936,21 +936,21 @@ export default function AdminDashboardPage() {
 
       {/* ── Closed-Loop Knowledge Gap Resolution Modal ────────────────── */}
       {activeGapItem && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <Card className="w-full max-w-2xl border-slate-800 bg-slate-900 shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <Card className="w-full max-w-2xl border-slate-200 bg-white shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
                   <Zap className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Closed-Loop Knowledge Gap Resolution</h3>
-                  <p className="text-[11px] text-slate-400">Update SOP & Auto-Index with BGE-M3 (1024d) in pgvector</p>
+                  <h3 className="text-sm font-bold text-slate-900">Closed-Loop Knowledge Gap Resolution</h3>
+                  <p className="text-[11px] text-slate-500">Update SOP & Auto-Index with BGE-M3 (1024d) in pgvector</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveGapItem(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -958,15 +958,17 @@ export default function AdminDashboardPage() {
 
             <div className="p-5 space-y-4 overflow-y-auto text-xs flex-1">
               {/* Flagged Query Card */}
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-400">
+              <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200 space-y-1">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-700">
                   Flagged Unanswered / Negative Feedback Query:
                 </span>
-                <p className="text-white font-medium text-xs sm:text-sm">
+                <p className="text-slate-900 font-medium text-xs sm:text-sm">
                   &ldquo;{activeGapItem.query}&rdquo;
                 </p>
                 <div className="flex items-center gap-2 text-[10px] text-slate-500 pt-0.5">
                   <span>Project: {activeGapItem.project_name}</span>
+                  <span>·</span>
+                  <span>Asked by: {activeGapItem.user_email}</span>
                   <span>·</span>
                   <span>Confidence: {(activeGapItem.confidence_score * 100).toFixed(1)}%</span>
                 </div>
@@ -975,58 +977,58 @@ export default function AdminDashboardPage() {
               {/* Target Document & Section */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-slate-300 font-semibold block">Target Document</label>
+                  <label className="text-slate-700 font-semibold block">Target Document</label>
                   <input
                     type="text"
                     value={gapDocTitle}
                     onChange={(e) => setGapDocTitle(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-slate-300 font-semibold block">Section Heading</label>
+                  <label className="text-slate-700 font-semibold block">Section Heading</label>
                   <input
                     type="text"
                     value={gapSectionName}
                     onChange={(e) => setGapSectionName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   />
                 </div>
               </div>
 
               {/* Guideline text editor */}
               <div className="space-y-1">
-                <label className="text-slate-300 font-semibold block">
+                <label className="text-slate-700 font-semibold block">
                   New / Updated SOP Guideline Text (Markdown Supported):
                 </label>
                 <textarea
                   value={gapGuidelineText}
                   onChange={(e) => setGapGuidelineText(e.target.value)}
                   rows={6}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 font-mono leading-relaxed placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 font-mono leading-relaxed placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600"
                 />
               </div>
 
               {/* Live Test Verification Card */}
               {testVerified && (
-                <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-2 animate-in fade-in">
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       Resolution Verified: pgvector Re-Indexed
                     </span>
-                    <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 font-mono text-[10px]">
+                    <Badge variant="outline" className="border-emerald-300 text-emerald-700 font-mono text-[10px] bg-white">
                       98.7% Relevance Match
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-emerald-200/90 leading-relaxed">
+                  <p className="text-[11px] text-emerald-700/90 leading-relaxed">
                     Future queries matching &ldquo;{activeGapItem.query}&rdquo; will now retrieve this newly indexed chunk as Citation [1].
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between text-xs">
+            <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between text-xs">
               <span className="text-slate-500 text-[11px]">
                 Model: BGE-M3 (1024d) Dense Vectors
               </span>
@@ -1035,7 +1037,7 @@ export default function AdminDashboardPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setActiveGapItem(null)}
-                  className="h-8 text-xs border-slate-800"
+                  className="h-8 text-xs border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 >
                   {resolutionSuccess ? "Done" : "Cancel"}
                 </Button>
@@ -1044,7 +1046,7 @@ export default function AdminDashboardPage() {
                     size="sm"
                     disabled={isResolving || !gapGuidelineText.trim()}
                     onClick={handleResolveKnowledgeGap}
-                    className="h-8 px-4 text-xs font-semibold bg-sky-500 hover:bg-sky-600 text-white flex items-center gap-1.5"
+                    className="h-8 px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-xs"
                   >
                     {isResolving ? (
                       <>

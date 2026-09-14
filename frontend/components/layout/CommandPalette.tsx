@@ -68,13 +68,13 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         </CommandGroup>
         
         <CommandGroup heading="Actions">
-          <CommandItem onSelect={() => handleSelect("/chat/new")}>
-            <Plus className="mr-2 h-4 w-4 text-sky-400" />
-            <span className="text-sky-400">New Chat</span>
+          <CommandItem onSelect={() => handleSelect("/chat")}>
+            <Plus className="mr-2 h-4 w-4 text-blue-600" />
+            <span className="text-blue-600 font-medium">New Chat</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleSelect("/documents/upload")}>
-            <Upload className="mr-2 h-4 w-4 text-sky-400" />
-            <span className="text-sky-400">Upload Document</span>
+          <CommandItem onSelect={() => handleSelect("/documents")}>
+            <Upload className="mr-2 h-4 w-4 text-blue-600" />
+            <span className="text-blue-600 font-medium">Upload Document</span>
           </CommandItem>
         </CommandGroup>
         

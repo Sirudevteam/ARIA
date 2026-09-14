@@ -8,7 +8,7 @@ interface SkeletonProps {
 
 export function Skeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn("animate-pulse rounded-md bg-slate-800/60", className)} />
+    <div className={cn("animate-pulse rounded-md bg-slate-200", className)} />
   );
 }
 
@@ -16,7 +16,7 @@ export function ChatSkeleton({ className }: SkeletonProps) {
   return (
     <div className={cn("flex h-full w-full", className)}>
       {/* Sidebar */}
-      <div className="w-64 border-r border-white/[0.06] bg-surface-1 p-4 hidden md:flex flex-col gap-4">
+      <div className="w-64 border-r border-slate-200 bg-white p-4 hidden md:flex flex-col gap-4">
         <Skeleton className="h-10 w-full rounded-lg" />
         <div className="mt-4 space-y-3 flex-1">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -29,8 +29,8 @@ export function ChatSkeleton({ className }: SkeletonProps) {
       </div>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full bg-surface-1">
-        <div className="border-b border-white/[0.06] p-4 flex items-center justify-between">
+      <div className="flex-1 flex flex-col h-full bg-slate-50">
+        <div className="border-b border-slate-200 bg-white p-4 flex items-center justify-between">
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
@@ -44,7 +44,7 @@ export function ChatSkeleton({ className }: SkeletonProps) {
           ))}
         </div>
         
-        <div className="p-4 border-t border-white/[0.06]">
+        <div className="p-4 border-t border-slate-200 bg-white">
           <Skeleton className="h-14 w-full rounded-xl" />
         </div>
       </div>
@@ -54,7 +54,7 @@ export function ChatSkeleton({ className }: SkeletonProps) {
 
 export function DocumentsSkeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn("flex flex-col h-full w-full p-6 bg-surface-1", className)}>
+    <div className={cn("flex flex-col h-full w-full p-6 bg-slate-50", className)}>
       <div className="flex items-center justify-between mb-8">
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
@@ -69,16 +69,16 @@ export function DocumentsSkeleton({ className }: SkeletonProps) {
         <Skeleton className="h-10 w-24 rounded-lg ml-auto" />
       </div>
       
-      <div className="border border-white/[0.06] rounded-xl overflow-hidden">
-        <div className="bg-surface-2 p-4 border-b border-white/[0.06] flex gap-4">
+      <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
+        <div className="bg-slate-100/70 p-4 border-b border-slate-200 flex gap-4">
           <Skeleton className="h-4 w-1/3" />
           <Skeleton className="h-4 w-1/4" />
           <Skeleton className="h-4 w-1/4" />
           <Skeleton className="h-4 w-12 ml-auto" />
         </div>
-        <div className="divide-y divide-white/[0.06]">
+        <div className="divide-y divide-slate-100">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="p-4 flex items-center gap-4 bg-surface-1">
+            <div key={i} className="p-4 flex items-center gap-4 bg-white">
               <Skeleton className="h-10 w-10 rounded-lg shrink-0" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-1/2" />
@@ -97,7 +97,7 @@ export function DocumentsSkeleton({ className }: SkeletonProps) {
 
 export function DashboardSkeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn("flex flex-col h-full w-full p-6 bg-surface-1 gap-8 overflow-y-auto", className)}>
+    <div className={cn("flex flex-col h-full w-full p-6 bg-slate-50 gap-8 overflow-y-auto", className)}>
       {/* Welcome Banner */}
       <Skeleton className="h-32 w-full rounded-2xl" />
       
@@ -130,7 +130,7 @@ export function DashboardSkeleton({ className }: SkeletonProps) {
 
 export function PageSkeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn("flex flex-col h-full w-full p-6 bg-surface-1 gap-6", className)}>
+    <div className={cn("flex flex-col h-full w-full p-6 bg-slate-50 gap-6", className)}>
       <div className="space-y-2 mb-4">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-96" />

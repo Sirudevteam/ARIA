@@ -46,18 +46,18 @@ export function StatCard({ icon, label, value, subtitle, trend, className }: Sta
   return (
     <SlideUp>
       <div className={cn(
-        "relative overflow-hidden rounded-xl bg-slate-900/60 backdrop-blur-sm border border-white/[0.06] p-6 transition-all duration-300 hover:-translate-y-[1px] hover:border-white/[0.12] hover:shadow-[0_4px_20px_rgba(56,189,248,0.05)]",
+        "relative overflow-hidden rounded-xl bg-white border border-slate-200 p-6 transition-all duration-300 hover:-translate-y-[1px] hover:border-blue-300 hover:shadow-md shadow-xs",
         className
       )}>
         <div className="flex items-start justify-between">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400/10 text-sky-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
             {icon}
           </div>
           
           {trend && (
             <div className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-              trend.positive ? "bg-emerald-400/10 text-emerald-400" : "bg-red-400/10 text-red-400"
+              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
+              trend.positive ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
             )}>
               {trend.value}
             </div>
@@ -65,13 +65,13 @@ export function StatCard({ icon, label, value, subtitle, trend, className }: Sta
         </div>
         
         <div className="mt-4">
-          <p className="text-xs font-medium text-slate-400">{label}</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
           <div className="mt-1 flex items-baseline gap-2">
-            <h3 className="text-2xl font-bold text-white">
+            <h3 className="text-2xl font-bold text-slate-900">
               {isNumber ? <AnimatedCounter value={value as number} /> : value}
             </h3>
             {subtitle && (
-              <span className="text-sm text-slate-500">{subtitle}</span>
+              <span className="text-sm text-slate-400 font-medium">{subtitle}</span>
             )}
           </div>
         </div>

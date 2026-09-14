@@ -23,13 +23,13 @@ function ShellInner({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0a0f1a]">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Desktop sidebar */}
       <Sidebar />
 
       {/* Mobile sidebar drawer */}
       <Sheet open={isMobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="p-0 w-64 bg-[#0a0f1a] border-r border-white/[0.06]">
+        <SheetContent side="left" className="p-0 w-64 bg-white border-r border-slate-200">
           <div className="h-full flex flex-col">
             <Sidebar forceExpanded />
           </div>
@@ -42,7 +42,7 @@ function ShellInner({ children }: { children: ReactNode }) {
           onCommandPaletteOpen={() => setCommandPaletteOpen(true)}
           onMobileMenuToggle={() => setMobileOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 bg-[#0a0f1a]/80">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 bg-slate-50">
           {children}
         </main>
       </div>

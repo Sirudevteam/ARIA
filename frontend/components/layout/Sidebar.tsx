@@ -30,28 +30,28 @@ const navItems: NavItem[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: <LayoutDashboard className="w-5 h-5 shrink-0" />,
-    activeColor: "text-sky-400",
+    activeColor: "text-blue-600",
     shortcut: "⌘1",
   },
   {
     label: "AI Assistant",
     href: "/chat",
     icon: <MessageSquareDot className="w-5 h-5 shrink-0" />,
-    activeColor: "text-cyan-400",
+    activeColor: "text-blue-600",
     shortcut: "⌘2",
   },
   {
     label: "Knowledge Base",
     href: "/documents",
     icon: <FileText className="w-5 h-5 shrink-0" />,
-    activeColor: "text-emerald-400",
+    activeColor: "text-emerald-600",
     shortcut: "⌘3",
   },
   {
     label: "Profile & Access",
     href: "/profile",
     icon: <UserCircle2 className="w-5 h-5 shrink-0" />,
-    activeColor: "text-purple-400",
+    activeColor: "text-purple-600",
     shortcut: "⌘4",
   },
 ];
@@ -75,29 +75,29 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "h-full flex-col transition-all duration-300 border-r border-white/[0.06] bg-gradient-to-b from-[#050d1a] to-surface-1",
+        "h-full flex-col transition-all duration-300 border-r border-slate-200 bg-white shadow-xs",
         isCollapsed ? "w-16" : "w-60",
         forceExpanded ? "flex w-full border-r-0" : "hidden md:flex relative"
       )}
     >
       {/* ── Brand ──────────────────────────────────────────────────── */}
-      <div className={cn("flex items-center py-5 border-b border-white/[0.06] h-[76px]", isCollapsed ? "justify-center px-0" : "px-4 gap-3")}>
+      <div className={cn("flex items-center py-5 border-b border-slate-100 h-[76px]", isCollapsed ? "justify-center px-0" : "px-4 gap-3")}>
         <div
-          className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-[0_0_12px_rgba(14,165,233,0.3)] border border-sky-400/30"
+          className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-sm border border-blue-200"
         >
           <Image src="/aria-logo.jpg" alt="ARIA" fill sizes="36px" className="object-cover" priority />
         </div>
         {!isCollapsed && (
           <>
             <div className="flex flex-col leading-tight min-w-0 transition-opacity duration-300">
-              <span className="text-sm font-bold tracking-widest text-white">ARIA</span>
-              <span className="text-[9px] text-slate-500 uppercase tracking-wider truncate">
+              <span className="text-sm font-bold tracking-widest text-slate-900">ARIA</span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider truncate font-medium">
                 RAG Intelligence
               </span>
             </div>
             {/* System online indicator */}
             <div className="ml-auto shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 block shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 block shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
             </div>
           </>
         )}
@@ -107,7 +107,7 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
       <div className="flex flex-col flex-1 overflow-y-auto">
         <nav className="flex flex-col gap-1 px-2 py-4">
           {!isCollapsed && (
-            <p className="px-2 mb-2 text-[9px] font-semibold uppercase tracking-widest text-slate-500 transition-opacity duration-300">
+            <p className="px-2 mb-2 text-[9px] font-bold uppercase tracking-widest text-slate-400 transition-opacity duration-300">
               Navigation
             </p>
           )}
@@ -124,22 +124,17 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
                 href={item.href}
                 title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  "group relative flex items-center rounded-lg py-2.5 transition-all duration-200 overflow-hidden",
+                  "group relative flex items-center rounded-lg py-2.5 transition-all duration-150 overflow-hidden",
                   isCollapsed ? "justify-center px-0" : "px-3 gap-3",
                   isActive
-                    ? "text-white bg-sky-500/10"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "text-blue-700 bg-blue-50 font-semibold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                 )}
               >
-                {/* Hover Glow Slide Effect */}
-                {!isActive && (
-                  <span className="absolute inset-0 bg-gradient-to-r from-sky-500/10 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out" />
-                )}
-                
                 <span
                   className={cn(
                     "relative z-10 transition-colors",
-                    isActive ? item.activeColor : "text-slate-500 group-hover:text-slate-300"
+                    isActive ? item.activeColor : "text-slate-400 group-hover:text-slate-600"
                   )}
                 >
                   {item.icon}
@@ -147,17 +142,20 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
                 
                 {!isCollapsed && (
                   <>
-                    <span className="relative z-10 truncate text-sm font-medium flex-1">{item.label}</span>
-                    <span className="relative z-10 text-[10px] font-medium text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-slate-700/50">
+                    <span className="relative z-10 truncate text-sm flex-1">{item.label}</span>
+                    <span className={cn(
+                      "relative z-10 text-[10px] font-medium px-1.5 py-0.5 rounded border",
+                      isActive ? "text-blue-600 bg-white border-blue-200" : "text-slate-400 bg-slate-50 border-slate-200"
+                    )}>
                       {item.shortcut}
                     </span>
                   </>
                 )}
 
-                {/* Active cyan left indicator */}
+                {/* Active blue left indicator */}
                 {isActive && (
                   <span
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-r-full bg-sky-400 shadow-[0_0_8px_#0ea5e9] transition-all"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-blue-600 transition-all"
                   />
                 )}
               </Link>
@@ -172,7 +170,7 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
           <button
             onClick={toggleCollapse}
             className={cn(
-              "flex items-center justify-center w-full h-8 rounded-md text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 transition-colors",
+              "flex items-center justify-center w-full h-8 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors",
             )}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
@@ -182,17 +180,17 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
       )}
 
       {/* ── Bottom Section ─────────────────────────────────────────── */}
-      <div className={cn("px-3 py-3 border-t border-white/[0.06] flex flex-col gap-3 transition-all", isCollapsed ? "items-center" : "")}>
+      <div className={cn("px-3 py-3 border-t border-slate-100 flex flex-col gap-2.5 transition-all", isCollapsed ? "items-center" : "")}>
         
         {/* User Avatar Area */}
-        <div className={cn("flex items-center gap-3", isCollapsed ? "justify-center" : "px-2")}>
-          <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-white/10 shrink-0 text-sky-400 text-xs font-bold">
+        <div className={cn("flex items-center gap-3", isCollapsed ? "justify-center" : "px-2 py-1")}>
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200 shrink-0 text-blue-700 text-xs font-bold">
             JD
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium text-white truncate">John Doe</span>
-              <span className="text-[10px] text-sky-400 uppercase tracking-wider font-medium">Admin</span>
+              <span className="text-sm font-semibold text-slate-800 truncate">John Doe</span>
+              <span className="text-[10px] text-blue-600 uppercase tracking-wider font-semibold">Admin</span>
             </div>
           )}
         </div>
@@ -200,19 +198,19 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
         {/* System status */}
         <div
           className={cn(
-            "rounded-md flex items-center bg-sky-500/5 border border-sky-400/10",
+            "rounded-lg flex items-center bg-slate-50 border border-slate-200/80 shadow-2xs",
             isCollapsed ? "justify-center w-8 h-8 p-0" : "px-3 py-2.5 gap-2"
           )}
           title={isCollapsed ? "RAG Pipeline Active" : undefined}
         >
-          <Cpu className={cn("text-sky-400 shrink-0", isCollapsed ? "w-4 h-4" : "w-3 h-3")} />
+          <Cpu className={cn("text-blue-600 shrink-0", isCollapsed ? "w-4 h-4" : "w-3.5 h-3.5")} />
           {!isCollapsed && (
             <>
               <div className="min-w-0 flex-1">
-                <p className="text-[9px] font-semibold text-sky-400 uppercase tracking-wider">RAG Pipeline</p>
-                <p className="text-[10px] text-slate-400 truncate">DeepSeek-V3 · BGE-M3</p>
+                <p className="text-[9px] font-bold text-blue-700 uppercase tracking-wider">RAG Pipeline</p>
+                <p className="text-[10px] text-slate-500 truncate font-medium">DeepSeek-V3 · BGE-M3</p>
               </div>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
             </>
           )}
         </div>
@@ -222,7 +220,7 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
           onClick={handleLogout}
           title={isCollapsed ? "Sign Out" : undefined}
           className={cn(
-            "flex items-center rounded-md text-slate-500 hover:text-red-400 hover:bg-red-950/20 transition-colors",
+            "flex items-center rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors font-medium",
             isCollapsed ? "justify-center w-8 h-8 p-0" : "w-full gap-2.5 px-3 py-2 text-xs"
           )}
         >
@@ -231,7 +229,7 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
         </button>
 
         {!isCollapsed && (
-          <p className="text-[9px] text-slate-600 px-1 mt-1 text-center font-medium tracking-wide">ARIA V2 · Prototype Build</p>
+          <p className="text-[9px] text-slate-400 px-1 mt-0.5 text-center font-medium tracking-wide">ARIA V2 · Enterprise Light</p>
         )}
       </div>
     </aside>

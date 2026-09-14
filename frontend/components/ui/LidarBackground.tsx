@@ -36,7 +36,7 @@ export function LidarBackground({ className = "", opacity = 0.18 }: LidarBackgro
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 90% 60% at 50% 50%, transparent 10%, rgba(2,8,23,0.85) 100%)",
+            "radial-gradient(ellipse 90% 60% at 50% 50%, transparent 10%, rgba(248,250,252,0.85) 100%)",
         }}
       />
     </div>
