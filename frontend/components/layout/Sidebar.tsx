@@ -56,11 +56,16 @@ const navItems: NavItem[] = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  forceExpanded?: boolean;
+}
+
+export function Sidebar({ forceExpanded = false }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
-  const { isCollapsed, toggleCollapse, isMobileOpen } = useSidebar();
+  const { isCollapsed: contextCollapsed, toggleCollapse } = useSidebar();
+  const isCollapsed = forceExpanded ? false : contextCollapsed;
 
   const handleLogout = async () => {
     await logout();
@@ -72,9 +77,7 @@ export function Sidebar() {
       className={cn(
         "h-full flex-col transition-all duration-300 border-r border-white/[0.06] bg-gradient-to-b from-[#050d1a] to-surface-1",
         isCollapsed ? "w-16" : "w-60",
-        // Hide on mobile unless we have logic to show it inline, but instructions say:
-        // "On screens below md breakpoint, the sidebar should not render inline"
-        "hidden md:flex relative"
+        forceExpanded ? "flex w-full border-r-0" : "hidden md:flex relative"
       )}
     >
       {/* ── Brand ──────────────────────────────────────────────────── */}
@@ -163,18 +166,20 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Toggle Button */}
-      <div className="px-3 pb-3">
-        <button
-          onClick={toggleCollapse}
-          className={cn(
-            "flex items-center justify-center w-full h-8 rounded-md text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 transition-colors",
-          )}
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-      </div>
+      {/* Toggle Button (desktop only) */}
+      {!forceExpanded && (
+        <div className="px-3 pb-3">
+          <button
+            onClick={toggleCollapse}
+            className={cn(
+              "flex items-center justify-center w-full h-8 rounded-md text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 transition-colors",
+            )}
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        </div>
+      )}
 
       {/* ── Bottom Section ─────────────────────────────────────────── */}
       <div className={cn("px-3 py-3 border-t border-white/[0.06] flex flex-col gap-3 transition-all", isCollapsed ? "items-center" : "")}>

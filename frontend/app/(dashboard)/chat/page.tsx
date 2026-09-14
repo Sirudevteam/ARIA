@@ -390,7 +390,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4.5rem)] rounded-2xl overflow-hidden glass-panel border border-white/[0.08] shadow-2xl relative">
+    <div className="flex h-[calc(100vh-5.5rem)] sm:h-[calc(100vh-6.5rem)] rounded-2xl overflow-hidden glass-panel border border-white/[0.08] shadow-2xl relative">
       {/* Desktop conversation sidebar */}
       <ConversationSidebar
         sessions={sessions}
@@ -491,7 +491,7 @@ export default function ChatPage() {
         )}
 
         {/* Messages container */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {messages.length === 0 ? (
             /* Empty state with prompt suggestions */
             <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto py-12">
@@ -543,7 +543,7 @@ export default function ChatPage() {
                     </div>
                   )}
 
-                  <div className={`max-w-[85%] md:max-w-[75%] space-y-2`}>
+                  <div className={`max-w-[92%] sm:max-w-[85%] md:max-w-[75%] space-y-2`}>
                     <div
                       className={`p-4 rounded-2xl text-sm leading-relaxed ${
                         isUser

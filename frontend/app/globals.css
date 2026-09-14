@@ -58,6 +58,16 @@
   --aria-glow: rgba(56,189,248,0.08);
   --aria-border: rgba(255,255,255,0.06);
 
+  /* Surface color mappings for first-class Tailwind utilities */
+  --color-surface-1: var(--aria-surface-1);
+  --color-surface-2: var(--aria-surface-2);
+  --color-surface-3: var(--aria-surface-3);
+  --color-surface-4: #1e293b;
+  --color-aria-primary: var(--aria-primary);
+  --color-aria-accent: var(--aria-accent);
+  --color-aria-success: var(--aria-success);
+  --color-aria-warning: var(--aria-warning);
+
   /* Glass morphism tokens */
   --glass-bg: rgba(15,23,42,0.6);
   --glass-border: rgba(255,255,255,0.08);

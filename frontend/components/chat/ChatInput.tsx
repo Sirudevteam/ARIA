@@ -61,9 +61,9 @@ export function ChatInput({
     <div className="flex flex-col glass-panel rounded-xl border border-white/[0.08] shadow-lg shadow-black/20 overflow-hidden">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-3 py-2 bg-slate-900/40 border-b border-white/[0.04]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Select value={selectedProject} onValueChange={(val) => onProjectChange(val ?? "")}>
-            <SelectTrigger className="h-7 w-[180px] bg-slate-800/50 border-white/[0.06] text-xs focus:ring-1 focus:ring-sky-500/50">
+            <SelectTrigger className="h-7 w-[125px] sm:w-[180px] bg-slate-800/50 border-white/[0.06] text-xs focus:ring-1 focus:ring-sky-500/50 shrink-0">
               <SelectValue placeholder="Select Project" />
             </SelectTrigger>
             <SelectContent>
@@ -76,9 +76,9 @@ export function ChatInput({
           </Select>
 
           {isStreaming && streamingStatusText && (
-            <div className="flex items-center gap-2 animate-fade-in">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 aria-scan-pulse" />
-              <span className="text-[10px] text-sky-400 font-mono tracking-tight">
+            <div className="flex items-center gap-1.5 animate-fade-in min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 aria-scan-pulse shrink-0" />
+              <span className="text-[10px] text-sky-400 font-mono tracking-tight truncate max-w-[100px] sm:max-w-xs">
                 {streamingStatusText}
               </span>
             </div>
@@ -89,10 +89,11 @@ export function ChatInput({
           variant="ghost"
           size="sm"
           onClick={onToggleSettings}
-          className={`h-7 px-2 text-xs ${showSettings ? "bg-slate-800 text-sky-400" : "text-slate-400 hover:text-slate-300"}`}
+          className={`h-7 px-2 text-xs shrink-0 ${showSettings ? "bg-slate-800 text-sky-400" : "text-slate-400 hover:text-slate-300"}`}
+          aria-label="Toggle RAG Settings"
         >
-          <SlidersHorizontal className="w-3.5 h-3.5 mr-1.5" />
-          Settings
+          <SlidersHorizontal className="w-3.5 h-3.5 sm:mr-1.5" />
+          <span className="hidden sm:inline">Settings</span>
         </Button>
       </div>
 
@@ -132,8 +133,8 @@ export function ChatInput({
         </div>
       </div>
       
-      {/* Bottom Hint */}
-      <div className="px-4 py-1.5 bg-slate-950 flex justify-end">
+      {/* Bottom Hint - Desktop only */}
+      <div className="hidden sm:flex px-4 py-1.5 bg-slate-950 justify-end">
         <span className="text-[10px] text-slate-600 font-medium">
           Enter to send <span className="mx-1 opacity-50">·</span> Shift+Enter for new line
         </span>

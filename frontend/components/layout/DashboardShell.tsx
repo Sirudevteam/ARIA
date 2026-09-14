@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, ReactNode } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -30,8 +30,8 @@ function ShellInner({ children }: { children: ReactNode }) {
       {/* Mobile sidebar drawer */}
       <Sheet open={isMobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="p-0 w-64 bg-[#0a0f1a] border-r border-white/[0.06]">
-          <div className="h-full flex flex-col [&>aside]:flex [&>aside]:w-full">
-            <Sidebar />
+          <div className="h-full flex flex-col">
+            <Sidebar forceExpanded />
           </div>
         </SheetContent>
       </Sheet>
@@ -42,7 +42,7 @@ function ShellInner({ children }: { children: ReactNode }) {
           onCommandPaletteOpen={() => setCommandPaletteOpen(true)}
           onMobileMenuToggle={() => setMobileOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#0a0f1a]/80">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 bg-[#0a0f1a]/80">
           {children}
         </main>
       </div>

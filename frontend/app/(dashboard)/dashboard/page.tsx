@@ -23,7 +23,7 @@ async function DashboardContent() {
   const stats = await getDashboardStats();
 
   return (
-    <FadeIn className="flex flex-col h-full overflow-y-auto bg-surface-1 p-4 sm:p-6 md:p-8 gap-8">
+    <FadeIn className="flex flex-col max-w-7xl mx-auto w-full gap-6 sm:gap-8 pb-8">
       {/* Banner */}
       <WelcomeBanner userName="John" />
 

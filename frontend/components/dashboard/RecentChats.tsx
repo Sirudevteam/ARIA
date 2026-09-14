@@ -75,33 +75,38 @@ export function RecentChats({ className }: { className?: string }) {
 
       {sessions.length > 0 ? (
         <StaggerChildren className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {sessions.map((session, i) => (
-            <SlideUp key={session.id}>
-              <Link
-                href={`/chat?session=${session.id}`}
-                className="flex items-start gap-4 p-4 rounded-xl bg-surface-2 border border-white/[0.04] hover:bg-slate-800/50 hover:border-white/[0.08] transition-all group"
-              >
-                <div className="w-10 h-10 rounded-lg bg-surface-1 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-cyan-400 transition-colors">
-                  <MessageSquare className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-white truncate mb-1">
-                    {session.title || "Untitled Session"}
-                  </h4>
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <MessageSquare className="w-3 h-3" />
-                      {session.messageCount} msgs
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {formatRelativeTime(session.updatedAt)}
-                    </span>
+          {sessions.map((session, i) => {
+            const count = (session as any).messages?.length ?? session.messageCount ?? 0;
+            const time = session.updatedAt || (session as any).createdAt || new Date().toISOString();
+
+            return (
+              <SlideUp key={session.id}>
+                <Link
+                  href={`/chat?session=${session.id}`}
+                  className="flex items-start gap-3.5 p-4 rounded-xl bg-surface-2 border border-white/[0.04] hover:bg-slate-800/50 hover:border-white/[0.08] transition-all group"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-surface-1 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-cyan-400 transition-colors mt-0.5">
+                    <MessageSquare className="w-4 h-4" />
                   </div>
-                </div>
-              </Link>
-            </SlideUp>
-          ))}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-medium text-white truncate mb-1">
+                      {session.title || "Untitled Session"}
+                    </h4>
+                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                      <span className="flex items-center gap-1 font-mono text-[11px]">
+                        <MessageSquare className="w-3 h-3 text-slate-600" />
+                        {count} msgs
+                      </span>
+                      <span className="flex items-center gap-1 font-mono text-[11px]">
+                        <Clock className="w-3 h-3 text-slate-600" />
+                        {formatRelativeTime(time)}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </SlideUp>
+            );
+          })}
         </StaggerChildren>
       ) : (
         <SlideUp>

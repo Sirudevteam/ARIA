@@ -45,62 +45,75 @@ export function Header({ onCommandPaletteOpen, onMobileMenuToggle }: HeaderProps
   const hasUnread = false;
 
   return (
-    <header className="flex h-14 items-center justify-between px-5 bg-slate-950/80 backdrop-blur-xl border-b border-white/[0.06]">
+    <header className="flex h-14 items-center justify-between px-3 sm:px-5 bg-slate-950/80 backdrop-blur-xl border-b border-white/[0.06] shrink-0 z-20">
       {/* Left side */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={onMobileMenuToggle}
-          className="md:hidden flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors shrink-0"
+          aria-label="Toggle Navigation Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex items-center gap-1.5 text-xs truncate">
           {page.parent && page.parentPath ? (
             <>
-              <Link href={page.parentPath} className="text-slate-500 hover:text-slate-300 transition-colors">
+              <Link href={page.parentPath} className="text-slate-500 hover:text-slate-300 transition-colors shrink-0">
                 {page.parent}
               </Link>
-              <ChevronRight className="w-3 h-3 text-slate-700" />
+              <ChevronRight className="w-3 h-3 text-slate-700 shrink-0" />
             </>
           ) : page.parent ? (
             <>
-              <span className="text-slate-500">{page.parent}</span>
-              <ChevronRight className="w-3 h-3 text-slate-700" />
+              <span className="text-slate-500 shrink-0">{page.parent}</span>
+              <ChevronRight className="w-3 h-3 text-slate-700 shrink-0" />
             </>
           ) : null}
-          <span className="text-white font-medium">{page.label}</span>
+          <span className="text-white font-medium truncate">{page.label}</span>
         </div>
       </div>
 
       {/* Center - Command Palette Trigger */}
-      <div className="hidden sm:flex flex-1 items-center justify-center px-4 max-w-md mx-auto">
+      <div className="hidden md:flex flex-1 items-center justify-center px-4 max-w-sm lg:max-w-md mx-auto">
         <button
           onClick={onCommandPaletteOpen}
-          className="w-full flex items-center justify-between bg-slate-800/50 border border-white/[0.06] rounded-lg px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-800/80 transition-colors"
+          className="w-full flex items-center justify-between bg-slate-800/40 border border-white/[0.06] rounded-lg px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/70 hover:border-white/[0.1] transition-all"
         >
-          <span>Search or jump to...</span>
-          <kbd className="hidden sm:inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 font-mono text-[10px] font-medium text-slate-400">
+          <span className="truncate">Search or jump to...</span>
+          <kbd className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 font-mono text-[10px] font-medium text-slate-400 shrink-0 ml-2">
             <span className="text-xs">⌘</span>K
           </kbd>
         </button>
       </div>
 
+      {/* Mobile Search Icon button for < md */}
+      <button
+        onClick={onCommandPaletteOpen}
+        className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors ml-auto mr-1"
+        aria-label="Open Command Palette"
+      >
+        <kbd className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-800 border border-white/[0.08]">⌘K</kbd>
+      </button>
+
       {/* Right cluster */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* RAG online status */}
         <div className="hidden sm:flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[10px] text-slate-500 font-mono">RAG ACTIVE</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+          <span className="text-[10px] text-slate-400 font-mono tracking-wider">RAG ACTIVE</span>
         </div>
 
         {/* Divider */}
         <div className="hidden sm:block h-4 w-px bg-slate-800" />
         
         {/* Notifications */}
-        <button className="relative text-slate-400 hover:text-white transition-colors">
+        <button 
+          className="relative flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+          aria-label="Notifications"
+        >
           <Bell className="w-4 h-4" />
           {hasUnread && (
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border-2 border-slate-950" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-slate-950" />
           )}
         </button>
 
