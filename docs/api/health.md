@@ -22,7 +22,7 @@ No authentication required.
 ```json
 {
   "status": "ok",
-  "app_name": "LiDAR AI Assistant",
+  "app_name": "ARIA",
   "version": "0.1.0",
   "environment": "development",
   "database": "connected"
@@ -32,7 +32,7 @@ No authentication required.
 | Field | Type | Description |
 |---|---|---|
 | `status` | string | Always `"ok"` when the API is reachable |
-| `app_name` | string | Application name from config |
+| `app_name` | string | Application name (`ARIA`) from configuration |
 | `version` | string | Semantic version |
 | `environment` | string | `development` · `staging` · `production` |
 | `database` | string | `"connected"` or `"unreachable"` |
