@@ -10,6 +10,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateProjectDialog } from "@/components/documents/CreateProjectDialog";
+import { documentsService } from "@/lib/services/documents";
+import { ProjectSummary } from "@/types/document";
 import {
   Activity,
   AlertCircle,
@@ -62,6 +65,8 @@ export default function AdminDashboardPage() {
   });
   const [unanswered, setUnanswered] = useState<UnansweredQueryItem[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [liveProjects, setLiveProjects] = useState<ProjectSummary[]>([]);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState<boolean>(false);
 
   // Unanswered status update simulation
   const [handledUnansweredIds, setHandledUnansweredIds] = useState<Record<string, string>>({});
@@ -117,21 +122,35 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function loadAdminData() {
       try {
-        const [kpisData, unansData, logsData] = await Promise.all([
+        const [kpisData, unansData, logsData, projsData] = await Promise.all([
           adminService.getOverviewKPIs(),
           adminService.getUnansweredQuestions(),
           adminService.getAuditLogs(20),
+          documentsService.getProjects(),
         ]);
 
         setKpis(kpisData);
         setUnanswered(unansData);
         setAuditLogs(logsData);
+        if (projsData && projsData.length > 0) {
+          setLiveProjects(projsData);
+        }
       } catch (err) {
         console.error("Admin dashboard data load error:", err);
       }
     }
     loadAdminData();
   }, []);
+
+  const refreshProjects = async () => {
+    try {
+      const projs = await documentsService.getProjects();
+      setLiveProjects(projs);
+      setKpis((prev) => ({ ...prev, total_projects: projs.length }));
+    } catch (e) {
+      console.warn("Failed to reload projects", e);
+    }
+  };
 
   const navSections: { id: AdminSection; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -462,30 +481,47 @@ export default function AdminDashboardPage() {
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 4: PROJECTS (8 Active Perception Projects)          */}
+          {/* SECTION 4: PROJECTS (Perception Projects)                   */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "projects" && (
             <Card className="border-slate-200 bg-white shadow-xs">
-              <CardHeader className="pb-3 border-b border-slate-100">
-                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Folder className="w-4 h-4 text-purple-600" />
-                  Perception Projects (8 Active Pipelines)
-                </CardTitle>
-                <CardDescription className="text-xs text-slate-500">
-                  Isolated workspace boundaries and project access rules.
-                </CardDescription>
+              <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Folder className="w-4 h-4 text-purple-600" />
+                    Perception Projects ({liveProjects.length > 0 ? liveProjects.length : 8} Active Pipelines)
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-500">
+                    Isolated workspace boundaries and project access rules.
+                  </CardDescription>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => setIsCreateProjectOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" /> New Project
+                </Button>
               </CardHeader>
               <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { name: "Project Alpha (Urban 3D Perception)", status: "Active", docs: 82, confidentiality: "Internal" },
-                  { name: "Project Beta (Highway Restricted Radar)", status: "Active", docs: 46, confidentiality: "Restricted" },
-                  { name: "Project Gamma (Night Vision Fusion)", status: "Active", docs: 34, confidentiality: "Internal" },
-                  { name: "Project Delta (Extreme Weather LiDAR)", status: "Active", docs: 29, confidentiality: "Internal" },
-                  { name: "Project Epsilon (Parking & Odometry)", status: "Active", docs: 21, confidentiality: "Public" },
-                  { name: "Project Zeta (HD Mapping SLAM)", status: "Active", docs: 18, confidentiality: "Restricted" },
-                  { name: "Project Eta (Traffic Delineation)", status: "Active", docs: 11, confidentiality: "Internal" },
-                  { name: "Project Theta (Emergency Vehicle SOP)", status: "Active", docs: 7, confidentiality: "Internal" },
-                ].map((p, i) => (
+                {(liveProjects.length > 0
+                  ? liveProjects.map((p) => ({
+                      name: p.name,
+                      status: p.status || "Active",
+                      docs: 0,
+                      confidentiality: "Internal",
+                    }))
+                  : [
+                      { name: "Project Alpha (Urban 3D Perception)", status: "Active", docs: 82, confidentiality: "Internal" },
+                      { name: "Project Beta (Highway Restricted Radar)", status: "Active", docs: 46, confidentiality: "Restricted" },
+                      { name: "Project Gamma (Night Vision Fusion)", status: "Active", docs: 34, confidentiality: "Internal" },
+                      { name: "Project Delta (Extreme Weather LiDAR)", status: "Active", docs: 29, confidentiality: "Internal" },
+                      { name: "Project Epsilon (Parking & Odometry)", status: "Active", docs: 21, confidentiality: "Public" },
+                      { name: "Project Zeta (HD Mapping SLAM)", status: "Active", docs: 18, confidentiality: "Restricted" },
+                      { name: "Project Eta (Traffic Delineation)", status: "Active", docs: 11, confidentiality: "Internal" },
+                      { name: "Project Theta (Emergency Vehicle SOP)", status: "Active", docs: 7, confidentiality: "Internal" },
+                    ]
+                ).map((p, i) => (
                   <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-slate-900 text-xs">{p.name}</span>
@@ -1066,6 +1102,12 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
       )}
+      {/* ── Create Project Modal ────────────────────────────── */}
+      <CreateProjectDialog
+        isOpen={isCreateProjectOpen}
+        onClose={() => setIsCreateProjectOpen(false)}
+        onSuccess={refreshProjects}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { DocumentsToolbar } from "@/components/documents/DocumentsToolbar";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { DocumentCard } from "@/components/documents/DocumentCard";
 import { UploadDialog } from "@/components/documents/UploadDialog";
+import { CreateProjectDialog } from "@/components/documents/CreateProjectDialog";
 import { DocumentDetailSheet } from "@/components/documents/DocumentDetailSheet";
 import { DocumentsSkeleton } from "@/components/ui/loading-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -26,6 +27,7 @@ export default function DocumentsPage() {
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploadingToDocId, setUploadingToDocId] = useState<string | undefined>(undefined);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   
   const [selectedDoc, setSelectedDoc] = useState<DocumentDetail | DocumentItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -123,7 +125,7 @@ export default function DocumentsPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onUploadClick={openUploadDialog}
-        onNewProjectClick={() => alert("Project creation is managed in the Admin portal.")}
+        onNewProjectClick={() => setIsCreateProjectOpen(true)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         filters={filters}
@@ -183,6 +185,12 @@ export default function DocumentsPage() {
         projects={projects}
         departments={departments}
         uploadingToDocId={uploadingToDocId}
+      />
+
+      <CreateProjectDialog
+        isOpen={isCreateProjectOpen}
+        onClose={() => setIsCreateProjectOpen(false)}
+        onSuccess={fetchData}
       />
 
       <DocumentDetailSheet 
