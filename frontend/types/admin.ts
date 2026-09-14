@@ -49,6 +49,16 @@ export interface AuditLogEntry {
   status: string;
 }
 
+export interface AdminConversationItem {
+  id: string;
+  query: string;
+  user_email: string;
+  project_name: string;
+  timestamp: string;
+  citations_count: number;
+  latency_ms?: number | null;
+}
+
 export interface KnowledgeGapResolutionRequest {
   unanswered_id?: string;
   query: string;

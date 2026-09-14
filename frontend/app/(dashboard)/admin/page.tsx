@@ -1,18 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 import { adminService } from "@/lib/services/admin";
+import { documentsService } from "@/lib/services/documents";
 import {
+  AdminConversationItem,
   AdminOverviewKPIs,
+  AIUsageStats,
   AuditLogEntry,
+  FeedbackAnalytics,
   UnansweredQueryItem,
 } from "@/types/admin";
+import { UserProfileResponse } from "@/types/auth";
+import { Department, DocumentItem, ProjectSummary } from "@/types/document";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectDialog } from "@/components/documents/CreateProjectDialog";
-import { documentsService } from "@/lib/services/documents";
-import { ProjectSummary } from "@/types/document";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Activity,
   AlertCircle,
@@ -52,28 +58,55 @@ export default function AdminDashboardPage() {
   // Selected Section (Default: Dashboard)
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
 
-  // Data states
+  // Data states (clean zero/empty initial states)
   const [kpis, setKpis] = useState<AdminOverviewKPIs>({
-    total_documents: 248,
-    total_users: 64,
-    total_projects: 8,
-    total_questions: 4821,
-    total_feedback: 3912,
-    total_failed_queries: 87,
-    positive_feedback_rate: 0.942,
-    avg_latency_ms: 320.5,
+    total_documents: 0,
+    total_users: 0,
+    total_projects: 0,
+    total_questions: 0,
+    total_feedback: 0,
+    total_failed_queries: 0,
+    positive_feedback_rate: 1.0,
+    avg_latency_ms: 0,
   });
+  const [users, setUsers] = useState<UserProfileResponse[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [documentsList, setDocumentsList] = useState<DocumentItem[]>([]);
+  const [conversations, setConversations] = useState<AdminConversationItem[]>([]);
   const [unanswered, setUnanswered] = useState<UnansweredQueryItem[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [liveProjects, setLiveProjects] = useState<ProjectSummary[]>([]);
+  const [aiUsage, setAiUsage] = useState<AIUsageStats>({
+    total_prompt_tokens: 0,
+    total_completion_tokens: 0,
+    total_tokens: 0,
+    estimated_cost_usd: 0,
+    active_model: "deepseek-chat",
+    active_embedding_model: "BAAI/bge-m3",
+    active_reranker_model: "BAAI/bge-reranker-v2-m3",
+  });
+  const [feedbackStats, setFeedbackStats] = useState<FeedbackAnalytics>({
+    total_feedback: 0,
+    positive_count: 0,
+    negative_count: 0,
+    satisfaction_rate: 100,
+    top_negative_reasons: [],
+  });
+  const [kbStats, setKbStats] = useState<{ total_documents: number; total_chunks: number; rag_status: string }>({
+    total_documents: 0,
+    total_chunks: 0,
+    rag_status: "OPTIMAL",
+  });
+
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Unanswered status update simulation
   const [handledUnansweredIds, setHandledUnansweredIds] = useState<Record<string, string>>({});
 
   // Closed-Loop Knowledge Gap Resolution Modal State
   const [activeGapItem, setActiveGapItem] = useState<UnansweredQueryItem | null>(null);
-  const [gapDocTitle, setGapDocTitle] = useState<string>("Urban LiDAR 3D Annotation SOP");
+  const [gapDocTitle, setGapDocTitle] = useState<string>("Standard Operating Procedure");
   const [gapSectionName, setGapSectionName] = useState<string>("");
   const [gapGuidelineText, setGapGuidelineText] = useState<string>("");
   const [isResolving, setIsResolving] = useState<boolean>(false);
@@ -90,7 +123,7 @@ export default function AdminDashboardPage() {
     setActiveGapItem(item);
     setGapSectionName(`Section: ${item.query.slice(0, 30)}...`);
     setGapGuidelineText(
-      `### Specification & Standard:\nFor queries regarding: "${item.query}"\n\nStandard Operating Procedure:\n1. All sensor annotations must strictly adhere to the project threshold.\n2. In cases of ambiguous occlusion, infer the 3D bounding box using vehicle geometry priors and minimum 15 LiDAR point density.`
+      `### Specification & Standard:\nFor queries regarding: "${item.query}"\n\nStandard Operating Procedure:\n1. Ensure annotations follow the project guidelines.\n2. Consult latest engineering guidelines.`
     );
     setResolutionSuccess(false);
     setTestVerified(false);
@@ -119,26 +152,58 @@ export default function AdminDashboardPage() {
     }
   };
 
-  useEffect(() => {
-    async function loadAdminData() {
-      try {
-        const [kpisData, unansData, logsData, projsData] = await Promise.all([
-          adminService.getOverviewKPIs(),
-          adminService.getUnansweredQuestions(),
-          adminService.getAuditLogs(20),
-          documentsService.getProjects(),
-        ]);
+  const loadAdminData = async () => {
+    setIsLoading(true);
+    try {
+      const [
+        kpisData,
+        unansData,
+        logsData,
+        projsData,
+        deptsData,
+        docsData,
+        convsData,
+        aiData,
+        fbData,
+        statsData,
+      ] = await Promise.all([
+        adminService.getOverviewKPIs(),
+        adminService.getUnansweredQuestions(),
+        adminService.getAuditLogs(20),
+        documentsService.getProjects(),
+        documentsService.getDepartments(),
+        documentsService.listDocuments({ limit: 50 }).catch(() => ({ items: [], total: 0, page: 1, limit: 50 })),
+        adminService.getConversations(20),
+        adminService.getAIUsageStats(),
+        adminService.getFeedbackAnalytics(),
+        documentsService.getStats(),
+      ]);
 
-        setKpis(kpisData);
-        setUnanswered(unansData);
-        setAuditLogs(logsData);
-        if (projsData && projsData.length > 0) {
-          setLiveProjects(projsData);
-        }
-      } catch (err) {
-        console.error("Admin dashboard data load error:", err);
+      setKpis(kpisData);
+      setUnanswered(unansData);
+      setAuditLogs(logsData);
+      setLiveProjects(projsData || []);
+      setDepartments(deptsData || []);
+      setDocumentsList(docsData?.items || []);
+      setConversations(convsData || []);
+      setAiUsage(aiData);
+      setFeedbackStats(fbData);
+      setKbStats(statsData);
+
+      try {
+        const usersData = await api.get<UserProfileResponse[]>("/api/v1/users");
+        setUsers(usersData || []);
+      } catch {
+        setUsers([]);
       }
+    } catch (err) {
+      console.error("Admin dashboard data load error:", err);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadAdminData();
   }, []);
 
@@ -154,16 +219,16 @@ export default function AdminDashboardPage() {
 
   const navSections: { id: AdminSection; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, badge: "64" },
-    { id: "teams", label: "Teams", icon: <Users className="w-4 h-4" />, badge: "6" },
-    { id: "projects", label: "Projects", icon: <Folder className="w-4 h-4" />, badge: "8" },
-    { id: "documents", label: "Documents", icon: <FileText className="w-4 h-4" />, badge: "248" },
+    { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, badge: kpis.total_users > 0 ? String(kpis.total_users) : undefined },
+    { id: "teams", label: "Teams", icon: <Users className="w-4 h-4" />, badge: departments.length > 0 ? String(departments.length) : undefined },
+    { id: "projects", label: "Projects", icon: <Folder className="w-4 h-4" />, badge: liveProjects.length > 0 ? String(liveProjects.length) : undefined },
+    { id: "documents", label: "Documents", icon: <FileText className="w-4 h-4" />, badge: kpis.total_documents > 0 ? String(kpis.total_documents) : undefined },
     { id: "knowledge-base", label: "Knowledge Base", icon: <Database className="w-4 h-4" /> },
-    { id: "conversations", label: "Conversations", icon: <MessageSquare className="w-4 h-4" /> },
-    { id: "feedback", label: "Feedback", icon: <ThumbsUp className="w-4 h-4" />, badge: "3,912" },
-    { id: "unanswered-questions", label: "Unanswered Questions", icon: <HelpCircle className="w-4 h-4" />, badge: "87" },
+    { id: "conversations", label: "Conversations", icon: <MessageSquare className="w-4 h-4" />, badge: conversations.length > 0 ? String(conversations.length) : undefined },
+    { id: "feedback", label: "Feedback", icon: <ThumbsUp className="w-4 h-4" />, badge: kpis.total_feedback > 0 ? String(kpis.total_feedback) : undefined },
+    { id: "unanswered-questions", label: "Unanswered Questions", icon: <HelpCircle className="w-4 h-4" />, badge: unanswered.length > 0 ? String(unanswered.length) : undefined },
     { id: "ai-usage", label: "AI Usage", icon: <BrainCircuit className="w-4 h-4" /> },
-    { id: "audit-logs", label: "Audit Logs", icon: <ShieldCheck className="w-4 h-4" /> },
+    { id: "audit-logs", label: "Audit Logs", icon: <ShieldCheck className="w-4 h-4" />, badge: auditLogs.length > 0 ? String(auditLogs.length) : undefined },
     { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -177,21 +242,22 @@ export default function AdminDashboardPage() {
             Enterprise Admin Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-slate-500">
-            Platform governance, 7-tier RBAC, knowledge base telemetry, and AI operations control.
+            Platform governance, role management, knowledge base telemetry, and AI operations control.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-xs py-1 px-2.5 font-mono">
-            SUPER_ADMIN ACCESS
+            ADMIN CONSOLE
           </Badge>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => window.location.reload()}
-            className="h-8 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 text-xs gap-1.5"
+            onClick={loadAdminData}
+            disabled={isLoading}
+            className="h-8 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 text-xs gap-1.5 cursor-pointer"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
@@ -207,7 +273,9 @@ export default function AdminDashboardPage() {
               <FileText className="w-4 h-4 text-blue-600" />
             </div>
             <div className="text-2xl font-black text-slate-900 font-mono">{kpis.total_documents}</div>
-            <div className="text-[10px] text-slate-400 font-mono">248 active in storage</div>
+            <div className="text-[10px] text-slate-400 font-mono">
+              {kpis.total_documents > 0 ? `${kpis.total_documents} active in storage` : "No documents"}
+            </div>
           </CardContent>
         </Card>
 
@@ -219,7 +287,9 @@ export default function AdminDashboardPage() {
               <Users className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="text-2xl font-black text-slate-900 font-mono">{kpis.total_users}</div>
-            <div className="text-[10px] text-slate-400 font-mono">64 across 7 tiers</div>
+            <div className="text-[10px] text-slate-400 font-mono">
+              {kpis.total_users > 0 ? `${kpis.total_users} registered users` : "No users"}
+            </div>
           </CardContent>
         </Card>
 
@@ -231,7 +301,9 @@ export default function AdminDashboardPage() {
               <Folder className="w-4 h-4 text-purple-600" />
             </div>
             <div className="text-2xl font-black text-slate-900 font-mono">{kpis.total_projects}</div>
-            <div className="text-[10px] text-slate-400 font-mono">8 active pipelines</div>
+            <div className="text-[10px] text-slate-400 font-mono">
+              {kpis.total_projects > 0 ? `${kpis.total_projects} active pipelines` : "No projects"}
+            </div>
           </CardContent>
         </Card>
 
@@ -242,8 +314,10 @@ export default function AdminDashboardPage() {
               <span className="font-medium">Questions</span>
               <MessageSquare className="w-4 h-4 text-sky-600" />
             </div>
-            <div className="text-2xl font-black text-slate-900 font-mono">4,821</div>
-            <div className="text-[10px] text-slate-400 font-mono">4,821 answered</div>
+            <div className="text-2xl font-black text-slate-900 font-mono">{kpis.total_questions.toLocaleString()}</div>
+            <div className="text-[10px] text-slate-400 font-mono">
+              {kpis.total_questions > 0 ? `${kpis.total_questions.toLocaleString()} answered` : "No queries yet"}
+            </div>
           </CardContent>
         </Card>
 
@@ -254,8 +328,10 @@ export default function AdminDashboardPage() {
               <span className="font-medium">Feedback</span>
               <ThumbsUp className="w-4 h-4 text-emerald-600" />
             </div>
-            <div className="text-2xl font-black text-slate-900 font-mono">3,912</div>
-            <div className="text-[10px] text-emerald-600 font-mono">94.2% satisfaction</div>
+            <div className="text-2xl font-black text-slate-900 font-mono">{kpis.total_feedback.toLocaleString()}</div>
+            <div className="text-[10px] text-emerald-600 font-mono">
+              {kpis.total_feedback > 0 ? `${(kpis.positive_feedback_rate * 100).toFixed(1)}% satisfaction` : "No feedback"}
+            </div>
           </CardContent>
         </Card>
 
@@ -266,8 +342,10 @@ export default function AdminDashboardPage() {
               <span className="font-medium">Failed Queries</span>
               <AlertCircle className="w-4 h-4 text-amber-600" />
             </div>
-            <div className="text-2xl font-black text-amber-600 font-mono">87</div>
-            <div className="text-[10px] text-amber-600/80 font-mono">87 flagged for SOP</div>
+            <div className="text-2xl font-black text-amber-600 font-mono">{kpis.total_failed_queries}</div>
+            <div className="text-[10px] text-amber-600/80 font-mono">
+              {kpis.total_failed_queries > 0 ? `${kpis.total_failed_queries} flagged for SOP` : "Zero failed queries"}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -327,25 +405,27 @@ export default function AdminDashboardPage() {
                     RAG Query Throughput & Satisfaction Trends
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
-                    Real-time telemetry across 4,821 queries and 3,912 feedback ratings.
+                    Real-time telemetry across {kpis.total_questions.toLocaleString()} queries and {kpis.total_feedback.toLocaleString()} feedback ratings.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                       <div className="text-[11px] text-slate-500">Average RAG Latency</div>
-                      <div className="text-xl font-bold text-slate-900 font-mono">320.5 ms</div>
+                      <div className="text-xl font-bold text-slate-900 font-mono">{kpis.avg_latency_ms.toFixed(1)} ms</div>
                       <div className="text-[10px] text-emerald-600 font-medium">Retrieval + Rerank + Gen</div>
                     </div>
                     <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                       <div className="text-[11px] text-slate-500">Precision Satisfaction</div>
-                      <div className="text-xl font-bold text-emerald-600 font-mono">94.2%</div>
-                      <div className="text-[10px] text-slate-500">3,685 positive thumbs up</div>
+                      <div className="text-xl font-bold text-emerald-600 font-mono">
+                        {(kpis.positive_feedback_rate * 100).toFixed(1)}%
+                      </div>
+                      <div className="text-[10px] text-slate-500">{feedbackStats.positive_count.toLocaleString()} positive thumbs up</div>
                     </div>
                     <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                       <div className="text-[11px] text-slate-500">Active Model Stack</div>
-                      <div className="text-sm font-bold text-blue-600 font-mono">DeepSeek-V3 + BGE-M3</div>
-                      <div className="text-[10px] text-slate-500">Cross-Encoder: BGE-Reranker</div>
+                      <div className="text-sm font-bold text-blue-600 font-mono">{aiUsage.active_model} + {aiUsage.active_embedding_model}</div>
+                      <div className="text-[10px] text-slate-500">Cross-Encoder: {aiUsage.active_reranker_model}</div>
                     </div>
                   </div>
 
@@ -361,16 +441,16 @@ export default function AdminDashboardPage() {
                         <span className="text-emerald-600 text-[11px] font-semibold">HEALTHY (1024d)</span>
                       </div>
                       <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
-                        <span className="text-slate-500 text-[11px]">DeepSeek API:</span>
+                        <span className="text-slate-500 text-[11px]">LLM Provider:</span>
                         <span className="text-emerald-600 text-[11px] font-semibold">OPERATIONAL</span>
                       </div>
                       <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
-                        <span className="text-slate-500 text-[11px]">Supabase Auth:</span>
+                        <span className="text-slate-500 text-[11px]">Auth System:</span>
                         <span className="text-emerald-600 text-[11px] font-semibold">CONNECTED</span>
                       </div>
                       <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
                         <span className="text-slate-500 text-[11px]">DMS Storage:</span>
-                        <span className="text-emerald-600 text-[11px] font-semibold">248 DOCS</span>
+                        <span className="text-emerald-600 text-[11px] font-semibold">{kpis.total_documents} DOCS</span>
                       </div>
                     </div>
                   </div>
@@ -380,7 +460,7 @@ export default function AdminDashboardPage() {
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 2: USERS (64 Users & 7 Role Tiers)                  */}
+          {/* SECTION 2: USERS                                            */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "users" && (
             <Card className="border-slate-200 bg-white shadow-xs">
@@ -388,100 +468,103 @@ export default function AdminDashboardPage() {
                 <div>
                   <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                     <Users className="w-4 h-4 text-emerald-600" />
-                    User Directory (64 Active Members)
+                    User Directory ({users.length} Active Members)
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
-                    7-Tier Role Hierarchy & Project Assignment Management.
+                    Role Hierarchy & Project Assignment Management.
                   </CardDescription>
                 </div>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 gap-1.5 shadow-xs">
-                  <Plus className="w-3.5 h-3.5" /> Invite User
-                </Button>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
-                    <tr>
-                      <th className="p-3">User</th>
-                      <th className="p-3">Role Tier</th>
-                      <th className="p-3">Department</th>
-                      <th className="p-3">Assigned Projects</th>
-                      <th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-sans">
-                    {[
-                      { name: "Dr. Sarah Lead", email: "sarah.admin@autocruise.ai", role: "SUPER_ADMIN", dept: "Perception Core", projs: "All Projects", status: "Active" },
-                      { name: "Marcus Rivera", email: "marcus.lead@autocruise.ai", role: "ADMIN", dept: "Sensor Fusion", projs: "Project Alpha, Beta", status: "Active" },
-                      { name: "Elena Rostova", email: "elena.mgr@autocruise.ai", role: "MANAGER", dept: "Annotation Ops", projs: "Urban 3D Perception", status: "Active" },
-                      { name: "Alex Chen", email: "alex.qc@autocruise.ai", role: "QC", dept: "Quality Assurance", projs: "Urban 3D Perception", status: "Active" },
-                      { name: "David Kim", email: "david.val@autocruise.ai", role: "VALIDATOR", dept: "Validation Lead", projs: "Highway Radar", status: "Active" },
-                      { name: "Maya Patel", email: "maya.annot@autocruise.ai", role: "ANNOTATOR", dept: "LiDAR Annotation", projs: "Urban 3D Perception", status: "Active" },
-                      { name: "James Wilson", email: "james.view@autocruise.ai", role: "VIEWER", dept: "Executive Audit", projs: "Urban 3D Perception", status: "Active" },
-                    ].map((u, i) => (
-                      <tr key={i} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="p-3 font-medium text-slate-900">
-                          <div>{u.name}</div>
-                          <div className="text-[11px] text-slate-500 font-mono">{u.email}</div>
-                        </td>
-                        <td className="p-3">
-                          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 font-mono text-[10px]">
-                            {u.role}
-                          </Badge>
-                        </td>
-                        <td className="p-3 text-slate-700">{u.dept}</td>
-                        <td className="p-3 text-slate-500">{u.projs}</td>
-                        <td className="p-3">
-                          <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">
-                            {u.status}
-                          </Badge>
-                        </td>
+                {users.length === 0 ? (
+                  <EmptyState
+                    icon={<Users className="w-8 h-8" />}
+                    title="No Users Found"
+                    description="There are currently no registered users in your organization."
+                  />
+                ) : (
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                      <tr>
+                        <th className="p-3">User</th>
+                        <th className="p-3">Role Tier</th>
+                        <th className="p-3">Organization</th>
+                        <th className="p-3">Assigned Projects</th>
+                        <th className="p-3">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-sans">
+                      {users.map((u) => (
+                        <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="p-3 font-medium text-slate-900">
+                            <div>{u.name || "Unnamed User"}</div>
+                            <div className="text-[11px] text-slate-500 font-mono">{u.email}</div>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 font-mono text-[10px]">
+                              {u.role?.name || "VIEWER"}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-slate-700">{u.organization?.name || "Default"}</td>
+                          <td className="p-3 text-slate-500">
+                            {u.projects && u.projects.length > 0
+                              ? u.projects.map((p) => p.project_name).join(", ")
+                              : "All Projects"}
+                          </td>
+                          <td className="p-3">
+                            <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">
+                              {u.status || "Active"}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 3: TEAMS (6 Organizational Units)                   */}
+          {/* SECTION 3: TEAMS                                            */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "teams" && (
             <Card className="border-slate-200 bg-white shadow-xs">
               <CardHeader className="pb-3 border-b border-slate-100">
                 <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <Users className="w-4 h-4 text-purple-600" />
-                  Teams & Departments (6 Units)
+                  Teams & Departments ({departments.length} Units)
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Organizational squads and department leads.
+                  Organizational squads and department units.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { name: "3D LiDAR Perception & Calibration", lead: "Dr. Sarah Lead", members: 18, docs: 94 },
-                  { name: "Sensor Fusion & Radar Tracking", lead: "Marcus Rivera", members: 14, docs: 62 },
-                  { name: "Urban Semantic Segmentation", lead: "Elena Rostova", members: 12, docs: 45 },
-                  { name: "Highway Autonomous QA & QC", lead: "Alex Chen", members: 8, docs: 28 },
-                  { name: "HD Mapping & Coordinate Datum", lead: "David Kim", members: 7, docs: 12 },
-                  { name: "Security & Validation Operations", lead: "James Wilson", members: 5, docs: 7 },
-                ].map((t, i) => (
-                  <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-900 text-xs">{t.name}</span>
-                      <Badge variant="outline" className="text-[10px] border-slate-200 bg-white text-slate-600">{t.members} Members</Badge>
-                    </div>
-                    <div className="text-[11px] text-slate-500">Lead: <span className="text-slate-800 font-medium">{t.lead}</span></div>
-                    <div className="text-[10px] text-blue-600 font-mono font-medium">{t.docs} Assigned Documents</div>
+              <CardContent className="p-4">
+                {departments.length === 0 ? (
+                  <EmptyState
+                    icon={<Users className="w-8 h-8" />}
+                    title="No Teams or Departments"
+                    description="No organizational departments have been configured yet."
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {departments.map((d) => (
+                      <div key={d.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-slate-900 text-xs">{d.name}</span>
+                          <Badge variant="outline" className="text-[10px] border-slate-200 bg-white text-slate-600">Active</Badge>
+                        </div>
+                        <div className="text-[11px] text-slate-500">{d.description || "Organization Unit"}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 4: PROJECTS (Perception Projects)                   */}
+          {/* SECTION 4: PROJECTS                                         */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "projects" && (
             <Card className="border-slate-200 bg-white shadow-xs">
@@ -489,7 +572,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                     <Folder className="w-4 h-4 text-purple-600" />
-                    Perception Projects ({liveProjects.length > 0 ? liveProjects.length : 8} Active Pipelines)
+                    Projects ({liveProjects.length} Active Pipelines)
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
                     Isolated workspace boundaries and project access rules.
@@ -503,42 +586,41 @@ export default function AdminDashboardPage() {
                   <Plus className="w-3.5 h-3.5" /> New Project
                 </Button>
               </CardHeader>
-              <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(liveProjects.length > 0
-                  ? liveProjects.map((p) => ({
-                      name: p.name,
-                      status: p.status || "Active",
-                      docs: 0,
-                      confidentiality: "Internal",
-                    }))
-                  : [
-                      { name: "Project Alpha (Urban 3D Perception)", status: "Active", docs: 82, confidentiality: "Internal" },
-                      { name: "Project Beta (Highway Restricted Radar)", status: "Active", docs: 46, confidentiality: "Restricted" },
-                      { name: "Project Gamma (Night Vision Fusion)", status: "Active", docs: 34, confidentiality: "Internal" },
-                      { name: "Project Delta (Extreme Weather LiDAR)", status: "Active", docs: 29, confidentiality: "Internal" },
-                      { name: "Project Epsilon (Parking & Odometry)", status: "Active", docs: 21, confidentiality: "Public" },
-                      { name: "Project Zeta (HD Mapping SLAM)", status: "Active", docs: 18, confidentiality: "Restricted" },
-                      { name: "Project Eta (Traffic Delineation)", status: "Active", docs: 11, confidentiality: "Internal" },
-                      { name: "Project Theta (Emergency Vehicle SOP)", status: "Active", docs: 7, confidentiality: "Internal" },
-                    ]
-                ).map((p, i) => (
-                  <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-900 text-xs">{p.name}</span>
-                      <Badge variant="outline" className="text-[10px] border-emerald-200 bg-emerald-50 text-emerald-700">{p.status}</Badge>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span>{p.docs} Documents</span>
-                      <Badge variant="outline" className="text-[9px] border-slate-200 bg-white text-slate-600">{p.confidentiality}</Badge>
-                    </div>
+              <CardContent className="p-4">
+                {liveProjects.length === 0 ? (
+                  <EmptyState
+                    icon={<Folder className="w-8 h-8" />}
+                    title="No Projects Found"
+                    description="No active project pipelines found. Create your first project to start organizing documents and chat history."
+                    action={{
+                      label: "Create Project",
+                      onClick: () => setIsCreateProjectOpen(true),
+                    }}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {liveProjects.map((p) => (
+                      <div key={p.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-slate-900 text-xs">{p.name}</span>
+                          <Badge variant="outline" className="text-[10px] border-emerald-200 bg-emerald-50 text-emerald-700">
+                            {p.status || "Active"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                          <span>Workspace Project</span>
+                          <Badge variant="outline" className="text-[9px] border-slate-200 bg-white text-slate-600">Active</Badge>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 5: DOCUMENTS (248 Active Documents)                 */}
+          {/* SECTION 5: DOCUMENTS                                        */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "documents" && (
             <Card className="border-slate-200 bg-white shadow-xs">
@@ -546,53 +628,55 @@ export default function AdminDashboardPage() {
                 <div>
                   <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                     <FileText className="w-4 h-4 text-blue-600" />
-                    Document Catalog (248 Indexed Documents)
+                    Document Catalog ({documentsList.length} Indexed Documents)
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
                     PDF, DOCX, Markdown, and text storage with version tracking.
                   </CardDescription>
                 </div>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 shadow-xs">
-                  Upload Document
-                </Button>
               </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                  <div>
-                    <div className="font-semibold text-slate-900">Velodyne VLS-128 LiDAR Calibration Guide</div>
-                    <div className="text-slate-500 text-[11px]">PDF · 48 Pages · 124 Chunks · SHA-256 Verified</div>
+              <CardContent className="p-4">
+                {documentsList.length === 0 ? (
+                  <EmptyState
+                    icon={<FileText className="w-8 h-8" />}
+                    title="No Documents Uploaded"
+                    description="No documents have been uploaded to the platform yet. Documents uploaded to projects will appear here."
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {documentsList.map((doc) => (
+                      <div key={doc.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-900">{doc.title}</div>
+                          <div className="text-slate-500 text-[11px]">
+                            {doc.doc_type?.toUpperCase() || "DOCUMENT"}{doc.page_count ? ` · ${doc.page_count} Pages` : ""} · {doc.project_name || "General"}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-[10px]">
+                            v{doc.current_version_number || 1}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] ${
+                              doc.status === "READY"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-amber-200 bg-amber-50 text-amber-700"
+                            }`}
+                          >
+                            {doc.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-[10px]">v2 (Current)</Badge>
-                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">READY</Badge>
-                  </div>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                  <div>
-                    <div className="font-semibold text-slate-900">3D Bounding Box & Occlusion Categorization SOP</div>
-                    <div className="text-slate-500 text-[11px]">Markdown · 32 Pages · 86 Chunks · SHA-256 Verified</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-[10px]">v1 (Current)</Badge>
-                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">READY</Badge>
-                  </div>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                  <div>
-                    <div className="font-semibold text-slate-900">Long-Range Radar Doppler Velocity Specification</div>
-                    <div className="text-slate-500 text-[11px]">DOCX · 24 Pages · 58 Chunks · SHA-256 Verified</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-[10px]">v1 (Current)</Badge>
-                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">READY</Badge>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 6: KNOWLEDGE BASE (pgvector Indexing)               */}
+          {/* SECTION 6: KNOWLEDGE BASE                                   */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "knowledge-base" && (
             <Card className="border-slate-200 bg-white shadow-xs">
@@ -606,25 +690,26 @@ export default function AdminDashboardPage() {
                     BGE-M3 (1024d) embeddings and chunk deduplication status.
                   </CardDescription>
                 </div>
-                <Button size="sm" variant="outline" className="h-8 text-xs border-slate-200 bg-white text-blue-600 hover:bg-slate-50 gap-1.5">
-                  <RefreshCw className="w-3.5 h-3.5" /> Re-embed All
-                </Button>
               </CardHeader>
               <CardContent className="p-4 space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px]">Total Chunks Embedded</div>
-                    <div className="text-xl font-bold text-slate-900 font-mono">12,450</div>
-                    <div className="text-[10px] text-emerald-600 font-medium">100% Status: EMBEDDED</div>
+                    <div className="text-xl font-bold text-slate-900 font-mono">
+                      {kbStats.total_chunks.toLocaleString()}
+                    </div>
+                    <div className="text-[10px] text-emerald-600 font-medium">
+                      {kbStats.total_chunks > 0 ? "100% Status: EMBEDDED" : "No Chunks Yet"}
+                    </div>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px]">Vector Dimensions</div>
                     <div className="text-xl font-bold text-blue-600 font-mono">1024-dim</div>
-                    <div className="text-[10px] text-slate-500">Model: BAAI/bge-m3</div>
+                    <div className="text-[10px] text-slate-500">Model: {aiUsage.active_embedding_model}</div>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px]">HNSW Index Status</div>
-                    <div className="text-xl font-bold text-emerald-600 font-mono">OPTIMAL</div>
+                    <div className="text-xl font-bold text-emerald-600 font-mono">{kbStats.rag_status || "OPTIMAL"}</div>
                     <div className="text-[10px] text-slate-500">Cosine Metric (1 - &lt;=&gt;)</div>
                   </div>
                 </div>
@@ -633,95 +718,107 @@ export default function AdminDashboardPage() {
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 7: CONVERSATIONS (Session Logs)                    */}
+          {/* SECTION 7: CONVERSATIONS                                    */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "conversations" && (
             <Card className="border-slate-200 bg-white shadow-xs">
               <CardHeader className="pb-3 border-b border-slate-100">
                 <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-sky-600" />
-                  Conversation Session Telemetry
+                  Conversation Session Telemetry ({conversations.length} Sessions)
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
                   Searchable employee chat queries across all projects.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-4 space-y-3 text-xs">
-                {[
-                  { query: "What is occlusion and how to annotate Level 2 vehicles?", user: "alex.chen@autocruise.ai", time: "10 mins ago", citations: 3, latency: "310ms" },
-                  { query: "What standard orientation do LiDAR coordinate axes use?", user: "maya.patel@autocruise.ai", time: "25 mins ago", citations: 2, latency: "285ms" },
-                  { query: "Explain the optical calibration beam angle offset matrix.", user: "david.kim@autocruise.ai", time: "1 hour ago", citations: 4, latency: "340ms" },
-                ].map((c, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-900">{c.query}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">{c.time}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span>User: {c.user}</span>
-                      <span className="text-blue-600 font-mono">{c.citations} Citations · {c.latency}</span>
-                    </div>
+              <CardContent className="p-4">
+                {conversations.length === 0 ? (
+                  <EmptyState
+                    icon={<MessageSquare className="w-8 h-8" />}
+                    title="No Conversations Yet"
+                    description="No employee queries or conversation sessions have been recorded in the platform."
+                  />
+                ) : (
+                  <div className="space-y-3 text-xs">
+                    {conversations.map((c) => (
+                      <div key={c.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-slate-900">{c.query}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">{c.timestamp}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                          <span>User: {c.user_email}</span>
+                          <span className="text-blue-600 font-mono">
+                            {c.project_name}{c.latency_ms ? ` · ${c.latency_ms}ms` : ""}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 8: FEEDBACK (3,912 Ratings Breakdown)              */}
+          {/* SECTION 8: FEEDBACK                                         */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "feedback" && (
             <Card className="border-slate-200 bg-white shadow-xs">
               <CardHeader className="pb-3 border-b border-slate-100">
                 <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <ThumbsUp className="w-4 h-4 text-emerald-600" />
-                  User Feedback & QA Analytics (3,912 Responses)
+                  User Feedback & QA Analytics ({feedbackStats.total_feedback.toLocaleString()} Responses)
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Satisfaction ratings: 94.2% Positive (3,685 thumbs up), 5.8% Negative (227).
+                  Satisfaction ratings: {feedbackStats.satisfaction_rate.toFixed(1)}% Positive ({feedbackStats.positive_count.toLocaleString()} thumbs up), {(feedbackStats.total_feedback > 0 ? (100 - feedbackStats.satisfaction_rate).toFixed(1) : "0.0")}% Negative ({feedbackStats.negative_count.toLocaleString()}).
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px]">Total Responses</div>
-                    <div className="text-2xl font-bold text-slate-900 font-mono">3,912</div>
+                    <div className="text-2xl font-bold text-slate-900 font-mono">{feedbackStats.total_feedback.toLocaleString()}</div>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px]">Helpful Answers (👍)</div>
-                    <div className="text-2xl font-bold text-emerald-600 font-mono">3,685</div>
-                    <div className="text-[10px] text-emerald-600 font-medium">94.2% positive rate</div>
+                    <div className="text-2xl font-bold text-emerald-600 font-mono">{feedbackStats.positive_count.toLocaleString()}</div>
+                    <div className="text-[10px] text-emerald-600 font-medium">
+                      {feedbackStats.total_feedback > 0 ? `${feedbackStats.satisfaction_rate.toFixed(1)}% positive rate` : "No ratings"}
+                    </div>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px]">Needs Improvement (👎)</div>
-                    <div className="text-2xl font-bold text-red-600 font-mono">227</div>
-                    <div className="text-[10px] text-red-600/80 font-medium">5.8% flagged</div>
+                    <div className="text-2xl font-bold text-red-600 font-mono">{feedbackStats.negative_count.toLocaleString()}</div>
+                    <div className="text-[10px] text-red-600/80 font-medium">
+                      {feedbackStats.total_feedback > 0 ? `${(100 - feedbackStats.satisfaction_rate).toFixed(1)}% flagged` : "0 flagged"}
+                    </div>
                   </div>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <div className="font-semibold text-slate-900">Top Negative Feedback Root Causes:</div>
-                  <div className="space-y-1.5 text-slate-700">
-                    <div className="flex justify-between">
-                      <span>• Missing edge-case annotation guideline in SOP</span>
-                      <span className="font-mono text-slate-500">112 occurrences</span>
+                  <div className="font-semibold text-slate-900">Negative Feedback Root Causes:</div>
+                  {feedbackStats.top_negative_reasons.length === 0 ? (
+                    <div className="text-slate-400 text-xs py-1 italic">
+                      No negative feedback issues recorded yet.
                     </div>
-                    <div className="flex justify-between">
-                      <span>• Ambiguous 3D cuboid yaw angle standard</span>
-                      <span className="font-mono text-slate-500">64 occurrences</span>
+                  ) : (
+                    <div className="space-y-1.5 text-slate-700">
+                      {feedbackStats.top_negative_reasons.map((r, i) => (
+                        <div key={i} className="flex justify-between">
+                          <span>• {r.reason}</span>
+                          <span className="font-mono text-slate-500">{r.count} occurrences</span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex justify-between">
-                      <span>• Outdated version reference</span>
-                      <span className="font-mono text-slate-500">51 occurrences</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 9: UNANSWERED QUESTIONS (87 Failed Queries Queue)   */}
+          {/* SECTION 9: UNANSWERED QUESTIONS                             */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "unanswered-questions" && (
             <Card className="border-slate-200 bg-white shadow-xs">
@@ -729,58 +826,66 @@ export default function AdminDashboardPage() {
                 <div>
                   <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                     <HelpCircle className="w-4 h-4 text-amber-600" />
-                    Unanswered Questions Queue (87 Flagged Queries)
+                    Unanswered Questions Queue ({unanswered.length} Flagged Queries)
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
                     Queries scoring below relevance threshold or lacking SOP documentation.
                   </CardDescription>
                 </div>
                 <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-xs">
-                  87 Items Pending SOP Addition
+                  {unanswered.length} Items Pending SOP Addition
                 </Badge>
               </CardHeader>
               <CardContent className="p-4 space-y-3 text-xs">
-                {unanswered.map((item) => {
-                  const isHandled = handledUnansweredIds[item.id] === "added_to_sop" || item.status === "added_to_sop";
-                  return (
-                    <div key={item.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <span className="font-semibold text-slate-900">{item.query}</span>
-                          <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                            <span>Project: {item.project_name}</span>
-                            <span>·</span>
-                            <span>Asked by: {item.user_email}</span>
-                            <span>·</span>
-                            <span>Confidence: {(item.confidence_score * 100).toFixed(1)}%</span>
+                {unanswered.length === 0 ? (
+                  <EmptyState
+                    icon={<HelpCircle className="w-8 h-8" />}
+                    title="No Unanswered Questions"
+                    description="All queries have met the confidence threshold. No knowledge gaps currently flagged."
+                  />
+                ) : (
+                  unanswered.map((item) => {
+                    const isHandled = handledUnansweredIds[item.id] === "added_to_sop" || item.status === "added_to_sop";
+                    return (
+                      <div key={item.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <span className="font-semibold text-slate-900">{item.query}</span>
+                            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                              <span>Project: {item.project_name}</span>
+                              <span>·</span>
+                              <span>Asked by: {item.user_email}</span>
+                              <span>·</span>
+                              <span>Confidence: {(item.confidence_score * 100).toFixed(1)}%</span>
+                            </div>
+                          </div>
+
+                          <div>
+                            {isHandled ? (
+                              <Badge variant="outline" className="border-emerald-200 text-emerald-700 bg-emerald-50 text-[10px]">
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Added to SOP
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => handleOpenGapModal(item)}
+                                className="h-7 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-xs flex items-center gap-1 cursor-pointer"
+                              >
+                                <Zap className="w-3 h-3" /> Resolve Gap
+                              </Button>
+                            )}
                           </div>
                         </div>
-
-                        <div>
-                          {isHandled ? (
-                            <Badge variant="outline" className="border-emerald-200 text-emerald-700 bg-emerald-50 text-[10px]">
-                              <CheckCircle2 className="w-3 h-3 mr-1" /> Added to SOP (v2)
-                            </Badge>
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => handleOpenGapModal(item)}
-                              className="h-7 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-xs flex items-center gap-1 cursor-pointer"
-                            >
-                              <Zap className="w-3 h-3" /> Resolve Gap
-                            </Button>
-                          )}
-                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 10: AI USAGE (Token Metrics & Telemetry)           */}
+          {/* SECTION 10: AI USAGE                                        */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "ai-usage" && (
             <Card className="border-slate-200 bg-white shadow-xs">
@@ -797,19 +902,33 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 font-mono">
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px] font-sans">Prompt Tokens</div>
-                    <div className="text-lg font-bold text-slate-900">18.42 M</div>
+                    <div className="text-lg font-bold text-slate-900">
+                      {aiUsage.total_prompt_tokens >= 1_000_000
+                        ? `${(aiUsage.total_prompt_tokens / 1_000_000).toFixed(2)} M`
+                        : aiUsage.total_prompt_tokens.toLocaleString()}
+                    </div>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px] font-sans">Completion Tokens</div>
-                    <div className="text-lg font-bold text-blue-600">6.21 M</div>
+                    <div className="text-lg font-bold text-blue-600">
+                      {aiUsage.total_completion_tokens >= 1_000_000
+                        ? `${(aiUsage.total_completion_tokens / 1_000_000).toFixed(2)} M`
+                        : aiUsage.total_completion_tokens.toLocaleString()}
+                    </div>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px] font-sans">Total Tokens</div>
-                    <div className="text-lg font-bold text-emerald-600">24.63 M</div>
+                    <div className="text-lg font-bold text-emerald-600">
+                      {aiUsage.total_tokens >= 1_000_000
+                        ? `${(aiUsage.total_tokens / 1_000_000).toFixed(2)} M`
+                        : aiUsage.total_tokens.toLocaleString()}
+                    </div>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                     <div className="text-slate-500 text-[11px] font-sans">Estimated Cost</div>
-                    <div className="text-lg font-bold text-amber-600">$12.45 USD</div>
+                    <div className="text-lg font-bold text-amber-600">
+                      ${aiUsage.estimated_cost_usd.toFixed(2)} USD
+                    </div>
                   </div>
                 </div>
 
@@ -818,15 +937,15 @@ export default function AdminDashboardPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px]">
                     <div className="p-2.5 rounded-lg bg-white border border-slate-200">
                       <span className="text-slate-500">LLM: </span>
-                      <span className="text-blue-600 font-semibold">deepseek-chat (V3)</span>
+                      <span className="text-blue-600 font-semibold">{aiUsage.active_model}</span>
                     </div>
                     <div className="p-2.5 rounded-lg bg-white border border-slate-200">
                       <span className="text-slate-500">Embedding: </span>
-                      <span className="text-emerald-600 font-semibold">BAAI/bge-m3</span>
+                      <span className="text-emerald-600 font-semibold">{aiUsage.active_embedding_model}</span>
                     </div>
                     <div className="p-2.5 rounded-lg bg-white border border-slate-200">
                       <span className="text-slate-500">Reranker: </span>
-                      <span className="text-purple-600 font-semibold">bge-reranker-v2-m3</span>
+                      <span className="text-purple-600 font-semibold">{aiUsage.active_reranker_model}</span>
                     </div>
                   </div>
                 </div>
@@ -835,7 +954,7 @@ export default function AdminDashboardPage() {
           )}
 
           {/* ─────────────────────────────────────────────────────────── */}
-          {/* SECTION 11: AUDIT LOGS (Security Trail)                    */}
+          {/* SECTION 11: AUDIT LOGS                                      */}
           {/* ─────────────────────────────────────────────────────────── */}
           {activeSection === "audit-logs" && (
             <Card className="border-slate-200 bg-white shadow-xs">
@@ -849,41 +968,49 @@ export default function AdminDashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
-                    <tr>
-                      <th className="p-3">Timestamp</th>
-                      <th className="p-3">Actor</th>
-                      <th className="p-3">Action</th>
-                      <th className="p-3">Resource</th>
-                      <th className="p-3">IP Address</th>
-                      <th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
-                    {auditLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="p-3 text-slate-500">{log.timestamp}</td>
-                        <td className="p-3 text-slate-900 font-sans font-medium">{log.actor_email}</td>
-                        <td className="p-3 text-blue-600 font-semibold">{log.action}</td>
-                        <td className="p-3 text-slate-700">{log.resource_name}</td>
-                        <td className="p-3 text-slate-500">{log.ip_address}</td>
-                        <td className="p-3">
-                          <Badge
-                            variant="outline"
-                            className={`text-[9px] ${
-                              log.status === "SUCCESS"
-                                ? "border-emerald-200 text-emerald-700 bg-emerald-50"
-                                : "border-red-200 text-red-700 bg-red-50"
-                            }`}
-                          >
-                            {log.status}
-                          </Badge>
-                        </td>
+                {auditLogs.length === 0 ? (
+                  <EmptyState
+                    icon={<ShieldCheck className="w-8 h-8" />}
+                    title="No Audit Logs"
+                    description="No security or access events have been recorded in the platform yet."
+                  />
+                ) : (
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                      <tr>
+                        <th className="p-3">Timestamp</th>
+                        <th className="p-3">Actor</th>
+                        <th className="p-3">Action</th>
+                        <th className="p-3">Resource</th>
+                        <th className="p-3">IP Address</th>
+                        <th className="p-3">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                      {auditLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="p-3 text-slate-500">{log.timestamp}</td>
+                          <td className="p-3 text-slate-900 font-sans font-medium">{log.actor_email}</td>
+                          <td className="p-3 text-blue-600 font-semibold">{log.action}</td>
+                          <td className="p-3 text-slate-700">{log.resource_name}</td>
+                          <td className="p-3 text-slate-500">{log.ip_address}</td>
+                          <td className="p-3">
+                            <Badge
+                              variant="outline"
+                              className={`text-[9px] ${
+                                log.status === "SUCCESS"
+                                  ? "border-emerald-200 text-emerald-700 bg-emerald-50"
+                                  : "border-red-200 text-red-700 bg-red-50"
+                              }`}
+                            >
+                              {log.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </CardContent>
             </Card>
           )}

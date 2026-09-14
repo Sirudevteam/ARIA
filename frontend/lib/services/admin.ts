@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import {
+  AdminConversationItem,
   AdminOverviewKPIs,
   AIUsageStats,
   AuditLogEntry,
@@ -15,14 +16,14 @@ export const adminService = {
       return await api.get<AdminOverviewKPIs>("/api/v1/admin/stats/overview");
     } catch {
       return {
-        total_documents: 248,
-        total_users: 64,
-        total_projects: 8,
-        total_questions: 4821,
-        total_feedback: 3912,
-        total_failed_queries: 87,
-        positive_feedback_rate: 0.942,
-        avg_latency_ms: 320.5,
+        total_documents: 0,
+        total_users: 0,
+        total_projects: 0,
+        total_questions: 0,
+        total_feedback: 0,
+        total_failed_queries: 0,
+        positive_feedback_rate: 1.0,
+        avg_latency_ms: 0,
       };
     }
   },
@@ -43,10 +44,10 @@ export const adminService = {
       return await api.get<AIUsageStats>("/api/v1/admin/ai-usage");
     } catch {
       return {
-        total_prompt_tokens: 18420500,
-        total_completion_tokens: 6210400,
-        total_tokens: 24630900,
-        estimated_cost_usd: 12.45,
+        total_prompt_tokens: 0,
+        total_completion_tokens: 0,
+        total_tokens: 0,
+        estimated_cost_usd: 0,
         active_model: "deepseek-chat",
         active_embedding_model: "BAAI/bge-m3",
         active_reranker_model: "BAAI/bge-reranker-v2-m3",
@@ -59,16 +60,20 @@ export const adminService = {
       return await api.get<FeedbackAnalytics>("/api/v1/admin/feedback-analytics");
     } catch {
       return {
-        total_feedback: 3912,
-        positive_count: 3685,
-        negative_count: 227,
-        satisfaction_rate: 94.2,
-        top_negative_reasons: [
-          { reason: "Missing edge-case guideline in SOP", count: 112 },
-          { reason: "Ambiguous 3D cuboid yaw angle standard", count: 64 },
-          { reason: "Outdated version reference", count: 51 },
-        ],
+        total_feedback: 0,
+        positive_count: 0,
+        negative_count: 0,
+        satisfaction_rate: 100,
+        top_negative_reasons: [],
       };
+    }
+  },
+
+  async getConversations(limit: number = 20): Promise<AdminConversationItem[]> {
+    try {
+      return await api.get<AdminConversationItem[]>(`/api/v1/admin/conversations?limit=${limit}`);
+    } catch {
+      return [];
     }
   },
 
@@ -83,21 +88,9 @@ export const adminService = {
   async resolveKnowledgeGap(
     req: KnowledgeGapResolutionRequest
   ): Promise<KnowledgeGapResolutionResponse> {
-    try {
-      return await api.post<KnowledgeGapResolutionResponse>(
-        "/api/v1/admin/knowledge-gaps/resolve",
-        req
-      );
-    } catch {
-      return {
-        status: "RESOLVED",
-        document_title: req.document_title,
-        section_name: req.section_name,
-        chunk_id: "demo-chunk-resolved",
-        vector_dimension: 1024,
-        embedding_model: "BAAI/bge-m3",
-        message: `Successfully indexed '${req.section_name}' into '${req.document_title}'. Knowledge gap resolved!`,
-      };
-    }
+    return await api.post<KnowledgeGapResolutionResponse>(
+      "/api/v1/admin/knowledge-gaps/resolve",
+      req
+    );
   },
 };
