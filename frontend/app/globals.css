@@ -48,10 +48,20 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* ARIA brand tokens */
-  --aria-cyan: #0ea5e9;
-  --aria-cyan-dim: #0ea5e920;
-  --aria-surface: #0f172a;
-  --aria-border: #1e293b;
+  --aria-primary: #38bdf8;
+  --aria-accent: #a78bfa;
+  --aria-success: #34d399;
+  --aria-warning: #fbbf24;
+  --aria-surface-1: #0a0f1a;
+  --aria-surface-2: #111827;
+  --aria-surface-3: #1e293b;
+  --aria-glow: rgba(56,189,248,0.08);
+  --aria-border: rgba(255,255,255,0.06);
+
+  /* Glass morphism tokens */
+  --glass-bg: rgba(15,23,42,0.6);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-blur: 12px;
 }
 
 /* ─── Force dark mode globally ─────────────────────────────────────── */
@@ -63,7 +73,7 @@
   --card-foreground: oklch(0.94 0.005 270);
   --popover: oklch(0.12 0.01 265);
   --popover-foreground: oklch(0.94 0.005 270);
-  --primary: oklch(0.62 0.19 214);
+  --primary: oklch(0.72 0.19 214);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.18 0.01 265);
   --secondary-foreground: oklch(0.94 0.005 270);
@@ -91,51 +101,93 @@
   --sidebar-ring: oklch(0.62 0.19 214);
 }
 
-.dark {
-  --background: oklch(0.09 0.01 265);
-  --foreground: oklch(0.94 0.005 270);
-  --card: oklch(0.12 0.01 265);
-  --card-foreground: oklch(0.94 0.005 270);
-  --popover: oklch(0.12 0.01 265);
-  --popover-foreground: oklch(0.94 0.005 270);
-  --primary: oklch(0.62 0.19 214);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.18 0.01 265);
-  --secondary-foreground: oklch(0.94 0.005 270);
-  --muted: oklch(0.18 0.01 265);
-  --muted-foreground: oklch(0.54 0.01 265);
-  --accent: oklch(0.18 0.01 265);
-  --accent-foreground: oklch(0.94 0.005 270);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.62 0.19 214);
-  --chart-1: oklch(0.62 0.19 214);
-  --chart-2: oklch(0.54 0.01 265);
-  --chart-3: oklch(0.44 0.01 265);
-  --chart-4: oklch(0.37 0.01 265);
-  --chart-5: oklch(0.27 0.01 265);
-  --sidebar: oklch(0.10 0.01 265);
-  --sidebar-foreground: oklch(0.94 0.005 270);
-  --sidebar-primary: oklch(0.62 0.19 214);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.15 0.01 265);
-  --sidebar-accent-foreground: oklch(0.94 0.005 270);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.62 0.19 214);
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-    background-color: #020817;
+    background-color: var(--aria-surface-1);
   }
   html {
     @apply font-sans;
   }
+}
+
+/* ─── Global Focus & Reduced Motion ────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--aria-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Utility CSS Classes ──────────────────────────────────────────── */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+.glow-border {
+  border: 1px solid rgba(56,189,248,0.15);
+  box-shadow: 0 0 20px rgba(56,189,248,0.05);
+}
+
+.glow-border-hover:hover {
+  border-color: rgba(56,189,248,0.3);
+  box-shadow: 0 0 30px rgba(56,189,248,0.1);
+}
+
+/* ─── Animations ───────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out forwards;
+}
+
+.animate-slide-up-stagger {
+  animation: slide-up 0.4s ease-out forwards;
+  animation-delay: calc(var(--stagger-index, 0) * 80ms);
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
 }
 
 /* ─── ARIA LiDAR Utilities ─────────────────────────────────────────── */
@@ -152,8 +204,8 @@
 
 /* Glow ring for active status indicators */
 @keyframes glow-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(14, 165, 233, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
 }
 
 .aria-glow {
@@ -172,8 +224,8 @@
   bottom: 20%;
   width: 2px;
   border-radius: 0 2px 2px 0;
-  background: #0ea5e9;
-  box-shadow: 0 0 8px #0ea5e9;
+  background: var(--aria-primary);
+  box-shadow: 0 0 8px var(--aria-primary);
 }
 
 /* Citation chip */
@@ -188,15 +240,15 @@
   font-size: 0.6rem;
   font-weight: 700;
   font-family: var(--font-mono, monospace);
-  background: rgba(14, 165, 233, 0.15);
-  border: 1px solid rgba(14, 165, 233, 0.4);
-  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: var(--aria-primary);
   cursor: pointer;
   vertical-align: super;
   line-height: 1;
   transition: background 0.15s, color 0.15s;
 }
 .aria-citation-chip:hover {
-  background: rgba(14, 165, 233, 0.3);
+  background: rgba(56, 189, 248, 0.3);
   color: #fff;
 }

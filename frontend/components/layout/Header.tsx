@@ -5,14 +5,15 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, ChevronRight } from "lucide-react";
+import { Shield, ChevronRight, Menu, Bell } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const breadcrumbMap: Record<string, { label: string; parent?: string }> = {
+const breadcrumbMap: Record<string, { label: string; parent?: string; parentPath?: string }> = {
   "/dashboard": { label: "Dashboard" },
-  "/chat": { label: "AI Assistant", parent: "Dashboard" },
-  "/documents": { label: "Knowledge Base", parent: "Dashboard" },
-  "/profile": { label: "Profile & Access", parent: "Dashboard" },
-  "/admin": { label: "Admin", parent: "Dashboard" },
+  "/chat": { label: "AI Assistant", parent: "Dashboard", parentPath: "/dashboard" },
+  "/documents": { label: "Knowledge Base", parent: "Dashboard", parentPath: "/dashboard" },
+  "/profile": { label: "Profile & Access", parent: "Dashboard", parentPath: "/dashboard" },
+  "/admin": { label: "Admin", parent: "Dashboard", parentPath: "/dashboard" },
 };
 
 const roleStyles: Record<string, string> = {
@@ -25,7 +26,12 @@ const roleStyles: Record<string, string> = {
   VIEWER: "border-slate-600 bg-slate-800 text-slate-400",
 };
 
-export function Header() {
+interface HeaderProps {
+  onCommandPaletteOpen?: () => void;
+  onMobileMenuToggle?: () => void;
+}
+
+export function Header({ onCommandPaletteOpen, onMobileMenuToggle }: HeaderProps) {
   const pathname = usePathname();
   const { user, profile, role } = useAuth();
   const page = breadcrumbMap[pathname] ?? { label: "ARIA" };
@@ -36,25 +42,47 @@ export function Header() {
       : (user?.email?.[0]?.toUpperCase() ?? "U");
 
   const displayName = profile?.name || user?.email?.split("@")[0] || "User";
+  const hasUnread = false;
 
   return (
-    <header
-      className="flex h-12 items-center justify-between px-5"
-      style={{
-        borderBottom: "1px solid rgba(14,165,233,0.1)",
-        background: "rgba(5,13,26,0.85)",
-        backdropFilter: "blur(12px)",
-      }}
-    >
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-        {page.parent && (
-          <>
-            <span className="text-slate-600">{page.parent}</span>
-            <ChevronRight className="w-3 h-3 text-slate-700" />
-          </>
-        )}
-        <span className="text-slate-300 font-medium">{page.label}</span>
+    <header className="flex h-14 items-center justify-between px-5 bg-slate-950/80 backdrop-blur-xl border-b border-white/[0.06]">
+      {/* Left side */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMobileMenuToggle}
+          className="md:hidden flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-1.5 text-xs">
+          {page.parent && page.parentPath ? (
+            <>
+              <Link href={page.parentPath} className="text-slate-500 hover:text-slate-300 transition-colors">
+                {page.parent}
+              </Link>
+              <ChevronRight className="w-3 h-3 text-slate-700" />
+            </>
+          ) : page.parent ? (
+            <>
+              <span className="text-slate-500">{page.parent}</span>
+              <ChevronRight className="w-3 h-3 text-slate-700" />
+            </>
+          ) : null}
+          <span className="text-white font-medium">{page.label}</span>
+        </div>
+      </div>
+
+      {/* Center - Command Palette Trigger */}
+      <div className="hidden sm:flex flex-1 items-center justify-center px-4 max-w-md mx-auto">
+        <button
+          onClick={onCommandPaletteOpen}
+          className="w-full flex items-center justify-between bg-slate-800/50 border border-white/[0.06] rounded-lg px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-800/80 transition-colors"
+        >
+          <span>Search or jump to...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 font-mono text-[10px] font-medium text-slate-400">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        </button>
       </div>
 
       {/* Right cluster */}
@@ -66,13 +94,24 @@ export function Header() {
         </div>
 
         {/* Divider */}
+        <div className="hidden sm:block h-4 w-px bg-slate-800" />
+        
+        {/* Notifications */}
+        <button className="relative text-slate-400 hover:text-white transition-colors">
+          <Bell className="w-4 h-4" />
+          {hasUnread && (
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border-2 border-slate-950" />
+          )}
+        </button>
+
+        {/* Divider */}
         <div className="h-4 w-px bg-slate-800" />
 
         {/* Role badge */}
         {role && (
           <Badge
             variant="outline"
-            className={`text-[9px] font-semibold px-1.5 py-0.5 ${roleStyles[role] ?? roleStyles["VIEWER"]}`}
+            className={`hidden md:inline-flex text-[9px] font-semibold px-1.5 py-0.5 ${roleStyles[role] ?? roleStyles["VIEWER"]}`}
           >
             <Shield className="w-2.5 h-2.5 mr-1" />
             {role}
@@ -83,14 +122,13 @@ export function Header() {
         {user ? (
           <Link
             href="/profile"
-            className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-slate-800/60 transition-colors"
+            className="flex items-center gap-2 px-1 py-1 rounded-md hover:bg-slate-800/60 transition-colors"
           >
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-sky-300 shrink-0"
-              style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(14,165,233,0.3)" }}
-            >
-              {initials}
-            </div>
+            <Avatar className="w-6 h-6 border border-sky-400/30">
+              <AvatarFallback className="bg-sky-500/15 text-sky-400 text-[10px] font-bold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
             <span className="text-xs text-slate-300 hidden md:inline font-medium">{displayName}</span>
           </Link>
         ) : (
