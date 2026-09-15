@@ -45,30 +45,14 @@ export interface StreamEventHandlers {
   onError?: (error: Error) => void;
 }
 
-async function getAuthToken(): Promise<string | null> {
-  try {
-    if (typeof window === "undefined") return null;
-    // @ts-expect-error Clerk is on window
-    if (window.Clerk?.session) {
-      // @ts-expect-error Clerk getToken
-      const token = await window.Clerk.session.getToken();
-      if (token) return token;
-    }
-    return localStorage.getItem("aria_auth_token");
-  } catch {
-    return null;
-  }
-}
 
 export const chatService = {
   /**
    * Non-streaming chat completion
    */
   async getChatCompletion(req: RAGChatRequest): Promise<RAGChatResponse> {
-    const token = await getAuthToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
     const res = await fetch(`${getBaseUrl()}/api/v1/chat/completions`, {
@@ -93,10 +77,8 @@ export const chatService = {
     handlers: StreamEventHandlers,
     abortSignal?: AbortSignal,
   ): Promise<void> {
-    const token = await getAuthToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
     const res = await fetch(`${getBaseUrl()}/api/v1/chat/stream`, {
@@ -182,10 +164,8 @@ export const chatService = {
     comment?: string;
     project_id?: string;
   }): Promise<{ id: string; status: string; message: string }> {
-    const token = await getAuthToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
     const res = await fetch(`${getBaseUrl()}/api/v1/chat/feedback`, {

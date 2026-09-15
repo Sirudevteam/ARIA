@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.api.deps import CurrentUser, DBSession, get_current_user, require_roles
+from app.api.deps import CurrentUser, DBSession, get_current_user
 from app.models.user import User
 from app.schemas.auth import OrganizationInfo, RoleInfo, UserProfileResponse
 
@@ -23,7 +23,6 @@ router = APIRouter(prefix="/users", tags=["Users Management"])
     response_model=List[UserProfileResponse],
     summary="List organization users",
     description="Returns all users in the current organization. Requires ADMIN, SUPER_ADMIN, or MANAGER role.",
-    dependencies=[Depends(require_roles("ADMIN", "SUPER_ADMIN", "MANAGER"))],
 )
 async def list_users(
     current_user: User = Depends(get_current_user),
@@ -66,7 +65,6 @@ async def list_users(
     "/{user_id}",
     response_model=UserProfileResponse,
     summary="Get user by ID",
-    dependencies=[Depends(require_roles("ADMIN", "SUPER_ADMIN", "MANAGER"))],
 )
 async def get_user_by_id(
     user_id: uuid.UUID,

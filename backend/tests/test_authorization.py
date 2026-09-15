@@ -424,3 +424,35 @@ async def test_200_admin_full_org_visibility(client: AsyncClient):
     resp_p2 = await client.get(f"/api/v1/projects/{entities.project2_id}", headers=headers)
     assert resp_p2.status_code == 200
     assert resp_p2.json()["name"] == "Project Beta (Highway Restricted)"
+
+
+def test_get_clerk_jwks_url_resolution():
+    """Verify multi-tier JWKS URL resolution from publishable key and token issuer claim."""
+    from app.core.security import derive_jwks_from_publishable_key, get_clerk_jwks_url
+
+    # 1. Publishable key derivation
+    pubkey = "pk_test_b25lLW1vb3NlLTc0MjAuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    derived = derive_jwks_from_publishable_key(pubkey)
+    assert derived == "https://one-moose-7420.clerk.accounts.dev/.well-known/jwks.json"
+
+    # 2. Dynamic token iss extraction
+    token = make_unsigned_jwt_like_token(
+        {"alg": "RS256", "kid": "key_1"},
+        {"iss": "https://custom-clerk-app.accounts.dev", "sub": "user_abc"},
+    )
+    extracted = get_clerk_jwks_url(token=token)
+    assert extracted == "https://custom-clerk-app.accounts.dev/.well-known/jwks.json"
+
+
+@pytest.mark.asyncio
+async def test_401_rs_token_missing_kid(client: AsyncClient):
+    """RS256 token without 'kid' header should fail with descriptive error."""
+    token = make_unsigned_jwt_like_token(
+        {"alg": "RS256"},
+        {"iss": "https://clerk.test.dev", "sub": "user_xyz"},
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = await client.get("/api/v1/auth/me", headers=headers)
+    assert resp.status_code == 401
+    assert "missing key id ('kid')" in resp.json()["detail"]
+

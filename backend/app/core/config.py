@@ -51,14 +51,6 @@ class Settings(BaseSettings):
                 return v.replace("postgresql://", "postgresql+psycopg://", 1)
         return v
 
-    # ── Authentication (Clerk & Local JWT) ──────────────────────────────────
-    AUTH_PROVIDER: str = "clerk"  # "clerk", "local"
-    CLERK_SECRET_KEY: str | None = None
-    CLERK_PUBLISHABLE_KEY: str | None = None
-    CLERK_JWKS_URL: str | None = None
-    CLERK_JWT_SECRET: str = "clerk-jwt-default-secret-key-32-chars-long"
-    JWT_ALGORITHM: str = "RS256"
-
     # ── Object Storage (Cloudflare R2 / S3 / Local) ───────────────────────────
     STORAGE_BACKEND: str = "r2"  # "r2", "local"
     R2_ACCOUNT_ID: str | None = None

@@ -6,20 +6,6 @@ import {
   ProjectSummary,
 } from "@/types/document";
 
-async function getAuthToken(): Promise<string | null> {
-  try {
-    if (typeof window === "undefined") return null;
-    // @ts-expect-error Clerk is on window
-    if (window.Clerk?.session) {
-      // @ts-expect-error Clerk getToken
-      const token = await window.Clerk.session.getToken();
-      if (token) return token;
-    }
-    return localStorage.getItem("aria_auth_token");
-  } catch {
-    return null;
-  }
-}
 
 export interface DocumentFilters {
   q?: string;
@@ -58,16 +44,11 @@ export const documentsService = {
     formData: FormData,
     onProgress?: (percent: number) => void
   ): Promise<DocumentDetail> {
-    const token = await getAuthToken();
     const url = `${getBaseUrl()}/api/v1/projects/${projectId}/documents/upload`;
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", url);
-
-      if (token) {
-        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      }
 
       if (xhr.upload && onProgress) {
         xhr.upload.onprogress = (event) => {
@@ -108,12 +89,10 @@ export const documentsService = {
     documentId: string,
     formData: FormData
   ): Promise<DocumentDetail> {
-    const token = await getAuthToken();
     const url = `${getBaseUrl()}/api/v1/documents/${documentId}/versions`;
 
     const res = await fetch(url, {
       method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
     });
 
@@ -143,14 +122,11 @@ export const documentsService = {
     versionNumber?: number,
     suggestedFilename?: string
   ): Promise<void> {
-    const token = await getAuthToken();
     const url = `${getBaseUrl()}/api/v1/documents/${documentId}/download${
       versionNumber ? `?version_number=${versionNumber}` : ""
     }`;
 
-    const res = await fetch(url, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const res = await fetch(url);
 
     if (!res.ok) {
       throw new Error(`Download failed with status ${res.status}`);

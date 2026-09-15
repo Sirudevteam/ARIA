@@ -18,12 +18,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
-ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_mock_publishable_key_for_aria
-ARG CLERK_SECRET_KEY=sk_test_mock_secret_key_for_aria_clerk_auth
 
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-ENV CLERK_SECRET_KEY=$CLERK_SECRET_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

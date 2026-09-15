@@ -27,7 +27,6 @@ from app.api.deps import (
     get_current_user,
     get_document_with_access,
     get_project_and_membership,
-    require_roles,
 )
 from app.models.document import Document, DocumentVersion
 from app.models.project import Project, ProjectMember

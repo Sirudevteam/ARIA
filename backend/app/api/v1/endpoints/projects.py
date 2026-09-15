@@ -16,8 +16,6 @@ from app.api.deps import (
     DBSession,
     get_current_user,
     get_project_and_membership,
-    require_project_roles,
-    require_roles,
 )
 from app.models.document import Document
 from app.models.organization import Organization

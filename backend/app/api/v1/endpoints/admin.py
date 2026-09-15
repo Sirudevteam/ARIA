@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.api.deps import DBSession, get_current_user, require_roles
+from app.api.deps import DBSession, get_current_user
 from app.models.conversation import Conversation, Message
 from app.models.document import Document
 from app.models.feedback import AuditLog, Feedback, FeedbackRating
@@ -34,7 +34,6 @@ from app.schemas.llm import KnowledgeGapResolutionRequest, KnowledgeGapResolutio
 router = APIRouter(
     prefix="/admin",
     tags=["Enterprise Admin Dashboard"],
-    dependencies=[Depends(require_roles("ADMIN", "SUPER_ADMIN"))],
 )
 
 

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, ChevronRight, Menu, Bell } from "lucide-react";
@@ -33,15 +32,12 @@ interface HeaderProps {
 
 export function Header({ onCommandPaletteOpen, onMobileMenuToggle }: HeaderProps) {
   const pathname = usePathname();
-  const { user, profile, role } = useAuth();
+  const user = { email: "admin@aria.local", name: "ARIA User" };
+  const role = "ADMIN";
   const page = breadcrumbMap[pathname] ?? { label: "ARIA" };
 
-  const initials =
-    profile?.name
-      ? profile.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
-      : (user?.email?.[0]?.toUpperCase() ?? "U");
-
-  const displayName = profile?.name || user?.email?.split("@")[0] || "User";
+  const initials = "AU";
+  const displayName = "ARIA User";
   const hasUnread = false;
 
   return (
@@ -132,25 +128,17 @@ export function Header({ onCommandPaletteOpen, onMobileMenuToggle }: HeaderProps
         )}
 
         {/* User avatar */}
-        {user ? (
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-slate-100 transition-colors"
-          >
-            <Avatar className="w-7 h-7 border border-blue-200">
-              <AvatarFallback className="bg-blue-50 text-blue-700 text-[10px] font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-xs text-slate-700 hidden md:inline font-medium">{displayName}</span>
-          </Link>
-        ) : (
-          <Link href="/login">
-            <Button size="sm" className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-xs">
-              Sign In
-            </Button>
-          </Link>
-        )}
+        <Link
+          href="/profile"
+          className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-slate-100 transition-colors"
+        >
+          <Avatar className="w-7 h-7 border border-blue-200">
+            <AvatarFallback className="bg-blue-50 text-blue-700 text-[10px] font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-xs text-slate-700 hidden md:inline font-medium">{displayName}</span>
+        </Link>
       </div>
     </header>
   );

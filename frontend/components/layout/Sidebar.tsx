@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-context";
 import {
@@ -63,14 +62,8 @@ interface SidebarProps {
 export function Sidebar({ forceExpanded = false }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
   const { isCollapsed: contextCollapsed, toggleCollapse } = useSidebar();
   const isCollapsed = forceExpanded ? false : contextCollapsed;
-
-  const handleLogout = async () => {
-    await logout();
-    router.push("/login");
-  };
 
   return (
     <aside
@@ -215,18 +208,7 @@ export function Sidebar({ forceExpanded = false }: SidebarProps) {
           )}
         </div>
 
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          title={isCollapsed ? "Sign Out" : undefined}
-          className={cn(
-            "flex items-center rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors font-medium",
-            isCollapsed ? "justify-center w-8 h-8 p-0" : "w-full gap-2.5 px-3 py-2 text-xs"
-          )}
-        >
-          <LogOut className={cn("shrink-0", isCollapsed ? "w-4 h-4" : "w-3.5 h-3.5")} />
-          {!isCollapsed && <span>Sign Out</span>}
-        </button>
+
 
         {!isCollapsed && (
           <p className="text-[9px] text-slate-400 px-1 mt-0.5 text-center font-medium tracking-wide">ARIA V2 · Enterprise Light</p>
