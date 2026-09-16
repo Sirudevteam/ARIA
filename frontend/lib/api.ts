@@ -1,12 +1,15 @@
 export const getBaseUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== "undefined") {
+    // Client-side: use relative paths (the Next.js route handler proxy handles it)
     if (!envUrl || (window.location.protocol === "https:" && envUrl.includes("localhost"))) {
       return "";
     }
     return envUrl.replace(/\/$/, "");
   }
-  return (envUrl ?? "http://localhost:8000").replace(/\/$/, "");
+  // Server-side: use BACKEND_URL for Server Components / Route Handlers
+  const serverUrl = process.env.BACKEND_URL || envUrl || "http://localhost:8000";
+  return serverUrl.replace(/\/$/, "");
 };
 
 export class APIError extends Error {
