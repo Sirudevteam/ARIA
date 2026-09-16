@@ -5,8 +5,11 @@ for grounded non-streaming and Server-Sent Events (SSE) streaming chat.
 """
 
 import json
+import logging
 from typing import AsyncGenerator, List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from app.schemas.llm import ChatMessage, LLMResponse, RAGChatResponse
 from app.schemas.reranker import RerankedChunk
@@ -105,57 +108,68 @@ class RAGGeneratorService:
         Execute full RAG generation with Server-Sent Events (SSE) streaming.
         Emits citations first, then real-time text/reasoning tokens, and finally token usage.
         """
-        # 1. Retrieve and rerank precision citations
-        citations = await hybrid_retrieval_engine.retrieve_and_rerank(
-            db=db,
-            query=query,
-            user_context=user_context,
-            filters=filters,
-            candidate_k=candidate_k,
-            final_top_k=top_k,
-            min_relevance_threshold=min_relevance_threshold,
-            enable_rerank=True,
-        )
+        try:
+            # 1. Retrieve and rerank precision citations
+            citations = await hybrid_retrieval_engine.retrieve_and_rerank(
+                db=db,
+                query=query,
+                user_context=user_context,
+                filters=filters,
+                candidate_k=candidate_k,
+                final_top_k=top_k,
+                min_relevance_threshold=min_relevance_threshold,
+                enable_rerank=True,
+            )
 
-        # 2. Emit citations metadata chunk via SSE (empty list if conversational query)
-        citations_payload = {
-            "type": "citations",
-            "count": len(citations) if citations else 0,
-            "citations": [c.model_dump(mode="json") for c in citations] if citations else [],
-        }
-        yield f"data: {json.dumps(citations_payload)}\n\n"
+            # 2. Emit citations metadata chunk via SSE (empty list if conversational query)
+            citations_payload = {
+                "type": "citations",
+                "count": len(citations) if citations else 0,
+                "citations": [c.model_dump(mode="json") for c in citations] if citations else [],
+            }
+            yield f"data: {json.dumps(citations_payload)}\n\n"
 
-        # 3. Compose grounded prompt messages
-        messages = prompt_composer.compose_messages(
-            query=query,
-            citations=citations or [],
-            conversation_history=conversation_history,
-            user_name=user_context.user_name,
-        )
+            # 3. Compose grounded prompt messages
+            messages = prompt_composer.compose_messages(
+                query=query,
+                citations=citations or [],
+                conversation_history=conversation_history,
+                user_name=user_context.user_name,
+            )
 
-        # 4. Stream LLM tokens
-        async for chunk in self._llm_provider.generate_stream(
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        ):
-            if chunk.done:
-                done_payload = {
-                    "type": "done",
-                    "usage": chunk.usage.model_dump() if chunk.usage else None,
-                    "finish_reason": chunk.finish_reason or "stop",
-                }
-                yield f"data: {json.dumps(done_payload)}\n\n"
-            else:
-                token_payload = {
-                    "type": "delta",
-                    "delta": chunk.delta,
-                    "reasoning_delta": chunk.reasoning_delta,
-                }
-                yield f"data: {json.dumps(token_payload)}\n\n"
+            # 4. Stream LLM tokens
+            async for chunk in self._llm_provider.generate_stream(
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            ):
+                if chunk.done:
+                    done_payload = {
+                        "type": "done",
+                        "usage": chunk.usage.model_dump() if chunk.usage else None,
+                        "finish_reason": chunk.finish_reason or "stop",
+                    }
+                    yield f"data: {json.dumps(done_payload)}\n\n"
+                else:
+                    token_payload = {
+                        "type": "delta",
+                        "delta": chunk.delta,
+                        "reasoning_delta": chunk.reasoning_delta,
+                    }
+                    yield f"data: {json.dumps(token_payload)}\n\n"
 
-        # End of stream indicator
-        yield "data: [DONE]\n\n"
+            # End of stream indicator
+            yield "data: [DONE]\n\n"
+
+        except Exception as e:
+            logger.exception(f"Error during RAG generation stream: {e}")
+            error_payload = {
+                "type": "delta",
+                "delta": f"\n\n⚠️ **RAG Knowledge Service Notice**: {str(e)}",
+            }
+            yield f"data: {json.dumps(error_payload)}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'finish_reason': 'error'})}\n\n"
+            yield "data: [DONE]\n\n"
 
 
 rag_generator_service = RAGGeneratorService()
