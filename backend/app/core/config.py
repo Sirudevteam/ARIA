@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_db_connection(cls, v: str) -> str:
         if isinstance(v, str):
+            v = v.strip().strip("'\"")
+            if v.startswith("${{"):
+                raise ValueError(
+                    f"DATABASE_URL contains an unexpanded Railway template reference: '{v}'. "
+                    "Please copy and paste the actual PostgreSQL connection string from your Railway Postgres service's Connect tab."
+                )
             if v.startswith("postgres://"):
                 return v.replace("postgres://", "postgresql+psycopg://", 1)
             elif v.startswith("postgresql://") and not v.startswith("postgresql+"):
