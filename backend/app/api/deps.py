@@ -54,6 +54,7 @@ async def get_current_user(
         # Auto-provision the default user
         org_stmt = select(Organization).limit(1)
         org_res = await db.execute(org_stmt)
+        org = org_res.scalar_one_or_none()
         if not org:
             org = Organization(
                 id=uuid.UUID("a0000000-0000-0000-0000-000000000001"),
