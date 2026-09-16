@@ -46,11 +46,13 @@ async def get_my_profile(
             teams = [t_val]
 
     # 2. Fetch user's project access
-    user_role_name = current_user.role.name.upper() if current_user.role else "VIEWER"
+    user_role_name = current_user.role.name.upper() if current_user.role else "SUPER_ADMIN"
 
     if user_role_name in ("SUPER_ADMIN", "ADMIN"):
         # Org Admins see all projects in the organization
-        stmt_projs = select(Project).where(Project.organization_id == current_user.organization_id)
+        stmt_projs = select(Project)
+        if current_user.organization_id:
+            stmt_projs = stmt_projs.where(Project.organization_id == current_user.organization_id)
         res_projs = await db.execute(stmt_projs)
         all_projs = res_projs.scalars().all()
 
@@ -98,8 +100,25 @@ async def get_my_profile(
         avatar_url=current_user.avatar_url,
         status=current_user.status.value if hasattr(current_user.status, "value") else str(current_user.status),
         last_seen_at=current_user.last_seen_at,
-        organization=OrganizationInfo.model_validate(current_user.organization),
-        role=RoleInfo.model_validate(current_user.role) if current_user.role else None,
+        organization=(
+            OrganizationInfo.model_validate(current_user.organization)
+            if current_user.organization
+            else OrganizationInfo(
+                id=uuid.UUID("a0000000-0000-0000-0000-000000000001"),
+                name="ARIA Open Source",
+                slug="aria-open-source",
+            )
+        ),
+        role=(
+            RoleInfo.model_validate(current_user.role)
+            if current_user.role
+            else RoleInfo(
+                id=uuid.UUID("b0000000-0000-0000-0000-000000000001"),
+                name="SUPER_ADMIN",
+                scope="system",
+                permissions=["*"],
+            )
+        ),
         teams=[TeamInfo.model_validate(t) for t in teams],
         projects=projects_access,
         effective_permissions=permissions,

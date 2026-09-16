@@ -86,7 +86,7 @@ class HybridRetrievalEngine:
         Builds the authenticated user's security context by querying
         organization scope and explicit project memberships.
         """
-        role_name = "VIEWER"
+        role_name = "SUPER_ADMIN"
         if user.role_id:
             from app.models.role import Role
             stmt_role = select(Role.name).where(Role.id == user.role_id)
@@ -97,8 +97,10 @@ class HybridRetrievalEngine:
 
         accessible_projects: List[uuid.UUID] = []
         if role_name in ("SUPER_ADMIN", "ADMIN"):
-            # Admins have organization-wide project visibility
-            stmt = select(Project.id).where(Project.organization_id == user.organization_id)
+            # Admins have project visibility
+            stmt = select(Project.id)
+            if user.organization_id:
+                stmt = stmt.where(Project.organization_id == user.organization_id)
             res = await db.execute(stmt)
             accessible_projects = list(res.scalars().all())
         else:

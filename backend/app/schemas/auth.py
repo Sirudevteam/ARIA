@@ -82,7 +82,7 @@ class UserProfileResponse(BaseModel):
     avatar_url: Optional[str] = None
     status: str
     last_seen_at: Optional[datetime] = None
-    organization: OrganizationInfo
+    organization: Optional[OrganizationInfo] = None
     role: Optional[RoleInfo] = None
     teams: List[TeamInfo] = Field(default_factory=list)
     projects: List[ProjectAccessInfo] = Field(default_factory=list)

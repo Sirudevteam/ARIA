@@ -54,18 +54,39 @@ async def get_current_user(
         # Auto-provision the default user
         org_stmt = select(Organization).limit(1)
         org_res = await db.execute(org_stmt)
-        org = org_res.scalar_one_or_none()
+        if not org:
+            org = Organization(
+                id=uuid.UUID("a0000000-0000-0000-0000-000000000001"),
+                name="ARIA Open Source",
+                slug="aria-open-source",
+                settings={},
+                is_active=True,
+            )
+            db.add(org)
+            await db.flush()
 
         role_stmt = select(Role).where(Role.name.in_(["SUPER_ADMIN", "ADMIN"])).limit(1)
         role_res = await db.execute(role_stmt)
         role = role_res.scalar_one_or_none()
+        if not role:
+            from app.models.role import RoleScope
+            role = Role(
+                id=uuid.UUID("b0000000-0000-0000-0000-000000000001"),
+                name="SUPER_ADMIN",
+                scope=RoleScope.system,
+                permissions=["*"],
+                is_system=True,
+                description="Default Super Admin Role",
+            )
+            db.add(role)
+            await db.flush()
 
         user = User(
             id=DEFAULT_USER_ID,
             email=DEFAULT_USER_EMAIL,
             name=DEFAULT_USER_NAME,
-            organization_id=org.id if org else None,
-            role_id=role.id if role else None,
+            organization_id=org.id,
+            role_id=role.id,
             status=UserStatus.active,
         )
         db.add(user)
